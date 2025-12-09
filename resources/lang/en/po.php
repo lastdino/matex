@@ -1,0 +1,162 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'filters' => [
+        'po_number_placeholder' => 'PO# (prefix)',
+        'supplier' => 'Supplier',
+        'requester' => 'Requester',
+        'issue_from_to' => 'Issue From To',
+        'issue_from' => 'Issue From',
+        'issue_to' => 'Issue To',
+        'expected_from_to' => 'Expected From To',
+        'expected_from' => 'Expected From',
+        'expected_to' => 'Expected To',
+        'search_placeholder' => 'Search by item name, manufacturer, ad-hoc item (description), memo, requester, or tokens',
+        'status_all' => 'All Status',
+    ],
+    'common' => [
+        'requester' => 'Requester',
+        'expected_date' => 'Expected Date',
+        'desired_date' => 'Desired Date',
+        'unit' => 'Unit',
+        'qty' => 'Qty',
+        'unit_price' => 'Unit Price',
+        'tax_rate' => 'Tax Rate',
+        'options' => 'Options',
+        'description' => 'Description',
+        'note' => 'Note',
+        'remove' => 'Remove',
+        'close' => 'Close',
+        'loading' => 'Loading...',
+        'choose_placeholder' => 'Choose ...',
+        'choose_material_placeholder' => 'Choose material...',
+        'unit_example' => 'pcs',
+    ],
+    'status' => [
+        'draft' => 'Draft',
+        'issued' => 'Issued',
+        'receiving' => 'Receiving',
+        'closed' => 'Closed',
+    ],
+    'buttons' => [
+        'clear_filters' => 'Clear Filters',
+        'new_po' => 'New PO',
+        'adhoc_order' => 'Ad-hoc Order',
+        'cancel' => 'Cancel',
+        'create' => 'Create',
+        'creating' => 'Creating...',
+        'save' => 'Save',
+        'saving' => 'Saving...',
+    ],
+    'table' => [
+        'po_number' => 'PO#',
+        'supplier' => 'Supplier',
+        'requester' => 'Requester',
+        'status' => 'Status',
+        'total' => 'Total',
+        'empty' => 'No purchase orders',
+    ],
+    'labels' => [
+        'saved' => 'Saved',
+        'draft_with_id' => 'Draft #:id',
+    ],
+    'create_preview' => [
+        'lines' => 'Lines',
+        'subtotal_excl_tax' => 'Subtotal (excl. tax)',
+        'select_materials_hint' => 'Select materials to see the per-supplier split preview here.',
+        'no_adhoc_hint' => 'Note: Ad-hoc lines (no material) are not available in this screen. For ad-hoc orders, please use "Ad-hoc Order".',
+        'title' => 'Pre‑creation preview',
+        'split_notice' => 'Current lines will be split into :count purchase orders by supplier.',
+    ],
+    'detail' => [
+        'title' => 'Purchase Order',
+        'supplier' => 'Supplier',
+        'requester' => 'Requester',
+        'subtotal' => 'Subtotal',
+        'tax' => 'Tax',
+        'total' => 'Total',
+        'items' => 'Items',
+        'no_items' => 'No items',
+        'receivings' => [
+            'title' => 'Receivings',
+            'received_at' => 'Received At',
+            'reference' => 'Reference',
+            'items' => 'Items',
+            'empty' => 'No receivings',
+        ],
+        'table' => [
+            'sku' => 'SKU',
+            'name_desc' => 'Name / Description',
+            'qty' => 'Qty',
+            'unit' => 'Unit',
+            'unit_price' => 'Unit Price',
+            'line_total' => 'Line Total',
+            'desired_date' => 'Desired Date',
+            'expected_date' => 'Expected Date',
+            'actions' => '',
+        ],
+    ],
+    'create' => [
+        'title' => 'New Purchase Order',
+        'mode' => [
+            'title' => 'Create Mode',
+            'material_based' => 'Material-based (auto-select supplier)',
+        ],
+        'delivery' => [
+            'label' => 'Delivery Location (default: PDF settings)',
+            'placeholder' => 'Enter delivery address (fallback to PDF settings if empty)'
+        ],
+        'items' => [
+            'title' => 'Items',
+            'add_row' => 'Add Row',
+        ],
+        'table' => [
+            'material' => 'Material',
+            'description' => 'Description',
+            'note' => 'Note',
+            'unit' => 'Unit',
+            'qty' => 'Qty',
+            'unit_price' => 'Unit Price',
+            'tax_rate' => 'Tax Rate',
+            'desired_date' => 'Desired Date',
+            'expected_date' => 'Expected Date',
+            'options' => 'Options',
+        ],
+        'options' => [
+            'no_active_groups' => 'No active groups',
+        ],
+    ],
+    'adhoc' => [
+        'title' => 'New Ad-hoc Purchase Order',
+        'form' => [
+            'supplier' => 'Supplier',
+        ],
+        'delivery' => [
+            'label' => 'Delivery Location (default: PDF settings)',
+            'placeholder' => 'Enter delivery address (fallback to PDF settings if empty)'
+        ],
+        'items' => [
+            'title' => 'Items (no material registration)',
+            'add_row' => 'Add Row',
+        ],
+        'table' => [
+            'description' => 'Description',
+            'note' => 'Note',
+            'unit' => 'Unit',
+            'qty' => 'Qty',
+            'unit_price' => 'Unit Price',
+            'tax_rate' => 'Tax Rate',
+            'desired_date' => 'Desired Date',
+            'expected_date' => 'Expected Date',
+            'options' => 'Options',
+        ],
+        'options' => [
+            'no_active_groups' => 'No active groups',
+        ],
+        'placeholders' => [
+            'description_hint' => 'If no material, enter item description',
+        ],
+    ],
+];

@@ -1,0 +1,162 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'filters' => [
+        'po_number_placeholder' => 'PO#（プレフィックス）',
+        'supplier' => 'サプライヤー',
+        'requester' => '発注者',
+        'issue_from_to' => '発行日（期間）',
+        'issue_from' => '発行日（開始）',
+        'issue_to' => '発行日（終了）',
+        'expected_from_to' => '入荷予定日（期間）',
+        'expected_from' => '入荷予定日（開始）',
+        'expected_to' => '入荷予定日（終了）',
+        'search_placeholder' => '品名・メーカー名・単発品目（説明）・メモ・発注者名・トークン で検索',
+        'status_all' => 'すべての状態',
+    ],
+    'common' => [
+        'requester' => '発注者',
+        'expected_date' => '入荷予定日',
+        'desired_date' => '希望日',
+        'unit' => '単位',
+        'qty' => '数量',
+        'unit_price' => '単価',
+        'tax_rate' => '税率',
+        'options' => 'オプション',
+        'description' => '説明',
+        'note' => '備考',
+        'remove' => '削除',
+        'close' => '閉じる',
+        'loading' => '読み込み中...',
+        'choose_placeholder' => '選択してください',
+        'choose_material_placeholder' => '資材を選択...',
+        'unit_example' => 'pcs',
+    ],
+    'status' => [
+        'draft' => '下書き',
+        'issued' => '発行済み',
+        'receiving' => '入荷中',
+        'closed' => '完了',
+    ],
+    'buttons' => [
+        'clear_filters' => '条件クリア',
+        'new_po' => '新規発注',
+        'adhoc_order' => '単発発注',
+        'cancel' => 'キャンセル',
+        'create' => '作成',
+        'creating' => '作成中...',
+        'save' => '保存',
+        'saving' => '保存中...',
+    ],
+    'table' => [
+        'po_number' => 'PO#',
+        'supplier' => 'サプライヤー',
+        'requester' => '発注者',
+        'status' => '状態',
+        'total' => '合計',
+        'empty' => '発注データがありません',
+    ],
+    'labels' => [
+        'saved' => '保存しました',
+        'draft_with_id' => '下書き #:id',
+    ],
+    'create_preview' => [
+        'lines' => '行数',
+        'subtotal_excl_tax' => '小計（税抜）',
+        'select_materials_hint' => '資材を選択すると、サプライヤーごとの分割プレビューが表示されます。',
+        'no_adhoc_hint' => '※ この画面ではアドホック行（資材未選択の明細）は使用できません。アドホック発注は「単発発注」をご利用ください。',
+        'title' => '作成前プレビュー',
+        'split_notice' => '現在の明細はサプライヤーごとに :count 件の発注書に分割されます。',
+    ],
+    'detail' => [
+        'title' => '発注書',
+        'supplier' => 'サプライヤー',
+        'requester' => '発注者',
+        'subtotal' => '小計',
+        'tax' => '税',
+        'total' => '合計',
+        'items' => '明細',
+        'no_items' => '明細がありません',
+        'receivings' => [
+            'title' => '入荷履歴',
+            'received_at' => '入荷日',
+            'reference' => '参照',
+            'items' => '明細数',
+            'empty' => '入荷はありません',
+        ],
+        'table' => [
+            'sku' => 'SKU',
+            'name_desc' => '名称 / 説明',
+            'qty' => '数量',
+            'unit' => '単位',
+            'unit_price' => '単価',
+            'line_total' => '行小計',
+            'desired_date' => '希望日',
+            'expected_date' => '入荷予定日',
+            'actions' => '操作',
+        ],
+    ],
+    'create' => [
+        'title' => '新規発注',
+        'mode' => [
+            'title' => '作成モード',
+            'material_based' => '資材起点（サプライヤー自動判定）',
+        ],
+        'delivery' => [
+            'label' => '納品先（デフォルトはPDF設定）',
+            'placeholder' => '納品先住所を入力（未入力時はPDF設定を使用）'
+        ],
+        'items' => [
+            'title' => '明細',
+            'add_row' => '行を追加',
+        ],
+        'table' => [
+            'material' => '資材',
+            'description' => '説明',
+            'note' => '備考',
+            'unit' => '単位',
+            'qty' => '数量',
+            'unit_price' => '単価',
+            'tax_rate' => '税率',
+            'desired_date' => '希望日',
+            'expected_date' => '入荷予定日',
+            'options' => 'オプション',
+        ],
+        'options' => [
+            'no_active_groups' => '有効なグループはありません',
+        ],
+    ],
+    'adhoc' => [
+        'title' => '新規単発発注',
+        'form' => [
+            'supplier' => 'サプライヤー',
+        ],
+        'delivery' => [
+            'label' => '納品先（デフォルトはPDF設定）',
+            'placeholder' => '納品先住所を入力（未入力時はPDF設定を使用）'
+        ],
+        'items' => [
+            'title' => '単発明細（資材未登録）',
+            'add_row' => '行を追加',
+        ],
+        'table' => [
+            'description' => '説明',
+            'note' => '備考',
+            'unit' => '単位',
+            'qty' => '数量',
+            'unit_price' => '単価',
+            'tax_rate' => '税率',
+            'desired_date' => '希望日',
+            'expected_date' => '入荷予定日',
+            'options' => 'オプション',
+        ],
+        'options' => [
+            'no_active_groups' => '有効なグループはありません',
+        ],
+        'placeholders' => [
+            'description_hint' => '資材がない場合、品目の説明を入力',
+        ],
+    ],
+];
