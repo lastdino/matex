@@ -44,7 +44,6 @@
             </div>
         </flux:field>
 
-
         <div class="w-full sm:flex-1 min-w-64">
             <flux:input wire:model.live.debounce.300ms="q" placeholder="{{ __('procflow::po.filters.search_placeholder') }}" />
         </div>
@@ -61,6 +60,7 @@
             <flux:button variant="outline" wire:click="clearFilters">{{ __('procflow::po.buttons.clear_filters') }}</flux:button>
             <flux:button variant="primary" wire:click="openCreatePo">{{ __('procflow::po.buttons.new_po') }}</flux:button>
             <flux:button variant="outline" wire:click="openAdhocPo">{{ __('procflow::po.buttons.adhoc_order') }}</flux:button>
+            <flux:button variant="outline" wire:click="openExportModal">{{ __('procflow::po.export.history_button') }}</flux:button>
         </div>
     </div>
 
@@ -106,6 +106,75 @@
             </tbody>
         </table>
     </div>
+
+    <!-- 履歴ダウンロードモーダル -->
+    <flux:modal wire:model.self="showExportModal" name="export-history" class="w-full md:w-[40rem] max-w-full">
+        <x-slot name="title">{{ __('procflow::po.export.modal.title') }}</x-slot>
+
+        <div class="space-y-4">
+            <p class="text-sm text-neutral-600 dark:text-neutral-300">{{ __('procflow::po.export.modal.description') }}</p>
+
+            <flux:field>
+                <flux:label>{{ __('procflow::po.export.fields.receiving_from_to') }}</flux:label>
+                <div class="flex items-center gap-2">
+                    <div class="w-full">
+                        <input type="date" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="receivingDate.start" placeholder="{{ __('procflow::po.export.fields.receiving_from') }}">
+                    </div>
+                    <div class="w-full">
+                        <input type="date" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="receivingDate.end" placeholder="{{ __('procflow::po.export.fields.receiving_to') }}">
+                    </div>
+                </div>
+                @error('receivingDate')
+                    <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
+                @enderror
+            </flux:field>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <flux:field>
+                    <flux:label>{{ __('procflow::po.export.fields.row_group') }}</flux:label>
+                    <flux:select wire:model.live="rowGroupId">
+                        <option value="">{{ __('procflow::po.export.fields.row_auto') }}</option>
+                        @foreach($this->optionGroups as $grp)
+                            <option value="{{ $grp->id }}">{{ $grp->name }}</option>
+                        @endforeach
+                    </flux:select>
+                </flux:field>
+                <flux:field>
+                    <flux:label>{{ __('procflow::po.export.fields.col_group') }}</flux:label>
+                    <flux:select wire:model.live="colGroupId">
+                        <option value="">{{ __('procflow::po.export.fields.col_none') }}</option>
+                        @foreach($this->optionGroups as $grp)
+                            <option value="{{ $grp->id }}">{{ $grp->name }}</option>
+                        @endforeach
+                    </flux:select>
+                </flux:field>
+            </div>
+
+            <flux:field>
+                <flux:label>{{ __('procflow::po.export.fields.aggregate_type') }}</flux:label>
+                <div class="flex items-center gap-3">
+                    <label class="inline-flex items-center gap-2 text-sm">
+                        <input type="radio" value="amount" class="accent-blue-600" wire:model.live="aggregateType">
+                        {{ __('procflow::po.export.aggregate.amount') }}
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm">
+                        <input type="radio" value="quantity" class="accent-blue-600" wire:model.live="aggregateType">
+                        {{ __('procflow::po.export.aggregate.quantity') }}
+                    </label>
+                </div>
+                @error('aggregateType')
+                    <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
+                @enderror
+            </flux:field>
+        </div>
+        <div class="flex items-center justify-end gap-2 mt-4">
+            <flux:button variant="ghost" wire:click="$set('showExportModal', false)">{{ __('procflow::po.buttons.cancel') }}</flux:button>
+            <flux:button variant="primary" wire:click="exportExcel" wire:target="exportExcel" wire:loading.attr="disabled">
+                <span wire:loading.remove wire:target="exportExcel">{{ __('procflow::po.export.buttons.download') }}</span>
+                <span wire:loading wire:target="exportExcel">{{ __('procflow::po.export.buttons.creating') }}</span>
+            </flux:button>
+        </div>
+    </flux:modal>
 
     <div class="flex justify-end">
         {{ $this->orders->links() }}
@@ -461,6 +530,7 @@
                         <thead>
                             <tr class="text-left text-neutral-500">
                                 <th class="py-2 px-3">{{ __('procflow::po.adhoc.table.description') }}</th>
+                                <th class="py-2 px-3">{{ __('procflow::po.adhoc.table.manufacturer') }}</th>
                                 <th class="py-2 px-3">{{ __('procflow::po.adhoc.table.note') }}</th>
                                 <th class="py-2 px-3">{{ __('procflow::po.adhoc.table.unit') }}</th>
                                 <th class="py-2 px-3">{{ __('procflow::po.adhoc.table.qty') }}</th>
@@ -482,6 +552,14 @@
                                             wire:model.live="adhocForm.items.{{ $i }}.description"
                                             class="min-w-64"
                                         />
+                                    </td>
+                                    <td class="py-2 px-3">
+                                        <div class="w-40">
+                                            <flux:input
+                                                placeholder="{{ __('procflow::po.adhoc.placeholders.manufacturer_hint') }}"
+                                                wire:model.live="adhocForm.items.{{ $i }}.manufacturer"
+                                            />
+                                        </div>
                                     </td>
                                     <td class="py-2 px-3">
                                         <flux:textarea

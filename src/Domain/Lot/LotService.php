@@ -13,7 +13,7 @@ class LotService
     /**
      * @param array{lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null} $line
      */
-    public function ensureAndIncrement(PurchaseOrder $po, Material $material, array $line, float $qtyBase, string $receivedAt): MaterialLot
+    public function ensureAndIncrement(PurchaseOrder $po, Material $material, array $line, float $qtyBase, \DateTimeInterface|string $receivedAt): MaterialLot
     {
         abort_if(empty($line['lot_no'] ?? null), 422, 'lot_no is required for lot-managed materials.');
 

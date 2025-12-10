@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow;
 
 use Illuminate\Support\ServiceProvider;
+use Lastdino\ProcurementFlow\Models\Receiving;
+use Lastdino\ProcurementFlow\Models\ReceivingItem;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Dashboard;
 use Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders\Index as PoIndexComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders\Show as PoShowComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\PendingReceiving\Index as PendingReceivingIndexComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Index as MaterialsIndexComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Suppliers\Index as SuppliersIndexComponent;
+use Lastdino\ProcurementFlow\Observers\ReceivingObserver;
+use Lastdino\ProcurementFlow\Observers\ReceivingItemObserver;
 use Livewire\Livewire;
 
 class ProcurementFlowServiceProvider extends ServiceProvider
@@ -55,6 +59,10 @@ class ProcurementFlowServiceProvider extends ServiceProvider
         ], 'procurement-flow-lang');
 
         $this->loadLivewireComponents();
+
+        // Register model observers
+        Receiving::observe(ReceivingObserver::class);
+        ReceivingItem::observe(ReceivingItemObserver::class);
     }
 
     // custom methods for livewire components

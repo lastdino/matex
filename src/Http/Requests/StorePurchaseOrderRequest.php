@@ -38,6 +38,7 @@ class StorePurchaseOrderRequest extends FormRequest
             'items.*.price_unit' => ['required','numeric','gte:0'],
             'items.*.tax_rate' => ['nullable','numeric','between:0,1'],
             'items.*.description' => ['nullable','string','required_without:items.*.material_id'],
+            'items.*.manufacturer' => ['nullable','string','max:255'],
             'items.*.desired_date' => ['nullable', 'date'],
             'items.*.expected_date' => ['nullable', 'date'],
             'items.*.note' => ['nullable','string','max:1000'],

@@ -113,20 +113,10 @@
     <flux:modal wire:model="showGroupModal">
         <flux:heading size="sm">{{ $groupForm['id'] ? __('procflow::settings.options.groups.modal.title_edit') : __('procflow::settings.options.groups.modal.title_create') }}</flux:heading>
         <div class="space-y-3 mt-3">
-            <flux:field label="{{ __('procflow::settings.options.groups.modal.name') }}">
-                <flux:input wire:model="groupForm.name" />
-                @error('groupForm.name')<div class="text-red-600 text-xs mt-1">{{ $message }}</div>@enderror
-            </flux:field>
-            <flux:field label="{{ __('procflow::settings.options.groups.modal.description') }}">
-                <flux:textarea wire:model="groupForm.description"></flux:textarea>
-            </flux:field>
-            <div class="flex items-center justify-between">
-                <label class="text-sm">{{ __('procflow::settings.options.groups.modal.active') }}</label>
-                <flux:switch wire:model="groupForm.is_active" />
-            </div>
-            <flux:field label="{{ __('procflow::settings.options.groups.modal.sort_order') }}">
-                <flux:input type="number" wire:model="groupForm.sort_order" />
-            </flux:field>
+            <flux:input wire:model="groupForm.name" label="{{ __('procflow::settings.options.groups.modal.name') }}"/>
+            <flux:textarea wire:model="groupForm.description" label="{{ __('procflow::settings.options.groups.modal.description') }}"></flux:textarea>
+            <flux:switch wire:model="groupForm.is_active" label="{{ __('procflow::settings.options.groups.modal.active') }}"/>
+            <flux:input type="number" wire:model="groupForm.sort_order" label="{{ __('procflow::settings.options.groups.modal.sort_order') }}"/>
         </div>
         <div class="mt-4 flex justify-end gap-2">
             <flux:button variant="outline" wire:click="$set('showGroupModal', false)">{{ __('procflow::settings.options.groups.modal.cancel') }}</flux:button>
@@ -138,24 +128,11 @@
     <flux:modal wire:model="showOptionModal">
         <flux:heading size="sm">{{ $optionForm['id'] ? __('procflow::settings.options.items.modal.title_edit') : __('procflow::settings.options.items.modal.title_create') }}</flux:heading>
         <div class="space-y-3 mt-3">
-            <flux:field label="{{ __('procflow::settings.options.items.modal.code') }}">
-                <flux:input wire:model="optionForm.code" />
-                @error('optionForm.code')<div class="text-red-600 text-xs mt-1">{{ $message }}</div>@enderror
-            </flux:field>
-            <flux:field label="{{ __('procflow::settings.options.items.modal.name') }}">
-                <flux:input wire:model="optionForm.name" />
-                @error('optionForm.name')<div class="text-red-600 text-xs mt-1">{{ $message }}</div>@enderror
-            </flux:field>
-            <flux:field label="{{ __('procflow::settings.options.items.modal.description') }}">
-                <flux:textarea wire:model="optionForm.description"></flux:textarea>
-            </flux:field>
-            <div class="flex items-center justify-between">
-                <label class="text-sm">{{ __('procflow::settings.options.items.modal.active') }}</label>
-                <flux:switch wire:model="optionForm.is_active" />
-            </div>
-            <flux:field label="{{ __('procflow::settings.options.items.modal.sort_order') }}">
-                <flux:input type="number" wire:model="optionForm.sort_order" />
-            </flux:field>
+            <flux:input wire:model="optionForm.code" label="{{ __('procflow::settings.options.items.modal.code') }}"/>
+            <flux:input wire:model="optionForm.name" label="{{ __('procflow::settings.options.items.modal.name') }}"/>
+            <flux:textarea wire:model="optionForm.description" label="{{ __('procflow::settings.options.items.modal.description') }}"></flux:textarea>
+            <flux:switch wire:model="optionForm.is_active" label="{{ __('procflow::settings.options.items.modal.active') }}"/>
+            <flux:input type="number" wire:model="optionForm.sort_order" label="{{ __('procflow::settings.options.items.modal.sort_order') }}"/>
         </div>
         <div class="mt-4 flex justify-end gap-2">
             <flux:button variant="outline" wire:click="$set('showOptionModal', false)">{{ __('procflow::settings.options.items.modal.cancel') }}</flux:button>

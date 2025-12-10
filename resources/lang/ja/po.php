@@ -3,6 +3,57 @@
 declare(strict_types=1);
 
 return [
+    // Export (history download) and Excel labels
+    'export' => [
+        'history_button' => '履歴ダウンロード',
+        'modal' => [
+            'title' => '履歴ダウンロード',
+            'description' => '入荷日の期間を指定して、Excelファイルをダウンロードします。',
+        ],
+        'fields' => [
+            'receiving_from_to' => '入荷日（From/To）',
+            'receiving_from' => '入荷日From',
+            'receiving_to' => '入荷日To',
+            'row_group' => '行グループ',
+            'col_group' => '列グループ',
+            'col_none' => 'なし（単一軸）',
+            'row_auto' => '自動選択（推奨）',
+            'aggregate_type' => '集計種別',
+        ],
+        'aggregate' => [
+            'amount' => '金額（単価×入荷数量）',
+            'quantity' => '数量（入荷数量）',
+        ],
+        'buttons' => [
+            'download' => 'ダウンロード',
+            'creating' => '作成中...',
+        ],
+        'validation' => [
+            'receiving_required' => '入荷日の期間（From/To）を指定してください。',
+            'aggregate_required' => '集計種別を選択してください。',
+        ],
+        'excel' => [
+            'headers' => [
+                'order_no' => '発注番号',
+                'supplier' => 'サプライヤー名',
+                'issue_date' => '発注日',
+                'received_at' => '入荷日',
+                'sku' => '品目コード',
+                'name' => '品目名',
+                'manufacturer' => 'メーカー名',
+                'qty_ordered' => '発注数量',
+                'qty_received' => '入荷数量',
+                'unit_price' => '単価',
+                'amount' => '金額',
+                'note' => '備考',
+            ],
+            'matrix' => [
+                'sheet_title' => 'オプション集計',
+                'total' => '計',
+                'unset' => '(未設定)',
+            ],
+        ],
+    ],
     'filters' => [
         'po_number_placeholder' => 'PO#（プレフィックス）',
         'supplier' => 'サプライヤー',
@@ -79,6 +130,20 @@ return [
         'total' => '合計',
         'items' => '明細',
         'no_items' => '明細がありません',
+        'back_to_list' => '一覧に戻る',
+        'no_token' => 'トークンなし',
+        'buttons' => [
+            'back' => '戻る',
+            'print_labels' => 'ラベルを印刷',
+            'download_pdf' => 'PDFダウンロード',
+        ],
+        'fields' => [
+            'po_number' => '発注番号',
+            'supplier' => 'サプライヤー',
+            'requester' => '発注者',
+            'status' => '状態',
+            'issue_date' => '発行日',
+        ],
         'receivings' => [
             'title' => '入荷履歴',
             'received_at' => '入荷日',
@@ -96,6 +161,11 @@ return [
             'desired_date' => '希望日',
             'expected_date' => '入荷予定日',
             'actions' => '操作',
+            // 詳細ページの簡易テーブル用
+            'name' => '名称',
+            'description' => '説明',
+            'tax_rate' => '税率',
+            'qr' => 'QR',
         ],
     ],
     'create' => [
@@ -143,6 +213,7 @@ return [
         ],
         'table' => [
             'description' => '説明',
+            'manufacturer' => 'メーカー',
             'note' => '備考',
             'unit' => '単位',
             'qty' => '数量',
@@ -157,6 +228,7 @@ return [
         ],
         'placeholders' => [
             'description_hint' => '資材がない場合、品目の説明を入力',
+            'manufacturer_hint' => 'メーカー名（任意）',
         ],
     ],
 ];

@@ -3,6 +3,57 @@
 declare(strict_types=1);
 
 return [
+    // Export (history download) and Excel labels
+    'export' => [
+        'history_button' => 'Download History',
+        'modal' => [
+            'title' => 'Download History',
+            'description' => 'Specify the receiving date range to download an Excel file.',
+        ],
+        'fields' => [
+            'receiving_from_to' => 'Receiving Date (From/To)',
+            'receiving_from' => 'Receiving From',
+            'receiving_to' => 'Receiving To',
+            'row_group' => 'Row Group',
+            'col_group' => 'Column Group',
+            'col_none' => 'None (single axis)',
+            'row_auto' => 'Auto (recommended)',
+            'aggregate_type' => 'Aggregate Type',
+        ],
+        'aggregate' => [
+            'amount' => 'Amount (unit price × received qty)',
+            'quantity' => 'Quantity (received qty)',
+        ],
+        'buttons' => [
+            'download' => 'Download',
+            'creating' => 'Creating...'
+        ],
+        'validation' => [
+            'receiving_required' => 'Please specify the receiving date range (From/To).',
+            'aggregate_required' => 'Please select an aggregate type.',
+        ],
+        'excel' => [
+            'headers' => [
+                'order_no' => 'Order No.',
+                'supplier' => 'Supplier',
+                'issue_date' => 'Issued At',
+                'received_at' => 'Received At',
+                'sku' => 'Item Code',
+                'name' => 'Item Name',
+                'manufacturer' => 'Manufacturer',
+                'qty_ordered' => 'Qty Ordered',
+                'qty_received' => 'Qty Received',
+                'unit_price' => 'Unit Price',
+                'amount' => 'Amount',
+                'note' => 'Note',
+            ],
+            'matrix' => [
+                'sheet_title' => 'Option Summary',
+                'total' => 'Total',
+                'unset' => '(Unset)',
+            ],
+        ],
+    ],
     'filters' => [
         'po_number_placeholder' => 'PO# (prefix)',
         'supplier' => 'Supplier',
@@ -79,6 +130,20 @@ return [
         'total' => 'Total',
         'items' => 'Items',
         'no_items' => 'No items',
+        'back_to_list' => 'Back to list',
+        'no_token' => 'No token',
+        'buttons' => [
+            'back' => 'Back',
+            'print_labels' => 'Print Labels',
+            'download_pdf' => 'Download PDF',
+        ],
+        'fields' => [
+            'po_number' => 'PO Number',
+            'supplier' => 'Supplier',
+            'requester' => 'Requester',
+            'status' => 'Status',
+            'issue_date' => 'Issue Date',
+        ],
         'receivings' => [
             'title' => 'Receivings',
             'received_at' => 'Received At',
@@ -96,6 +161,11 @@ return [
             'desired_date' => 'Desired Date',
             'expected_date' => 'Expected Date',
             'actions' => '',
+            // For simple detail table in show.blade.php
+            'name' => 'Name',
+            'description' => 'Description',
+            'tax_rate' => 'Tax Rate',
+            'qr' => 'QR',
         ],
     ],
     'create' => [
@@ -143,6 +213,7 @@ return [
         ],
         'table' => [
             'description' => 'Description',
+            'manufacturer' => 'Manufacturer',
             'note' => 'Note',
             'unit' => 'Unit',
             'qty' => 'Qty',
@@ -157,6 +228,7 @@ return [
         ],
         'placeholders' => [
             'description_hint' => 'If no material, enter item description',
+            'manufacturer_hint' => 'Manufacturer (optional)',
         ],
     ],
 ];

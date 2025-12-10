@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 class PurchaseOrderItem extends Model
 {
     protected $fillable = [
-        'purchase_order_id', 'material_id', 'scan_token', 'description', 'unit_purchase', 'qty_ordered', 'price_unit', 'tax_rate', 'line_total', 'desired_date', 'expected_date', 'note',
+        'purchase_order_id', 'material_id', 'scan_token', 'description', 'unit_purchase', 'qty_ordered', 'price_unit', 'tax_rate', 'line_total', 'desired_date', 'expected_date', 'note', 'manufacturer', 'shipping_for_item_id',
     ];
 
     public function getTable()
@@ -30,6 +30,7 @@ class PurchaseOrderItem extends Model
             'desired_date' => 'date:Y-m-d',
             'expected_date' => 'date:Y-m-d',
             'note' => 'string',
+            'manufacturer' => 'string',
         ];
     }
 
@@ -42,6 +43,17 @@ class PurchaseOrderItem extends Model
     public function optionValueForGroup(int $groupId): ?PurchaseOrderItemOptionValue
     {
         return $this->optionValues->firstWhere('group_id', $groupId);
+    }
+
+    // Shipping relations
+    public function shippingTarget(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'shipping_for_item_id');
+    }
+
+    public function shippingCharges(): HasMany
+    {
+        return $this->hasMany(self::class, 'shipping_for_item_id');
     }
 
 

@@ -13,6 +13,15 @@ use Lastdino\ProcurementFlow\Models\OptionGroup;
 use Lastdino\ProcurementFlow\Models\Option;
 use Lastdino\ProcurementFlow\Models\PurchaseOrderItemOptionValue;
 use Lastdino\ProcurementFlow\Support\Settings;
+use Lastdino\ProcurementFlow\Models\Receiving;
+use Lastdino\ProcurementFlow\Models\ReceivingItem;
+use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
+use Lastdino\ProcurementFlow\Models\Supplier;
+use Lastdino\ProcurementFlow\Models\Material;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Carbon;
 
 class Index extends Component
 {
@@ -33,6 +42,19 @@ class Index extends Component
         'end' => null,
     ];
 
+    // Receiving date range filters (YYYY-MM-DD)
+    public array $receivingDate = [
+        'start' => null,
+        'end' => null,
+    ];
+
+    // Export modal state
+    public bool $showExportModal = false;
+    // Matrix options
+    public ?int $rowGroupId = null;
+    public ?int $colGroupId = null;
+    public string $aggregateType = 'amount'; // amount|quantity
+
     // Modal state for creating a PO
     public bool $showPoModal = false;
     /** @var array{supplier_id:?int,expected_date:?string,items:array<int,array{material_id:?int,unit_purchase:?string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,description:?string,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
@@ -46,12 +68,12 @@ class Index extends Component
 
     // Modal state for creating an Ad-hoc PO (materials not registered)
     public bool $showAdhocPoModal = false;
-    /** @var array{supplier_id:?int,expected_date:?string,items:array<int,array{description:string|null,unit_purchase:string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
+    /** @var array{supplier_id:?int,expected_date:?string,items:array<int,array{description:string|null,manufacturer:string|null,unit_purchase:string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
     public array $adhocForm = [
         'supplier_id' => null,
         'expected_date' => null,
         'items' => [
-            ['description' => null, 'unit_purchase' => '', 'qty_ordered' => null, 'price_unit' => null, 'tax_rate' => null, 'desired_date' => null, 'expected_date' => null, 'options' => []],
+            ['description' => null, 'manufacturer' => null, 'unit_purchase' => '', 'qty_ordered' => null, 'price_unit' => null, 'tax_rate' => null, 'desired_date' => null, 'expected_date' => null, 'options' => []],
         ],
     ];
 
@@ -203,12 +225,362 @@ class Index extends Component
             'start' => null,
             'end' => null,
         ];
+        $this->receivingDate = [
+            'start' => null,
+            'end' => null,
+        ];
         $this->resetPage();
+    }
+
+    public function openExportModal(): void
+    {
+        $this->resetErrorBag('receivingDate');
+        $this->resetErrorBag('aggregateType');
+        // defaults
+        if (! in_array($this->aggregateType, ['amount', 'quantity'], true)) {
+            $this->aggregateType = 'amount';
+        }
+        $this->showExportModal = true;
     }
 
     public function render(): View
     {
         return view('procflow::livewire.procurement.purchase-orders.index');
+    }
+
+    /**
+     * Active option groups for select inputs in export modal.
+     */
+    public function getOptionGroupsProperty()
+    {
+        return OptionGroup::query()->active()->ordered()->get(['id', 'name']);
+    }
+
+    /**
+     * Excel export for order & delivery history filtered by receiving date range.
+     */
+    public function exportExcel(): ?StreamedResponse
+    {
+        $from = (string) ($this->receivingDate['start'] ?? '');
+        $to = (string) ($this->receivingDate['end'] ?? '');
+
+        if ($from === '' || $to === '') {
+            $this->addError('receivingDate', __('procflow::po.export.validation.receiving_required'));
+            return null;
+        }
+
+        if (! in_array($this->aggregateType, ['amount', 'quantity'], true)) {
+            $this->addError('aggregateType', __('procflow::po.export.validation.aggregate_required'));
+            return null;
+        }
+
+        // Build dataset
+        $items = ReceivingItem::query()
+            ->join((new Receiving())->getTable() . ' as r', 'r.id', '=', (new ReceivingItem())->getTable() . '.receiving_id')
+            ->whereDate('r.received_at', '>=', $from)
+            ->whereDate('r.received_at', '<=', $to)
+            ->with([
+                'receiving:id,purchase_order_id,received_at,notes',
+                // include manufacturer on item for ad-hoc lines
+                'purchaseOrderItem:id,purchase_order_id,material_id,qty_ordered,price_unit,note,description,manufacturer',
+                'purchaseOrderItem.purchaseOrder:id,po_number,supplier_id,issue_date',
+                // include manufacturer_name on material when available
+                'purchaseOrderItem.material:id,sku,name,manufacturer_name',
+                'purchaseOrderItem.purchaseOrder.supplier:id,name',
+                // Options (if any)
+                'purchaseOrderItem.optionValues.option:id,name',
+                'purchaseOrderItem.optionValues.group:id,name,sort_order',
+            ])
+            ->orderBy('r.received_at', 'asc')
+            ->select((new ReceivingItem())->getTable() . '.*', 'r.received_at')
+            ->get();
+
+        // Spreadsheet
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        // Build dynamic option group headers based on data in range
+        $baseBeforeOptionHeaders = [
+            __('procflow::po.export.excel.headers.order_no'),
+            __('procflow::po.export.excel.headers.supplier'),
+            __('procflow::po.export.excel.headers.issue_date'),
+            __('procflow::po.export.excel.headers.received_at'),
+            __('procflow::po.export.excel.headers.sku'),
+            __('procflow::po.export.excel.headers.name'),
+            __('procflow::po.export.excel.headers.manufacturer'),
+        ];
+        $baseAfterOptionHeaders = [
+            __('procflow::po.export.excel.headers.qty_ordered'),
+            __('procflow::po.export.excel.headers.qty_received'),
+            __('procflow::po.export.excel.headers.unit_price'),
+            __('procflow::po.export.excel.headers.amount'),
+            __('procflow::po.export.excel.headers.note'),
+        ];
+
+        // Collect unique option groups used in the result set
+        /** @var array<int, array{id:int,name:string,sort:int}> $groupMeta */
+        $groupMeta = [];
+        foreach ($items as $riForGroups) {
+            $poiForGroups = $riForGroups->purchaseOrderItem;
+            $ovc = $poiForGroups?->optionValues;
+            if (! $ovc) {
+                continue;
+            }
+            foreach ($ovc as $ov) {
+                $gid = (int) ($ov->group?->id ?? 0);
+                if ($gid > 0 && ! isset($groupMeta[$gid])) {
+                    $groupMeta[$gid] = [
+                        'id' => $gid,
+                        'name' => (string) ($ov->group?->name ?? ''),
+                        'sort' => (int) ($ov->group?->sort_order ?? 0),
+                    ];
+                }
+            }
+        }
+
+        // Sort groups by sort_order then name
+        $sortedGroups = array_values($groupMeta);
+        usort($sortedGroups, static function ($a, $b) {
+            if ($a['sort'] === $b['sort']) {
+                return strcmp($a['name'], $b['name']);
+            }
+            return $a['sort'] <=> $b['sort'];
+        });
+
+        $dynamicOptionHeaders = array_map(static fn ($g) => $g['name'], $sortedGroups);
+
+        $headers = array_merge($baseBeforeOptionHeaders, $dynamicOptionHeaders, $baseAfterOptionHeaders);
+        $rows = [$headers];
+
+        foreach ($items as $ri) {
+            /** @var ReceivingItem $ri */
+            $poi = $ri->purchaseOrderItem;
+            $po = $poi?->purchaseOrder;
+            $rcv = $ri->receiving;
+            $mat = $poi?->material;
+            $poNumber = (string) ($po?->po_number ?? '');
+            $supplierName = (string) ($po?->supplier?->name ?? '');
+            $issueDate = $po?->issue_date ? Carbon::parse($po->issue_date)->format('Y-m-d') : '';
+            $receivedAt = $rcv?->received_at ? Carbon::parse($rcv->received_at)->format('Y-m-d') : '';
+            $sku = (string) ($mat?->sku ?? '');
+            $name = (string) ($mat?->name ?? ($poi?->description ?? ''));
+            $manufacturer = (string) ($mat?->manufacturer_name ?? ($poi?->manufacturer ?? ''));
+            $qtyOrdered = (float) ($poi?->qty_ordered ?? 0);
+            $qtyReceived = (float) ($ri->qty_received ?? 0);
+            $unitPrice = (float) ($poi?->price_unit ?? 0);
+            $amount = $unitPrice * $qtyReceived;
+            $note = (string) ($poi?->note ?? '');
+
+            // Map option values to dynamic group columns (option name per group)
+            $optionValuesByGroupId = [];
+            /** @var \Illuminate\Support\Collection<int, \Lastdino\ProcurementFlow\Models\PurchaseOrderItemOptionValue>|null $ovc */
+            $ovc = $poi?->optionValues;
+            if ($ovc) {
+                foreach ($ovc as $ov) {
+                    $gid = (int) ($ov->group?->id ?? 0);
+                    if ($gid > 0) {
+                        $optionValuesByGroupId[$gid] = (string) ($ov->option?->name ?? '');
+                    }
+                }
+            }
+
+            // Compose row: base-before, dynamic option group columns, base-after
+            $dynamicOptionValues = [];
+            foreach ($sortedGroups as $g) {
+                $dynamicOptionValues[] = (string) ($optionValuesByGroupId[$g['id']] ?? '');
+            }
+
+            $values = array_merge(
+                [$poNumber, $supplierName, $issueDate, $receivedAt, $sku, $name, $manufacturer],
+                $dynamicOptionValues,
+                [(float) $qtyOrdered, (float) $qtyReceived, (float) $unitPrice, (float) $amount, $note]
+            );
+            $rows[] = $values;
+        }
+
+        // Dump all rows starting at A1
+        $sheet->fromArray($rows, null, 'A1', true);
+
+        // Auto size columns
+        foreach (range(1, count($headers)) as $colIndex) {
+            $sheet->getColumnDimensionByColumn($colIndex)->setAutoSize(true);
+        }
+
+        // ==============================
+        // Matrix summary sheet (by options)
+        // ==============================
+        // Determine axis groups (allow user selection; else: prefer 費用区分/部門区分; else first/second detected)
+        $rowGroup = null; // ['id'=>int,'name'=>string]
+        $colGroup = null; // ['id'=>int,'name'=>string]
+        $groupsById = [];
+        foreach ($sortedGroups as $g) {
+            $groupsById[(int) $g['id']] = $g;
+        }
+        $userSelectedRow = $this->rowGroupId !== null && $this->rowGroupId !== 0;
+        $userSelectedCol = $this->colGroupId !== null && $this->colGroupId !== 0;
+
+        if ($userSelectedRow) {
+            $rid = (int) $this->rowGroupId;
+            if (isset($groupsById[$rid])) {
+                $rowGroup = $groupsById[$rid];
+            }
+        }
+        if ($userSelectedCol) {
+            $cid = (int) $this->colGroupId;
+            if (isset($groupsById[$cid])) {
+                $colGroup = $groupsById[$cid];
+            }
+        }
+        // If neither axis selected by user, auto-detect preferred axes
+        if (! $userSelectedRow && ! $userSelectedCol && $rowGroup === null) {
+            foreach ($sortedGroups as $g) {
+                if ($g['name'] === '費用区分') { $rowGroup = $g; break; }
+            }
+        }
+        if (! $userSelectedRow && ! $userSelectedCol && $colGroup === null) {
+            foreach ($sortedGroups as $g) {
+                if ($g['name'] === '部門区分') { $colGroup = $g; break; }
+            }
+        }
+        if (! $userSelectedRow && $rowGroup === null && ! empty($sortedGroups)) {
+            $rowGroup = $sortedGroups[0];
+        }
+        // If user selected only row group, keep single-axis (do not auto-fill column)
+        if (! $userSelectedRow && $colGroup === null) {
+            foreach ($sortedGroups as $g) {
+                if (! $rowGroup || $g['id'] !== $rowGroup['id']) { $colGroup = $g; break; }
+            }
+        }
+        // If user selected only column group and row is still null, try to auto-pick a different row group
+        if ($userSelectedCol && ! $userSelectedRow && $rowGroup === null) {
+            foreach ($sortedGroups as $g) {
+                if ($g['id'] !== $colGroup['id']) { $rowGroup = $g; break; }
+            }
+            // Fallback: if nothing else, allow same group as row
+            if ($rowGroup === null && $colGroup !== null) {
+                $rowGroup = $colGroup;
+            }
+        }
+
+        // Only create a matrix sheet when at least one axis exists
+        if ($rowGroup !== null) {
+            $rowLabel = (string) $rowGroup['name'];
+            $colLabel = (string) ($colGroup['name'] ?? '');
+
+            // Collect distinct option values for axis groups from the dataset
+            $rowKeys = [];
+            $colKeys = [];
+            foreach ($items as $ri0) {
+                $poi0 = $ri0->purchaseOrderItem;
+                $ovc0 = $poi0?->optionValues;
+                $rowKey = __('procflow::po.export.excel.matrix.unset');
+                $colKey = __('procflow::po.export.excel.matrix.unset');
+                if ($ovc0) {
+                    foreach ($ovc0 as $ov0) {
+                        $gid0 = (int) ($ov0->group?->id ?? 0);
+                        if ($rowGroup && $gid0 === (int) $rowGroup['id']) {
+                            $rowKey = (string) ($ov0->option?->name ?? __('procflow::po.export.excel.matrix.unset'));
+                        }
+                        if ($colGroup && $gid0 === (int) $colGroup['id']) {
+                            $colKey = (string) ($ov0->option?->name ?? __('procflow::po.export.excel.matrix.unset'));
+                        }
+                    }
+                }
+                $rowKeys[$rowKey] = true;
+                if ($colGroup !== null) {
+                    $colKeys[$colKey] = true;
+                }
+            }
+
+            // Fallback for when there is no column group: use single column unset label
+            if ($colGroup === null) {
+                $colKeys = [__('procflow::po.export.excel.matrix.unset') => true];
+            }
+
+            $rowValues = array_keys($rowKeys);
+            sort($rowValues, SORT_NATURAL);
+            $colValues = array_keys($colKeys);
+            sort($colValues, SORT_NATURAL);
+
+            // Initialize matrix sums
+            $matrix = [];
+            foreach ($rowValues as $rk) {
+                $matrix[$rk] = [];
+                foreach ($colValues as $ck) {
+                    $matrix[$rk][$ck] = 0.0;
+                }
+            }
+
+            // Aggregate amounts (qty_received * unit_price)
+            foreach ($items as $ri1) {
+                $poi1 = $ri1->purchaseOrderItem;
+                $ovc1 = $poi1?->optionValues;
+                $rowKey = __('procflow::po.export.excel.matrix.unset');
+                $colKey = __('procflow::po.export.excel.matrix.unset');
+                if ($ovc1) {
+                    foreach ($ovc1 as $ov1) {
+                        $gid1 = (int) ($ov1->group?->id ?? 0);
+                        if ($rowGroup && $gid1 === (int) $rowGroup['id']) {
+                            $rowKey = (string) ($ov1->option?->name ?? __('procflow::po.export.excel.matrix.unset'));
+                        }
+                        if ($colGroup && $gid1 === (int) $colGroup['id']) {
+                            $colKey = (string) ($ov1->option?->name ?? __('procflow::po.export.excel.matrix.unset'));
+                        }
+                    }
+                }
+                $qty1 = (float) ($ri1->qty_received ?? 0);
+                $amount1 = (float) (($poi1?->price_unit ?? 0) * $qty1);
+                if (! isset($matrix[$rowKey])) {
+                    $matrix[$rowKey] = [];
+                }
+                if (! isset($matrix[$rowKey][$colKey])) {
+                    $matrix[$rowKey][$colKey] = 0.0;
+                }
+                $matrix[$rowKey][$colKey] += ($this->aggregateType === 'quantity') ? $qty1 : $amount1;
+            }
+
+            // Build sheet rows
+            $matrixHeaders = array_merge([''], $colValues, ['計']);
+            $matrixRows = [$matrixHeaders];
+            $columnTotals = array_fill_keys($colValues, 0.0);
+            $grandTotal = 0.0;
+            foreach ($rowValues as $rk) {
+                $rowTotal = 0.0;
+                $dataRow = [$rk];
+                foreach ($colValues as $ck) {
+                    $val = (float) ($matrix[$rk][$ck] ?? 0.0);
+                    $dataRow[] = $val;
+                    $rowTotal += $val;
+                    $columnTotals[$ck] += $val;
+                }
+                $grandTotal += $rowTotal;
+                $dataRow[] = $rowTotal;
+                $matrixRows[] = $dataRow;
+            }
+            // Final totals row
+            $totalsRow = [__('procflow::po.export.excel.matrix.total')];
+            foreach ($colValues as $ck) {
+                $totalsRow[] = (float) $columnTotals[$ck];
+            }
+            $totalsRow[] = (float) $grandTotal;
+            $matrixRows[] = $totalsRow;
+
+            // Create new sheet and dump
+            $matrixSheet = $spreadsheet->createSheet();
+            $matrixSheet->setTitle(__('procflow::po.export.excel.matrix.sheet_title'));
+            $matrixSheet->fromArray($matrixRows, null, 'A1', true);
+            // Auto-size
+            foreach (range(1, count($matrixHeaders)) as $colIndex) {
+                $matrixSheet->getColumnDimensionByColumn($colIndex)->setAutoSize(true);
+            }
+        }
+
+        $today = Carbon::now()->format('Ymd');
+        $filename = "注文納品履歴_{$today}.xlsx";
+
+        return response()->streamDownload(function () use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename);
     }
 
     // Modal helpers
@@ -392,7 +764,7 @@ class Index extends Component
             $expectedDate = isset($validated['expected_date']) && $validated['expected_date'] ? \Carbon\Carbon::parse($validated['expected_date']) : null;
             $taxSet = Settings::itemTax($expectedDate);
 
-            // 1) 通常のアイテム行
+            // 1) 通常のアイテム行（品目ごとの送料行も直後に自動生成・紐づけ）
             $materialIdsInOrder = [];
             foreach ($validated['items'] as $idx => $line) {
                 $materialId = $line['material_id'] ?? null;
@@ -407,10 +779,7 @@ class Index extends Component
                     $lineTaxRate = (float) $line['tax_rate'];
                 } else {
                     /** @var \Lastdino\ProcurementFlow\Models\Material|null $material */
-                    $material = null;
-                    if (! is_null($materialId)) {
-                        $material = \Lastdino\ProcurementFlow\Models\Material::find($materialId);
-                    }
+                    // use previously fetched $material when available
                     $lineTaxRate = $this->resolveMaterialTaxRate($material, $taxSet);
                 }
                 $lineTax = $lineTotal * $lineTaxRate;
@@ -464,27 +833,16 @@ class Index extends Component
             if (! is_null($materialId)) {
                 $materialIdsInOrder[(int) $materialId] = true;
             }
-        }
 
-            // 2) 送料アイテム行（対象資材ごとに1行）
-            if (! empty($materialIdsInOrder)) {
-                /** @var \Illuminate\Support\Collection<int, \Lastdino\ProcurementFlow\Models\Material> $materials */
-                $materials = \Lastdino\ProcurementFlow\Models\Material::query()
-                    ->whereIn('id', array_keys($materialIdsInOrder))
-                    ->get();
-
-                $shipping = Settings::shipping();
-                $shippingTaxable = (bool) $shipping['taxable'];
-                $shippingTaxRate = $shippingTaxable ? (float) $shipping['tax_rate'] : 0.0;
-
-                foreach ($materials as $mat) {
-                    $separate = (bool) ($mat->getAttribute('separate_shipping') ?? false);
-                    $fee = (float) ($mat->getAttribute('shipping_fee_per_order') ?? 0);
-                    if (! $separate || $fee <= 0) {
-                        continue;
-                    }
-
-                    $desc = '送料（' . (string) ($mat->getAttribute('name') ?? '対象資材') . '）';
+            // 品目ごとの送料行を自動生成・紐づけ（B案）
+            if (! is_null($materialId) && isset($material) && $material) {
+                $separate = (bool) ($material->getAttribute('separate_shipping') ?? false);
+                $fee = (float) ($material->getAttribute('shipping_fee_per_order') ?? 0);
+                if ($separate && $fee > 0) {
+                    $shipping = Settings::shipping();
+                    $shippingTaxable = (bool) ($shipping['taxable'] ?? true);
+                    $shippingTaxRate = $shippingTaxable ? (float) ($shipping['tax_rate'] ?? 0.10) : 0.0;
+                    $desc = '送料（' . (string) ($material->getAttribute('name') ?? $material->getAttribute('sku') ?? '対象資材') . '）';
 
                     \Lastdino\ProcurementFlow\Models\PurchaseOrderItem::create([
                         'purchase_order_id' => $po->id,
@@ -497,18 +855,22 @@ class Index extends Component
                         'line_total' => $fee,
                         'desired_date' => null,
                         'expected_date' => null,
+                        'shipping_for_item_id' => (int) $createdItem->getKey(),
                     ]);
 
                     $subtotal += $fee;
                     $tax += ($fee * $shippingTaxRate);
                 }
             }
+        }
 
-            $po->update([
-                'subtotal' => $subtotal,
-                'tax' => $tax,
-                'total' => $subtotal + $tax,
-            ]);
+        // 2) まとめての送料生成はB案では不要（各行の直後で生成済み）
+
+        $po->update([
+            'subtotal' => $subtotal,
+            'tax' => $tax,
+            'total' => $subtotal + $tax,
+        ]);
 
                 return $po;
             });
@@ -636,34 +998,35 @@ class Index extends Component
                     if (! is_null($materialId)) {
                         $materialIdsInOrder[(int) $materialId] = true;
                     }
-                }
 
-                // Shipping per material flagged
-                if (! empty($materialIdsInOrder)) {
-                    $materials = \Lastdino\ProcurementFlow\Models\Material::query()->whereIn('id', array_keys($materialIdsInOrder))->get();
-                    $shippingTaxable = (bool) config('procurement-flow.shipping.taxable', true);
-                    $shippingTaxRate = $shippingTaxable ? (float) config('procurement-flow.shipping.tax_rate', 0.10) : 0.0;
-                    foreach ($materials as $mat) {
-                        $separate = (bool) ($mat->getAttribute('separate_shipping') ?? false);
-                        $fee = (float) ($mat->getAttribute('shipping_fee_per_order') ?? 0);
-                        if (! $separate || $fee <= 0) { continue; }
-                        $desc = '送料（' . (string) ($mat->getAttribute('name') ?? '対象資材') . '）';
-                        \Lastdino\ProcurementFlow\Models\PurchaseOrderItem::create([
-                            'purchase_order_id' => $po->id,
-                            'material_id' => null,
-                            'description' => $desc,
-                            'unit_purchase' => 'shipping',
-                            'qty_ordered' => 1,
-                            'price_unit' => $fee,
-                            'tax_rate' => $shippingTaxRate,
-                            'line_total' => $fee,
-                            'desired_date' => null,
-                            'expected_date' => null,
-                        ]);
-                        $subtotal += $fee;
-                        $tax += ($fee * $shippingTaxRate);
+                    // 品目ごとの送料行を自動生成・紐づけ（B案）
+                    if (! is_null($materialId) && isset($material) && $material) {
+                        $separate = (bool) ($material->getAttribute('separate_shipping') ?? false);
+                        $fee = (float) ($material->getAttribute('shipping_fee_per_order') ?? 0);
+                        if ($separate && $fee > 0) {
+                            $shippingTaxable = (bool) config('procurement-flow.shipping.taxable', true);
+                            $shippingTaxRate = $shippingTaxable ? (float) config('procurement-flow.shipping.tax_rate', 0.10) : 0.0;
+                            $desc = '送料（' . (string) ($material->getAttribute('name') ?? $material->getAttribute('sku') ?? '対象資材') . '）';
+                            \Lastdino\ProcurementFlow\Models\PurchaseOrderItem::create([
+                                'purchase_order_id' => $po->id,
+                                'material_id' => null,
+                                'description' => $desc,
+                                'unit_purchase' => 'shipping',
+                                'qty_ordered' => 1,
+                                'price_unit' => $fee,
+                                'tax_rate' => $shippingTaxRate,
+                                'line_total' => $fee,
+                                'desired_date' => null,
+                                'expected_date' => null,
+                                'shipping_for_item_id' => (int) $createdItem->getKey(),
+                            ]);
+                            $subtotal += $fee;
+                            $tax += ($fee * $shippingTaxRate);
+                        }
                     }
                 }
+
+                // まとめての送料生成はB案では不要（各行の直後で生成済み）
 
                 $po->update([
                     'subtotal' => $subtotal,
@@ -740,7 +1103,7 @@ class Index extends Component
         $expectedDate = isset($this->adhocForm['expected_date']) && $this->adhocForm['expected_date'] ? \Carbon\Carbon::parse($this->adhocForm['expected_date']) : null;
         $taxSet = $this->resolveCurrentItemTaxSet($expectedDate);
         $defaultRate = (float) ($taxSet['default_rate'] ?? 0.10);
-        $this->adhocForm['items'][] = ['description' => null, 'unit_purchase' => '', 'qty_ordered' => null, 'price_unit' => null, 'tax_rate' => $defaultRate, 'tax_locked' => false, 'desired_date' => null, 'expected_date' => null, 'note' => null, 'options' => []];
+        $this->adhocForm['items'][] = ['description' => null, 'manufacturer' => null, 'unit_purchase' => '', 'qty_ordered' => null, 'price_unit' => null, 'tax_rate' => $defaultRate, 'tax_locked' => false, 'desired_date' => null, 'expected_date' => null, 'note' => null, 'options' => []];
     }
 
     public function removeAdhocItem(int $index): void
@@ -751,6 +1114,19 @@ class Index extends Component
 
     public function saveAdhocPoFromModal(): void
     {
+        // 承認フロー事前チェック（validateの前で止める）
+        try {
+            $flowIdStr = \Lastdino\ProcurementFlow\Models\AppSetting::get('approval_flow.purchase_order_flow_id');
+            $flowId = (int) ($flowIdStr ?? 0);
+            if ($flowId <= 0 || ! \Lastdino\ApprovalFlow\Models\ApprovalFlow::query()->whereKey($flowId)->exists()) {
+                $this->addError('approval_flow', '承認フローが未設定のため発注できません。管理者に連絡してください。');
+                return;
+            }
+        } catch (\Throwable $e) {
+            $this->addError('approval_flow', '承認フローが未設定のため発注できません。管理者に連絡してください。');
+            return;
+        }
+
         // Reuse same rules; items will have material_id null and require description
         $rules = (new \Lastdino\ProcurementFlow\Http\Requests\StorePurchaseOrderRequest())->rules();
 
@@ -759,6 +1135,7 @@ class Index extends Component
             return [
                 'material_id' => null,
                 'description' => $line['description'] ?? null,
+                'manufacturer' => $line['manufacturer'] ?? null,
                 'unit_purchase' => $line['unit_purchase'] ?? '',
                 'qty_ordered' => $line['qty_ordered'] ?? null,
                 'price_unit' => $line['price_unit'] ?? null,
@@ -783,6 +1160,12 @@ class Index extends Component
         $prefixedRules = $this->prefixFormRules($rules, 'adhocForm.');
         $validatedAll = validator($payload, $prefixedRules)->validate();
         $validated = $validatedAll['adhocForm'];
+
+        // アドホック発注フローでは supplier_id は必須（FormRequest の withValidator は使っていないため、ここで強制）
+        if (empty($validated['supplier_id'])) {
+            $this->addError('adhocForm.supplier_id', 'アドホック行が含まれるため、サプライヤーの選択が必要です。');
+            return;
+        }
 
         /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrder $po */
         $po = \Illuminate\Support\Facades\DB::transaction(function () use ($validated) {
@@ -820,6 +1203,7 @@ class Index extends Component
                     'purchase_order_id' => $po->id,
                     'material_id' => null, // ad-hoc
                     'description' => $line['description'] ?? null,
+                    'manufacturer' => $line['manufacturer'] ?? null,
                     'unit_purchase' => $line['unit_purchase'],
                     'qty_ordered' => $line['qty_ordered'],
                     'price_unit' => $line['price_unit'],
@@ -869,6 +1253,26 @@ class Index extends Component
 
             return $po;
         });
+
+        // 承認フロー登録（設定されたFlow IDで登録）
+        try {
+            /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrder $poModel */
+            $poModel = $po->fresh();
+            $authorId = (int) (auth()->id() ?? $poModel->created_by ?? 0);
+            $link = null;
+            if (\Illuminate\Support\Facades\Route::has('procurement.purchase-orders.show')) {
+                $link = route('procurement.purchase-orders.show', ['po' => $poModel->id]);
+            } elseif (\Illuminate\Support\Facades\Route::has('purchase-orders.show')) {
+                $link = route('purchase-orders.show', ['purchase_order' => $poModel->id]);
+            }
+            $flowId = (int) ((\Lastdino\ProcurementFlow\Models\AppSetting::get('approval_flow.purchase_order_flow_id')) ?? 0);
+            \Log::debug('Registering approval flow for Adhoc PO ID: '.$poModel->id.' with author ID: '.$authorId.' and flow ID: '.$flowId);
+            if ($authorId > 0 && $flowId > 0) {
+                $poModel->registerApprovalFlowTask($flowId, $authorId, null, null, $link);
+            }
+        } catch (\Throwable $e) {
+            \Log::warning('Failed to register approval flow for Adhoc PO: '.$e->getMessage(), ['po_id' => $po->id]);
+        }
 
         $this->showAdhocPoModal = false;
         if (\Illuminate\Support\Facades\Route::has('procurement.purchase-orders.show')) {

@@ -130,8 +130,6 @@ return new class extends Migration {
             $table->decimal('line_total', 18, 2)->default(0);
             $table->date('desired_date')->nullable();
             $table->date('expected_date')->nullable();
-            $table->foreignId('cost_option_id')->nullable()->constrained(Tables::name('options'));
-            $table->foreignId('department_option_id')->nullable()->constrained(Tables::name('options'));
             $table->text('note')->nullable();
             $table->timestamps();
             $table->index(['purchase_order_id']);
