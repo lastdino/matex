@@ -3,7 +3,6 @@
     "name": "lastdino/procurement-flow",
     "description": "ProcurementFlow base package for procurement workflows.",
     "type": "library",
-    "version": "0.1.0",
     "license": "MIT",
     "autoload": {
         "psr-4": {
