@@ -213,13 +213,15 @@ class Index extends Component
     public function saveOption(): void
     {
         $gid = (int) ($this->optionForm['group_id'] ?? 0);
+        // Preserve ID before validation because it is not part of validated payload
+        $currentId = (int) ($this->optionForm['id'] ?? 0);
 
         $validated = $this->validate([
             'optionForm.group_id' => ['required', Rule::exists((new OptionGroup())->getTable(), 'id')],
             'optionForm.code' => [
                 'required', 'string', 'max:100',
                 Rule::unique((new Option())->getTable(), 'code')
-                    ->ignore($this->optionForm['id'] ?? null)
+                    ->ignore($currentId)
                     ->where(fn ($q) => $q->where('group_id', $gid)),
             ],
             'optionForm.name' => ['required', 'string', 'max:255'],
@@ -230,8 +232,8 @@ class Index extends Component
 
         $payload = $validated['optionForm'];
 
-        if (! empty($payload['id'])) {
-            $o = Option::findOrFail((int) $payload['id']);
+        if ($currentId > 0) {
+            $o = Option::findOrFail($currentId);
             $o->fill($payload)->save();
         } else {
             Option::create($payload);
@@ -256,12 +258,10 @@ class Index extends Component
         // Reference protection: if referenced by PO items, only soft delete allowed (which we do).
         $o = Option::findOrFail($id);
 
-        $isReferenced = PurchaseOrderItem::query()
-            ->where(function (Builder $q) use ($id): void {
-                $q->where('cost_option_id', $id)->orWhere('department_option_id', $id);
-            })
-            ->exists()
-            || PurchaseOrderItemOptionValue::query()->where('option_id', $id)->exists();
+        // Options are stored in purchase_order_item_option_values, not on purchase_order_items columns.
+        $isReferenced = PurchaseOrderItemOptionValue::query()
+            ->where('option_id', $id)
+            ->exists();
 
         // In both cases we only soft delete; for non-referenced it is also fine.
         if (! $o->trashed()) {

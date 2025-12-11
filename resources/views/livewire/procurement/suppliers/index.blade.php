@@ -46,6 +46,19 @@
         </table>
     </div>
 
+    <div class="flex items-center justify-between">
+        <div class="text-sm text-neutral-500">
+            {{-- results summary --}}
+            @php($p = $this->suppliers)
+            @if ($p->total() > 0)
+                <span>{{ $p->firstItem() }}–{{ $p->lastItem() }} / {{ $p->total() }}</span>
+            @endif
+        </div>
+        <div>
+            {{ $this->suppliers->links() }}
+        </div>
+    </div>
+
     {{-- Modal for create/edit supplier (Flux UI) --}}
     <flux:modal wire:model.self="showSupplierModal" name="supplier-form">
         <div class="w-full md:w-[] max-w-lg">

@@ -6,11 +6,16 @@ namespace Lastdino\ProcurementFlow\Livewire\Procurement\Suppliers;
 
 use Illuminate\Contracts\View\View;
 use Livewire\Component;
+use Livewire\WithPagination;
 use Lastdino\ProcurementFlow\Models\Supplier;
 
 class Index extends Component
 {
+    use WithPagination;
+
     public string $q = '';
+
+    public int $perPage = 25;
 
     // Modal state for create/edit supplier
     public bool $showSupplierModal = false;
@@ -37,6 +42,9 @@ class Index extends Component
     public bool $showDeleteConfirm = false;
     public ?int $deletingSupplierId = null;
 
+    /**
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
     public function getSuppliersProperty()
     {
         $q = (string) $this->q;
@@ -48,8 +56,12 @@ class Index extends Component
                 });
             })
             ->orderBy('name')
-            ->limit(100)
-            ->get();
+            ->paginate($this->perPage);
+    }
+
+    public function updatedQ(): void
+    {
+        $this->resetPage();
     }
 
     public function render(): View
