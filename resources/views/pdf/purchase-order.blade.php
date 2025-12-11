@@ -160,16 +160,27 @@
             </tr>
             </thead>
             <tbody>
+            @php($hasCanceled = false)
             @foreach($po->items as $idx => $item)
                 @php($mat = $item->relationLoaded('material') ? $item->material : $item->material)
                 @php($name = $mat->name ?? ($item->description ?? ''))
+                @php($qtyOrdered = (float) ($item->qty_ordered ?? 0))
+                @php($qtyCanceled = (float) ($item->qty_canceled ?? 0))
+                @php($effectiveQty = max($qtyOrdered - $qtyCanceled, 0))
+                @php($isShipping = (string) ($item->unit_purchase ?? '') === 'shipping')
+                @php($hasCanceled = $hasCanceled || ($qtyCanceled > 0))
                 <tr >
                     <td class="border border-black text-center">{{ $idx + 1 }}</td>
                     <td class="border border-black p-1">
                         <div class="whitespace-pre-line">{{ $name }}</div>
                     </td>
-                    <td class="border border-black text-center">{{ number_format((float) $item->qty_ordered) }}</td>
-                    <td class="border border-black text-center">{{ number_format((float) $item->price_unit, 0) }}</td>
+                    <td class="border border-black text-center">
+                        {{ \Lastdino\ProcurementFlow\Support\Format::qty($effectiveQty) }}
+                        @if(!$isShipping && $qtyCanceled > 0)
+                            <span class="text-xs text-red-600">（キャンセル: {{ \Lastdino\ProcurementFlow\Support\Format::qty($qtyCanceled) }}）</span>
+                        @endif
+                    </td>
+                    <td class="border border-black text-center">{{ \Lastdino\ProcurementFlow\Support\Format::unitPrice($item->price_unit) }}</td>
                     <td class="border border-black text-center">{{ optional($item->desired_date)->format('m/d') }}</td>
                     <td class="border border-black text-center"></td>
                     <td class="border border-black whitespace-pre-wrap">{{ $item->note ?? '' }}</td>
@@ -177,15 +188,15 @@
             @endforeach
             <tr>
                 <td class="border border-black text-center " colspan="2">小計</td>
-                <td class="border border-black text-center " colspan="5">{{ number_format((float) $po->subtotal, 0) }} 円</td>
+                <td class="border border-black text-center " colspan="5">{{ \Lastdino\ProcurementFlow\Support\Format::moneySubtotal($po->subtotal) }}</td>
             </tr>
             <tr>
                 <td class="border border-black text-center " colspan="2">消費税</td>
-                <td class="border border-black text-center " colspan="5">{{ number_format((float) $po->tax, 0) }} 円</td>
+                <td class="border border-black text-center " colspan="5">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTax($po->tax) }}</td>
             </tr>
             <tr>
                 <td class="border border-black text-center font-bold" colspan="2">合計金額</td>
-                <td class="border border-black text-center font-bold" colspan="5">{{ number_format((float) $po->total, 0) }} 円</td>
+                <td class="border border-black text-center font-bold" colspan="5">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTotal($po->total) }}</td>
             </tr>
             </tbody>
         </table>
@@ -197,6 +208,11 @@
                 @foreach($footnotes as $note)
                     <div>＊ {{ $note }}</div>
                 @endforeach
+            </div>
+        @endif
+        @if($hasCanceled)
+            <div class="mt-4 text-xs text-neutral-700">
+                改訂: 行キャンセル反映済み（{{ now()->format('Y-m-d H:i') }}）
             </div>
         @endif
     </div>

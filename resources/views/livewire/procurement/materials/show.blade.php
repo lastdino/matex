@@ -33,7 +33,7 @@
                         @php $expired = $lot->expiry_date && \Illuminate\Support\Carbon::parse($lot->expiry_date)->isPast(); @endphp
                         <tr class="border-t {{ $expired ? 'bg-red-50/40 dark:bg-red-950/20' : '' }}">
                             <td class="py-2 px-3">{{ $lot->lot_no }}</td>
-                            <td class="py-2 px-3">{{ (float) $lot->qty_on_hand }} {{ $lot->unit }}</td>
+                            <td class="py-2 px-3">{{ \Lastdino\ProcurementFlow\Support\Format::qty($lot->qty_on_hand) }} {{ $lot->unit }}</td>
                             <td class="py-2 px-3">{{ $lot->expiry_date ?? '-' }}</td>
                             <td class="py-2 px-3">{{ $lot->status ?? '-' }}</td>
                             <td class="py-2 px-3">
@@ -69,7 +69,7 @@
                         <tr class="border-t">
                             <td class="py-2 px-3">{{ $mv->occurred_at }}</td>
                             <td class="py-2 px-3">{{ $mv->type }}</td>
-                            <td class="py-2 px-3">{{ (float) $mv->qty_base }} {{ $mv->unit }}</td>
+                            <td class="py-2 px-3">{{ \Lastdino\ProcurementFlow\Support\Format::qty($mv->qty_base) }} {{ $mv->unit }}</td>
                             <td class="py-2 px-3">{{ optional($mv->lot)->lot_no ?? '-' }}</td>
                             <td class="py-2 px-3">{{ $mv->reason ?? '-' }}</td>
                         </tr>

@@ -94,4 +94,86 @@ final class Settings
     {
         AppSetting::setArray('procurement.pdf', $value);
     }
+
+    /**
+     * Get display decimals map or a specific key from AppSetting with config fallback.
+     * When $key is provided, returns int decimals for that key. Otherwise returns the full map.
+     *
+     * @return array<string,int>|int
+     */
+    public static function displayDecimals(?string $key = null): array|int
+    {
+        $cfg = AppSetting::getArray('procurement.display.decimals');
+        if ($cfg === null) {
+            $cfg = (array) (config('procurement-flow.decimals') ?? []);
+        }
+
+        if ($key !== null) {
+            return (int) ($cfg[$key] ?? 0);
+        }
+        // cast all values to int
+        $out = [];
+        foreach ($cfg as $k => $v) {
+            $out[(string) $k] = (int) $v;
+        }
+        return $out;
+    }
+
+    /**
+     * Persist display decimals map.
+     * @param array<string,int|float|string> $map
+     */
+    public static function saveDisplayDecimals(array $map): void
+    {
+        $clean = [];
+        foreach ($map as $k => $v) {
+            $clean[(string) $k] = (int) $v;
+        }
+        AppSetting::setArray('procurement.display.decimals', $clean);
+    }
+
+    /**
+     * Get currency display configuration from AppSetting with config fallback.
+     * Returns: ['symbol'=>string,'position'=>'prefix'|'suffix','space'=>bool]
+     *
+     * @return array{symbol:string,position:string,space:bool}
+     */
+    public static function displayCurrency(): array
+    {
+        $cfg = AppSetting::getArray('procurement.display.currency');
+        if ($cfg === null) {
+            $cfg = (array) (config('procurement-flow.currency') ?? []);
+        }
+        $symbol = (string) ($cfg['symbol'] ?? '¥');
+        $position = (string) ($cfg['position'] ?? 'prefix');
+        if (! in_array($position, ['prefix', 'suffix'], true)) {
+            $position = 'prefix';
+        }
+        $space = (bool) ($cfg['space'] ?? false);
+
+        return [
+            'symbol' => $symbol,
+            'position' => $position,
+            'space' => $space,
+        ];
+    }
+
+    /**
+     * Save currency display configuration.
+     * @param array{symbol?:string,position?:string,space?:bool} $cfg
+     */
+    public static function saveDisplayCurrency(array $cfg): void
+    {
+        $symbol = (string) ($cfg['symbol'] ?? '¥');
+        $position = (string) ($cfg['position'] ?? 'prefix');
+        if (! in_array($position, ['prefix', 'suffix'], true)) {
+            $position = 'prefix';
+        }
+        $space = (bool) ($cfg['space'] ?? false);
+        AppSetting::setArray('procurement.display.currency', [
+            'symbol' => $symbol,
+            'position' => $position,
+            'space' => $space,
+        ]);
+    }
 }

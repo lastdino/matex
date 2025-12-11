@@ -241,7 +241,7 @@ class Dashboard extends Component
 
             // Load PO Items within timeframe (by PO issue_date) with related receivings
             $items = PurchaseOrderItem::query()
-                ->select(['id', 'purchase_order_id', 'material_id', 'unit_purchase', 'qty_ordered', 'expected_date'])
+                ->select(['id', 'purchase_order_id', 'material_id', 'unit_purchase', 'qty_ordered', 'qty_canceled', 'expected_date'])
                 ->with([
                     'purchaseOrder:id,issue_date,expected_date',
                     'receivingItems:id,purchase_order_item_id,receiving_id,qty_received',
@@ -263,7 +263,13 @@ class Dashboard extends Component
             foreach ($items as $item) {
                 $total++;
 
-                $ordered = (float) ($item->qty_ordered ?? 0);
+                // Exclude fully canceled lines from OTIF
+                $ordered = max(((float) ($item->qty_ordered ?? 0)) - ((float) ($item->qty_canceled ?? 0)), 0.0);
+                if ($ordered <= 0) {
+                    // No effective order quantity -> skip from denominator
+                    $total--;
+                    continue;
+                }
                 $receivedTotal = 0.0;
                 $lastReceivedAt = null;
 

@@ -172,7 +172,7 @@
                                             </a>
                                         </td>
                                             <td class="py-2 px-3">{{ __('procflow::po.status.' . ($po['status'] ?? 'draft')) }}</td>
-                                            <td class="py-2 px-3">¥{{ number_format((float)($po['total'] ?? 0), 0) }}</td>
+                                            <td class="py-2 px-3">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTotal($po['total'] ?? 0) }}</td>
                                         </tr>
                                 @empty
                                     <tr><td class="py-4 text-center text-neutral-500" colspan="3">{{ __('procflow::suppliers.detail.empty_pos') }}</td></tr>

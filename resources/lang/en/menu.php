@@ -15,6 +15,7 @@ return [
     'options' => 'Options',
     'approval_flow' => 'Approval Flow',
     'taxes' => 'Taxes',
+    'display' => 'Display & Currency',
     'categories' => 'Categories',
     'pdf' => 'PDF',
 ];

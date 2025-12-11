@@ -14,9 +14,9 @@
 <p>
     注文番号：{{ $poNo }}<br>
     発行日：{{ optional($po->issue_date)->format('Y-m-d') }}<br>
-    小計：¥{{ number_format((float) ($po->subtotal ?? 0), 0) }}<br>
-    税額：¥{{ number_format((float) ($po->tax ?? 0), 0) }}<br>
-    合計金額：¥{{ number_format((float) $po->total, 0) }}
+    小計：{{ \Lastdino\ProcurementFlow\Support\Format::moneySubtotal($po->subtotal ?? 0) }}<br>
+    税額：{{ \Lastdino\ProcurementFlow\Support\Format::moneyTax($po->tax ?? 0) }}<br>
+    合計金額：{{ \Lastdino\ProcurementFlow\Support\Format::moneyTotal($po->total) }}
 </p>
 
 <p>

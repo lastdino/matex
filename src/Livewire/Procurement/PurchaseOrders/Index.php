@@ -22,6 +22,8 @@ use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Carbon;
+use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
+use Lastdino\ProcurementFlow\Services\UnitConversionService;
 
 class Index extends Component
 {
@@ -129,36 +131,69 @@ class Index extends Component
                 $query->whereDate('expected_date', '<=', $expTo);
             })
             ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($sub) use ($q) {
-                    $sub->where('po_number', 'like', "%{$q}%")
-                        ->orWhere('notes', 'like', "%{$q}%")
-                        // サプライヤー名
-                        ->orWhereHas('supplier', function ($sq) use ($q) {
-                            $sq->where('name', 'like', "%{$q}%");
-                        })
-                        // 発注者（作成者）名
-                        ->orWhereHas('requester', function ($uq) use ($q) {
-                            $uq->where('name', 'like', "%{$q}%");
-                        })
-                        // アイテムの品名／メーカー名（資材マスタ）
-                        ->orWhereHas('items.material', function ($mq) use ($q) {
-                            $mq->where(function ($mm) use ($q) {
-                                $mm->where('name', 'like', "%{$q}%")
-                                   ->orWhere('manufacturer_name', 'like', "%{$q}%");
-                            });
-                        })
-                        // 発注アイテムのスキャン用トークン（先頭一致／全一致どちらも可）
-                        ->orWhereHas('items', function ($iq) use ($q) {
-                            $iq->where(function ($iqq) use ($q) {
-                                $iqq->where('scan_token', $q)
-                                    ->orWhere('scan_token', 'like', $q.'%');
-                            });
-                        })
-                        // 単発（アドホック）品目の説明（material_id が null の場合も含む）
-                        ->orWhereHas('items', function ($iq) use ($q) {
-                            $iq->where('description', 'like', "%{$q}%");
+                // キーワードを空白で分割して AND 条件を実現（案1）
+                $keywords = preg_split('/\s+/u', trim((string) $q)) ?: [];
+
+                if (count($keywords) > 1) {
+                    // 複数語のときは、以下のフィールドに対して AND 検索：
+                    // - materials.name（品名）
+                    // - materials.manufacturer_name（メーカー名）
+                    // - purchase_order_items.description（説明）
+                    // - purchase_order_items.manufacturer（単発注文のメーカー名）
+                    foreach ($keywords as $word) {
+                        $like = "%{$word}%";
+                        $query->where(function ($and) use ($like, $word) {
+                            $and
+                                // 資材マスタの品名／メーカー名
+                                ->orWhereHas('items.material', function ($mq) use ($like) {
+                                    $mq->where(function ($mm) use ($like) {
+                                        $mm->where('name', 'like', $like)
+                                           ->orWhere('manufacturer_name', 'like', $like);
+                                    });
+                                })
+                                // 発注アイテムの説明／単発メーカー名
+                                ->orWhereHas('items', function ($iq) use ($like) {
+                                    $iq->where(function ($iqq) use ($like) {
+                                        $iqq->where('description', 'like', $like)
+                                            ->orWhere('manufacturer', 'like', $like);
+                                    });
+                                });
                         });
-                });
+                    }
+                } else {
+                    // 単一語は従来の広い OR 検索を維持（UIの利便性維持）
+                    $single = $keywords[0] ?? $q;
+                    $query->where(function ($sub) use ($single) {
+                        $sub->where('po_number', 'like', "%{$single}%")
+                            ->orWhere('notes', 'like', "%{$single}%")
+                            // サプライヤー名
+                            ->orWhereHas('supplier', function ($sq) use ($single) {
+                                $sq->where('name', 'like', "%{$single}%");
+                            })
+                            // 発注者（作成者）名
+                            ->orWhereHas('requester', function ($uq) use ($single) {
+                                $uq->where('name', 'like', "%{$single}%");
+                            })
+                            // アイテムの品名／メーカー名（資材マスタ）
+                            ->orWhereHas('items.material', function ($mq) use ($single) {
+                                $mq->where(function ($mm) use ($single) {
+                                    $mm->where('name', 'like', "%{$single}%")
+                                       ->orWhere('manufacturer_name', 'like', "%{$single}%");
+                                });
+                            })
+                            // 発注アイテムのスキャン用トークン（先頭一致／全一致どちらも可）
+                            ->orWhereHas('items', function ($iq) use ($single) {
+                                $iq->where(function ($iqq) use ($single) {
+                                    $iqq->where('scan_token', $single)
+                                        ->orWhere('scan_token', 'like', $single.'%');
+                                });
+                            })
+                            // 単発（アドホック）品目の説明
+                            ->orWhereHas('items', function ($iq) use ($single) {
+                                $iq->where('description', 'like', "%{$single}%");
+                            });
+                    });
+                }
             })
             ->when($status !== '', fn ($qrb) => $qrb->where('status', $status))
             ->latest('id')
@@ -1428,7 +1463,14 @@ class Index extends Component
 
         /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrder $model */
         $model = \Lastdino\ProcurementFlow\Models\PurchaseOrder::query()
-            ->with(['supplier', 'items.material', 'receivings.items', 'requester'])
+            ->with([
+                'supplier',
+                'items.material',
+                'receivings.items',
+                'receivings.items.material',
+                'receivings.items.purchaseOrderItem',
+                'requester',
+            ])
             ->findOrFail($this->selectedPoId);
         $this->poDetail = $model->toArray();
 
@@ -1438,6 +1480,165 @@ class Index extends Component
             /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrderItem $it */
             $this->itemExpectedDates[$it->id] = $it->expected_date?->format('Y-m-d');
         }
+    }
+
+    /**
+     * Cancel a draft Purchase Order. Only allowed when current status is Draft.
+     */
+    public function cancelPo(int $id): void
+    {
+        /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrder|null $po */
+        $po = PurchaseOrder::query()->find($id);
+        if (! $po) {
+            $this->dispatch('toast', type: 'error', message: 'Purchase order not found');
+            return;
+        }
+
+        // Normalize status value
+        $statusValue = is_string($po->status) ? $po->status : ($po->status->value ?? '');
+        if ($statusValue !== PurchaseOrderStatus::Draft->value) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.cancel_not_allowed'));
+            return;
+        }
+
+        $po->status = PurchaseOrderStatus::Canceled;
+        $po->save();
+
+        // If the canceled PO is currently opened in the detail modal, refresh it
+        if ($this->selectedPoId === $po->id) {
+            $this->loadPoDetail();
+        }
+
+        // Refresh the list by resetting the page to trigger re-query
+        $this->resetPage();
+
+        $this->dispatch('toast', type: 'success', message: __('procflow::po.detail.canceled_toast'));
+    }
+
+    /**
+     * Cancel a single Purchase Order Item (entire remaining quantity).
+     * Rules:
+     * - Allowed only when PO status is Issued or Receiving.
+     * - Shipping lines cannot be canceled by this action (kept as-is).
+     * - If partially received, cancel the unreceived remainder only.
+     */
+    public function cancelItem(int $itemId, ?string $reason = null): void
+    {
+        /** @var PurchaseOrderItem|null $item */
+        $item = PurchaseOrderItem::query()->with(['purchaseOrder', 'material'])->find($itemId);
+        if (! $item) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_not_found'));
+            return;
+        }
+
+        $po = $item->purchaseOrder;
+        if (! in_array($po->status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Receiving], true)) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_not_allowed'));
+            return;
+        }
+
+        // Do not cancel shipping lines via this action
+        if ($item->unit_purchase === 'shipping') {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_shipping_not_allowed'));
+            return;
+        }
+
+        // Already fully canceled?
+        $ordered = (float) ($item->qty_ordered ?? 0);
+        $canceled = (float) ($item->qty_canceled ?? 0);
+        if ($canceled >= $ordered - 1e-9) {
+            $this->dispatch('toast', type: 'info', message: __('procflow::po.detail.item_already_canceled'));
+            return;
+        }
+
+        // Compute received quantity in purchase unit
+        $material = $item->material; // may be null for ad-hoc
+        $receivedBase = (float) $item->receivingItems()->sum('qty_base');
+        if ($material) {
+            /** @var UnitConversionService $conv */
+            $conv = app(UnitConversionService::class);
+            $factor = (float) $conv->factor($material, $item->unit_purchase, $material->unit_stock);
+            $receivedPurchase = $factor > 0 ? ($receivedBase / $factor) : 0.0;
+        } else {
+            // ad-hoc: base == purchase
+            $receivedPurchase = $receivedBase;
+        }
+
+        $alreadyCanceled = $canceled;
+        $remaining = max($ordered - $receivedPurchase - $alreadyCanceled, 0.0);
+        if ($remaining <= 1e-9) {
+            $this->dispatch('toast', type: 'info', message: __('procflow::po.detail.item_no_remaining_to_cancel'));
+            return;
+        }
+
+        // Apply cancel of the remaining qty
+        $item->qty_canceled = $alreadyCanceled + $remaining;
+        $item->canceled_at = now();
+        if ($reason) {
+            $item->canceled_reason = $reason;
+        }
+
+        // Update effective line_total for non-shipping lines
+        $effectiveQty = max($ordered - (float) $item->qty_canceled, 0.0);
+        $item->line_total = $effectiveQty * (float) ($item->price_unit ?? 0);
+        $item->save();
+
+        // Recompute PO totals
+        $po = $po->refresh()->loadMissing(['items.receivingItems']);
+        $this->recomputeTotals($po);
+
+        // If no remaining effective quantity across all non-shipping items, update PO status as requested:
+        // - If there is at least some received quantity on any item, mark as Closed
+        // - Otherwise (no receipts at all), mark as Canceled
+        $effectiveRemaining = 0.0;
+        $hasAnyReceipt = false;
+        foreach ($po->items as $lit) {
+            /** @var PurchaseOrderItem $lit */
+            if (($lit->unit_purchase ?? '') === 'shipping') {
+                continue;
+            }
+            $ordered = (float) ($lit->qty_ordered ?? 0);
+            $canceledQty = (float) ($lit->qty_canceled ?? 0);
+            $effectiveRemaining += max($ordered - $canceledQty, 0.0);
+            if (! $hasAnyReceipt && $lit->receivingItems()->exists()) {
+                $hasAnyReceipt = true;
+            }
+        }
+
+        if ($effectiveRemaining <= 1e-9) {
+            $po->status = $hasAnyReceipt ? PurchaseOrderStatus::Closed : PurchaseOrderStatus::Canceled;
+            $po->save();
+        }
+
+        if ($this->selectedPoId === $po->id) {
+            $this->loadPoDetail();
+        }
+
+        $this->dispatch('toast', type: 'success', message: __('procflow::po.detail.item_canceled_toast'));
+    }
+
+    protected function recomputeTotals(PurchaseOrder $po): void
+    {
+        $po->loadMissing('items');
+        $subtotal = 0.0; $tax = 0.0;
+        foreach ($po->items as $it) {
+            /** @var PurchaseOrderItem $it */
+            // Shipping: keep as-is
+            if ($it->unit_purchase === 'shipping') {
+                $lt = (float) ($it->line_total ?? 0);
+                $subtotal += $lt;
+                $tax += $lt * (float) ($it->tax_rate ?? 0);
+                continue;
+            }
+            $qty = max(((float) ($it->qty_ordered ?? 0)) - ((float) ($it->qty_canceled ?? 0)), 0.0);
+            $line = $qty * (float) ($it->price_unit ?? 0);
+            $subtotal += $line;
+            $tax += $line * (float) ($it->tax_rate ?? 0);
+        }
+        $po->subtotal = $subtotal;
+        $po->tax = $tax;
+        $po->total = $subtotal + $tax;
+        $po->save();
     }
 
     /**

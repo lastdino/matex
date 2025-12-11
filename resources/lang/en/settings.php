@@ -119,6 +119,37 @@ return [
         ],
     ],
 
+    'display' => [
+        'title' => 'Display & Currency Settings',
+        'back' => 'Back',
+        'decimals' => [
+            'heading' => 'Number of Decimals',
+            'qty' => 'Quantity (qty)',
+            'unit_price' => 'Unit Price (unit_price)',
+            'unit_price_materials' => 'Unit Price (materials list) (unit_price_materials)',
+            'line_total' => 'Line Total (line_total)',
+            'subtotal' => 'Subtotal (subtotal)',
+            'tax' => 'Tax Amount (tax)',
+            'total' => 'Grand Total (total)',
+            'percent' => 'Percent (percent)',
+        ],
+        'currency' => [
+            'heading' => 'Currency',
+            'symbol' => 'Symbol',
+            'position' => 'Position',
+            'prefix' => 'Prefix',
+            'suffix' => 'Suffix',
+            'space' => 'Insert a space between symbol and number',
+            'space_hint' => 'Example: "$ 1,234" when enabled',
+        ],
+        'buttons' => [
+            'save' => 'Save',
+        ],
+        'flash' => [
+            'saved' => 'Display & Currency settings have been saved.',
+        ],
+    ],
+
     'categories' => [
         'title' => 'Material Categories',
         'new' => 'Add Category',

@@ -17,23 +17,69 @@ class Index extends Component
     {
         $q = (string) $this->q;
         return PurchaseOrder::query()
-            ->with(['supplier', 'items', 'requester'])
+            ->with(['supplier', 'items', 'items.material', 'requester'])
             ->whereIn('status', [
                 PurchaseOrderStatus::Issued,
                 PurchaseOrderStatus::Receiving,
             ])
             ->when($q !== '', function ($query) use ($q) {
-                $query->where(function ($sub) use ($q) {
-                    $sub->where('po_number', 'like', "%{$q}%")
-                        ->orWhere('notes', 'like', "%{$q}%")
-                        // 発注アイテムのスキャン用トークンでも検索可能にする
-                        ->orWhereHas('items', function ($iq) use ($q) {
-                            $iq->where(function ($iqq) use ($q) {
-                                $iqq->where('scan_token', $q)
-                                    ->orWhere('scan_token', 'like', $q.'%');
-                            });
+                // フリーワードを空白区切りで分割し、複数語のときは AND、各語は対象フィールド内で OR
+                $keywords = preg_split('/\s+/u', trim((string) $q)) ?: [];
+
+                if (count($keywords) > 1) {
+                    foreach ($keywords as $word) {
+                        $like = "%{$word}%";
+                        $query->where(function ($and) use ($like) {
+                            $and
+                                // 資材マスタの品名/メーカー名
+                                ->orWhereHas('items.material', function ($mq) use ($like) {
+                                    $mq->where(function ($mm) use ($like) {
+                                        $mm->where('name', 'like', $like)
+                                           ->orWhere('manufacturer_name', 'like', $like);
+                                    });
+                                })
+                                // 発注アイテムの説明/単発メーカー名
+                                ->orWhereHas('items', function ($iq) use ($like) {
+                                    $iq->where(function ($iqq) use ($like) {
+                                        $iqq->where('description', 'like', $like)
+                                            ->orWhere('manufacturer', 'like', $like);
+                                    });
+                                });
                         });
-                });
+                    }
+                } else {
+                    $single = $keywords[0] ?? $q;
+                    $query->where(function ($sub) use ($single) {
+                        $sub->where('po_number', 'like', "%{$single}%")
+                            ->orWhere('notes', 'like', "%{$single}%")
+                            // サプライヤー名
+                            ->orWhereHas('supplier', function ($sq) use ($single) {
+                                $sq->where('name', 'like', "%{$single}%");
+                            })
+                            // 発注者（作成者）名
+                            ->orWhereHas('requester', function ($rq) use ($single) {
+                                $rq->where('name', 'like', "%{$single}%");
+                            })
+                            // 資材マスタの品名/メーカー名
+                            ->orWhereHas('items.material', function ($mq) use ($single) {
+                                $mq->where(function ($mm) use ($single) {
+                                    $mm->where('name', 'like', "%{$single}%")
+                                       ->orWhere('manufacturer_name', 'like', "%{$single}%");
+                                });
+                            })
+                            // 発注アイテムのスキャン用トークン（先頭一致/全一致）
+                            ->orWhereHas('items', function ($iq) use ($single) {
+                                $iq->where(function ($iqq) use ($single) {
+                                    $iqq->where('scan_token', $single)
+                                        ->orWhere('scan_token', 'like', $single.'%');
+                                });
+                            })
+                            // 単発（アドホック）品目の説明
+                            ->orWhereHas('items', function ($iq) use ($single) {
+                                $iq->where('description', 'like', "%{$single}%");
+                            });
+                    });
+                }
             })
             ->latest('id')
             ->limit(50)

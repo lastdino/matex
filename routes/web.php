@@ -94,6 +94,10 @@ Route::group([
     Route::get('/settings/pdf', PdfSettingsComponent::class)
         ->name('procurement.settings.pdf');
 
+    // Display settings (decimals & currency)
+    Route::get('/settings/display', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Display\Index::class)
+        ->name('procurement.settings.display');
+
     // Ordering Tokens settings (CRUD)
     Route::get('/settings/tokens', TokensSettingsComponent::class)
         ->name('procurement.settings.tokens');

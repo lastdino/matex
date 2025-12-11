@@ -136,9 +136,14 @@ class Scan extends Component
         $material = $poi->material;
         if (!$material) {
             // Ad-hoc line (no material): show minimal info without conversion
-            $orderedBase = (float) $poi->qty_ordered;
+            $orderedBase = max((float) $poi->qty_ordered - (float) ($poi->qty_canceled ?? 0), 0.0);
             $receivedBase = (float) $poi->receivingItems()->sum('qty_base');
             $remainingBase = max($orderedBase - $receivedBase, 0.0);
+            if ($remainingBase <= 0.0) {
+                $this->resetInfo();
+                $this->setMessage(__('procflow::receiving.messages.not_receivable_status'), false);
+                return;
+            }
 
             $this->info = [
                 'po_number' => (string) $po->po_number,
@@ -154,9 +159,15 @@ class Scan extends Component
             return;
         }
 
-        $orderedBase = (float) $poi->qty_ordered * (float) $conversion->factor($material, $poi->unit_purchase, $material->unit_stock);
+        $effectiveOrdered = max((float) $poi->qty_ordered - (float) ($poi->qty_canceled ?? 0), 0.0);
+        $orderedBase = $effectiveOrdered * (float) $conversion->factor($material, $poi->unit_purchase, $material->unit_stock);
         $receivedBase = (float) $poi->receivingItems()->sum('qty_base');
         $remainingBase = max($orderedBase - $receivedBase, 0.0);
+        if ($remainingBase <= 0.0) {
+            $this->resetInfo();
+            $this->setMessage(__('procflow::receiving.messages.not_receivable_status'), false);
+            return;
+        }
 
         $this->info = [
             'po_number' => (string) $po->po_number,

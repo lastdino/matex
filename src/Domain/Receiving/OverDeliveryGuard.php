@@ -12,7 +12,7 @@ class OverDeliveryGuard
 {
     public function assertNotExceededAdhoc(PurchaseOrderItem $poi, float $qtyBase): void
     {
-        $ordered = (float) $poi->qty_ordered;
+        $ordered = max((float) $poi->qty_ordered - (float) ($poi->qty_canceled ?? 0), 0.0);
         $received = (float) $poi->receivingItems()->sum('qty_base');
         $remaining = $ordered - $received;
         abort_if($qtyBase > max($remaining, 0.0), 422, 'Quantity exceeds remaining amount. Over-delivery must be returned.');
@@ -20,7 +20,8 @@ class OverDeliveryGuard
 
     public function assertNotExceededMaterial(PurchaseOrderItem $poi, Material $material, float $qtyBase, UnitConversionService $conv): void
     {
-        $orderedBase = (float) $poi->qty_ordered * (float) $conv->factor($material, $poi->unit_purchase, $material->unit_stock);
+        $effectiveOrdered = max((float) $poi->qty_ordered - (float) ($poi->qty_canceled ?? 0), 0.0);
+        $orderedBase = $effectiveOrdered * (float) $conv->factor($material, $poi->unit_purchase, $material->unit_stock);
         $receivedBase = (float) $poi->receivingItems()->sum('qty_base');
         $remaining = $orderedBase - $receivedBase;
         abort_if($qtyBase > max($remaining, 0.0), 422, 'Quantity exceeds remaining amount. Over-delivery must be returned.');

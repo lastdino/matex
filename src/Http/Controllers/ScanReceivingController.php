@@ -41,9 +41,11 @@ class ScanReceivingController extends Controller
 
         if (! $material) {
             // Ad-hoc line: no conversion. Provide minimal info without material.
-            $orderedBase = (float) $poi->qty_ordered;
+            $orderedBase = (float) $poi->qty_ordered - (float) ($poi->qty_canceled ?? 0);
             $receivedBase = (float) $poi->receivingItems()->sum('qty_base');
             $remainingBase = max($orderedBase - $receivedBase, 0.0);
+
+            abort_if($remainingBase <= 0.0, 422, 'This line has no receivable quantity (possibly canceled).');
 
             return response()->json([
                 'po_id' => $po->getKey(),
@@ -58,9 +60,12 @@ class ScanReceivingController extends Controller
         }
 
         // Normal material line
-        $orderedBase = (float) $poi->qty_ordered * (float) $conversion->factor($material, $poi->unit_purchase, $material->unit_stock);
+        $effectiveOrdered = max((float) $poi->qty_ordered - (float) ($poi->qty_canceled ?? 0), 0.0);
+        $orderedBase = $effectiveOrdered * (float) $conversion->factor($material, $poi->unit_purchase, $material->unit_stock);
         $receivedBase = (float) $poi->receivingItems()->sum('qty_base');
         $remainingBase = max($orderedBase - $receivedBase, 0.0);
+
+        abort_if($remainingBase <= 0.0, 422, 'This line has no receivable quantity (possibly canceled).');
 
         return response()->json([
             'po_id' => $po->getKey(),

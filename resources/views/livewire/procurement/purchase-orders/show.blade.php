@@ -56,10 +56,10 @@
                                 <tr class="border-t align-top">
                                     <td class="py-2 pr-4">{{ $item->material->name ?? '—' }}</td>
                                     <td class="py-2 pr-4">{{ $item->description ?? '—' }}</td>
-                                    <td class="py-2 pr-4">{{ $item->qty_ordered ?? '—' }}</td>
+                                    <td class="py-2 pr-4">{{ \Lastdino\ProcurementFlow\Support\Format::qty($item->qty_ordered ?? 0) }}</td>
                                     <td class="py-2 pr-4">{{ $item->unit_purchase ?? '—' }}</td>
-                                    <td class="py-2 pr-4">{{ $item->price_unit ?? '—' }}</td>
-                                    <td class="py-2 pr-4">{{ $item->tax_rate ?? '—' }}</td>
+                                    <td class="py-2 pr-4">{{ \Lastdino\ProcurementFlow\Support\Format::moneyUnitPrice($item->price_unit ?? 0) }}</td>
+                                    <td class="py-2 pr-4">{{ is_null($item->tax_rate) ? '—' : (\Lastdino\ProcurementFlow\Support\Format::percent($item->tax_rate) . '%') }}</td>
                                     <td class="py-2 pr-4">
                                         @if ($item->unit_purchase === 'shipping')
                                             <span class="text-gray-400">—</span>

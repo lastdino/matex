@@ -1,6 +1,6 @@
-Procurement Flow for Laravel
+Laravel 向け Procurement Flow
 
-概要 (Japanese)
+概要
 
 このパッケージは、調達（Procurement）業務のための Livewire ベース UI、ルーティング、設定、翻訳、PDF 生成や受入スキャン（QR）などのワークフローを提供する Laravel パッケージです。アプリケーションに組み込むことで、下記の機能をすぐに利用できます。
 
@@ -10,78 +10,83 @@ Procurement Flow for Laravel
 - 調達関連の設定（オプション・承認フロー・税・PDF・カテゴリ・トークン／ラベル）
 - 画面、翻訳（日本語/英語）の公開・上書き
 
-English Overview
+機能一覧
 
-This package provides procurement workflows for Laravel: Livewire-based pages, routes, configuration, translations, PDF generation, receiving QR scan, and more. Drop it into your application and get a ready-to-use procurement module.
+- ダッシュボード、発注（一覧・詳細・PDF）、仕入先一覧
+- 資材：一覧・詳細・払出、SDS の署名付きダウンロード
+- 受入：QR スキャンで入庫登録／注文：QR スキャンでドラフト発注作成
+- 設定画面：オプション、承認フロー、税、PDF、カテゴリ、トークン、ラベル
+- ビュー／翻訳の名前空間、設定・言語ファイルの公開
 
-Features
+動作要件
 
-- Dashboard, Purchase Orders (index/show/pdf), Suppliers index
-- Materials: index/show/issue, secure SDS download (signed)
-- Receiving: QR scan and post; Ordering: QR scan to create draft POs
-- Settings screens: Options, Approval (flow selection), Taxes, PDF, Categories, Tokens, Labels
-- View and translation namespaces; publishable config and language files
-
-Requirements
-
-- PHP: ^8.0
-- Laravel Framework: ^12.0（Illuminate Support 12）
-- Livewire v3（アプリ側のセットアップに従います）
-- Dependencies (installed via composer):
+- PHP: ^8.4
+- Laravel Framework: ^12.0
+- Livewire: v3
+- Tailwind CSS: v4（アプリ側でのビルドが必要）
+- 推奨: Laravel Herd によるローカル提供（例: http://procuraflow.test）
+- Composer により以下を自動インストール：
   - lastdino/approval-flow ^0.1
   - tuncaybahadir/quar ^1.7
   - lastdino/chrome-laravel ^0.1
   - spatie/laravel-medialibrary ^11.0
 
-Installation
+インストール
 
-1) Install via Composer
+1) Composer でインストール
 
 ```
 composer require lastdino/procurement-flow
 ```
 
-In a monorepo setup (packages/lastdino/procurement-flow), ensure your root composer is configured to load the package, or require it by path/version accordingly.
+Monorepo（`packages/lastdino/procurement-flow`）での開発中は、ルートの composer がパッケージをロードできるように設定してください（`path` リポジトリなど）。
 
-2) Service Provider
-
-The service provider is auto-discovered:
+2) サービスプロバイダ（自動検出）
 
 ```
 Lastdino\ProcurementFlow\ProcurementFlowServiceProvider
 ```
 
-3) Publish Config and Translations (optional)
+3) 設定と翻訳の公開（任意）
 
 ```
 php artisan vendor:publish --tag=procurement-flow-config --no-interaction
 php artisan vendor:publish --tag=procurement-flow-lang --no-interaction
 ```
 
-Configuration
+セットアップの注意
 
-Config key: `procurement_flow` (note the underscore). Publish destination: `config/procurement-flow.php`.
+- APP_URL を Herd の URL に合わせて設定してください（例: `APP_URL=http://procuraflow.test`）。
+- Vite / Tailwind v4 を利用するため、UI を変更した場合は `npm run dev` または `npm run build` を実行してください。
+- Livewire v3 を使用しています。アプリ側で Livewire のセットアップが済んでいることを前提とします。
 
-Available options (excerpt):
+実行・ビルド
 
-- `route_prefix`: UI の URL プレフィックス（既定: `procurement`）
-- `middleware`: UI に適用するミドルウェア（既定: `['web', 'auth']`）
-- `enabled`: 機能の有効/無効フラグ
-- `ghs`
-  - `disk`: GHS ピクトグラム画像のストレージディスク名（例: `public`）
-  - `directory`: ディスク直下の保存ディレクトリ（例: `ghs_labels`）
-  - `map`: GHS キーとファイル名のマッピング（例: `GHS01` => `GHS01.bmp` など）
-  - `placeholder`: 未定義または欠損時のプレースホルダファイル名（`null`で非表示）
+- アプリ側で必要なコマンド例：
 
-Routes
+```
+# PHP 依存関係
+composer install
 
-All web routes are grouped by the configured prefix and middleware. Default prefix is `/procurement`.
+# 開発用ビルド
+npm install
+npm run dev
 
-Named routes (selection):
+# 本番ビルド
+npm run build
+```
+
+ルートと主要 URL
+
+本パッケージの Web ルートは、設定されたプレフィックスとミドルウェアでグルーピングされます。既定のプレフィックスは `/procurement` です。Herd の既定 URL 例：`http://procuraflow.test/procurement`。
+
+Named routes（抜粋）:
 
 - `procurement.dashboard` → `/`
+  - 例: http://procuraflow.test/procurement
 - Purchase Orders:
   - `procurement.purchase-orders.index` → `/purchase-orders`
+    - 例: http://procuraflow.test/procurement/purchase-orders
   - `procurement.purchase-orders.show` → `/purchase-orders/{po}`
   - `procurement.purchase-orders.pdf` → `/purchase-orders/{po}/pdf`
 - Pending Receiving:
@@ -90,7 +95,7 @@ Named routes (selection):
   - `procurement.materials.index` → `/materials`
   - `procurement.materials.show` → `/materials/{material}`
   - `procurement.materials.issue` → `/materials/{material}/issue`
-  - `procurement.materials.sds.download` (signed) → `/materials/{material}/sds`
+  - `procurement.materials.sds.download`（署名付き）→ `/materials/{material}/sds`
 - Suppliers:
   - `procurement.suppliers.index` → `/suppliers`
 - Receiving Scan:
@@ -108,14 +113,14 @@ Named routes (selection):
 - Ordering Scan:
   - `procurement.ordering.scan` → `/ordering/scan`
 
-Views & Translations Namespaces
+ビューと翻訳の名前空間
 
 - Views: namespace `procflow`（例: `procflow::livewire.procurement.materials.index`）
 - Translations: namespace `procflow`（例: `__('procflow::materials.table.name')`）
 
-Livewire Components
+Livewire コンポーネント（登録済み）
 
-These components are registered by the service provider and are referenced in routes/views:
+以下はサービスプロバイダにより登録され、画面やルートで参照されます：
 
 - `procurement.dashboard`
 - `purchase-orders.index`, `purchase-orders.show`
@@ -133,54 +138,69 @@ These components are registered by the service provider and are referenced in ro
   - `procurement.settings.tokens.index`
   - `procurement.settings.tokens.labels`
 
-Materials: SDS and GHS
+使い方・設定例
 
-- SDS（安全データシート）
-  - Secure download is served via a signed + authenticated route: `procurement.materials.sds.download`.
-  - Store the SDS file(s) on the `sds` media collection of the Material model (Spatie Media Library v11).
-- GHS ピクトグラム
-  - 一覧テーブルでは、モデルに `ghsImageUrls()` メソッドが存在する場合に、その返却 URL を表示します。未実装の場合は `N/A` と表示されます。
-  - 画像は設定ファイルの `ghs.disk` / `ghs.directory` / `ghs.map` に従い、任意の拡張子（bmp/png/jpg）で配置できます。
+設定キー / ファイル
 
-PDF & QR/Scanning Notes
+- 設定キー: `procurement_flow`
+- 公開先: `config/procurement-flow.php`
 
-- Purchase Order PDF: `lastdino/chrome-laravel` によるレンダリングを想定しています。アプリ側で Chrome/Chromium 実行環境の準備が必要です。
-- Receiving/Ordering のスキャンは JSON エンドポイントと Livewire 画面を提供します。認可はグループミドルウェアに準拠します。
+主なオプション（抜粋）
 
-Authorization
+- `route_prefix`: UI の URL プレフィックス（既定: `procurement`）
+- `middleware`: UI に適用するミドルウェア（既定: `['web', 'auth']`）
+- `enabled`: 機能の有効/無効フラグ
+- `ghs`:
+  - `disk`: GHS ピクトグラム画像の保存ディスク名（例: `public`）
+  - `directory`: ディスク直下の保存ディレクトリ（例: `ghs_labels`）
+  - `map`: GHS キーとファイル名の対応（例: `GHS01 => GHS01.bmp`）
+  - `placeholder`: 未定義／欠損時のプレースホルダ（`null` で非表示）
 
-By default, all UI routes use `['web', 'auth']`. Adjust via `config('procurement_flow.middleware')`.
+GHS 設定例
 
-Customization
-
-- Views/Translations: publish and override in your app.
-- Route prefix & middleware: configurable.
-- GHS images: supply/override via storage as per config.
-
-Local Development (Monorepo)
-
-- Package path: `packages/lastdino/procurement-flow`
-- Provider: `Lastdino\ProcurementFlow\ProcurementFlowServiceProvider`
-- After changes, if UI changes are not reflected, run `npm run dev` or `npm run build` in your host app.
-
-Testing
-
-- This repository uses Pest v4. Run focused tests where possible:
-
-```
-php artisan test
-php artisan test tests/Feature/YourTest.php
-php artisan test --filter=your_test_name
+```php
+// config/procurement-flow.php（抜粋）
+return [
+    'ghs' => [
+        'disk' => 'public',
+        'directory' => 'ghs_labels',
+        'map' => [
+            'GHS01' => 'GHS01.png',
+            'GHS02' => 'GHS02.png',
+            // ...
+        ],
+        'placeholder' => 'placeholder.png',
+    ],
+];
 ```
 
-Coding Style
+SDS（安全データシート）
 
-- Run Laravel Pint before committing code changes:
+- Material モデルの Media Library コレクション `sds` に SDS ファイルを登録してください。
+- ダウンロードは署名付きかつ認証済みルート `procurement.materials.sds.download` で提供されます。
 
-```
-vendor/bin/pint --dirty
-```
+PDF（発注書）
 
-License
+- `lastdino/chrome-laravel` を用いて PDF を生成します。Chrome / Chromium の実行環境をアプリ側で用意してください。
+- レイアウトやロゴ等はアプリ側で上書き可能です（ビュー公開・上書きを活用）。
+
+QR / スキャン
+
+- 受入（Receiving）および注文（Ordering）のスキャン用に JSON API と Livewire 画面を提供します。
+- 権限はグループミドルウェア（既定は `web` + `auth`）に従います。
+
+カスタマイズ
+
+- 画面・翻訳の公開と上書き
+- ルートプレフィックス・ミドルウェアの変更
+- GHS 画像の差し替え（ストレージ設定）
+
+ローカル開発（Monorepo）
+
+- パス: `packages/lastdino/procurement-flow`
+- プロバイダ: `Lastdino\ProcurementFlow\ProcurementFlowServiceProvider`
+- UI 変更が反映されない場合は `npm run dev` または `npm run build` を実行してください。
+
+ライセンス
 
 MIT License.

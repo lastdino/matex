@@ -54,6 +54,7 @@
                 <option value="issued">{{ __('procflow::po.status.issued') }}</option>
                 <option value="receiving">{{ __('procflow::po.status.receiving') }}</option>
                 <option value="closed">{{ __('procflow::po.status.closed') }}</option>
+                <option value="canceled">{{ __('procflow::po.status.canceled') }}</option>
             </flux:select>
         </div>
         <div class="ms-auto flex gap-2 w-full sm:w-auto">
@@ -67,42 +68,43 @@
     <div class="rounded-lg border overflow-x-auto bg-white dark:bg-neutral-900">
         <table class="min-w-full text-sm">
             <thead>
-                <tr class="text-left text-neutral-500">
-                    <th class="py-2 px-3">{{ __('procflow::po.table.po_number') }}</th>
-                    <th class="py-2 px-3">{{ __('procflow::po.table.supplier') }}</th>
-                    <th class="py-2 px-3">{{ __('procflow::po.table.requester') }}</th>
-                    <th class="py-2 px-3">{{ __('procflow::po.table.status') }}</th>
-                    <th class="py-2 px-3">{{ __('procflow::po.table.total') }}</th>
-                </tr>
+            <tr class="text-left text-neutral-500">
+                <th class="py-2 px-3">{{ __('procflow::po.table.po_number') }}</th>
+                <th class="py-2 px-3">{{ __('procflow::po.table.supplier') }}</th>
+                <th class="py-2 px-3">{{ __('procflow::po.table.requester') }}</th>
+                <th class="py-2 px-3">{{ __('procflow::po.table.status') }}</th>
+                <th class="py-2 px-3">{{ __('procflow::po.table.total') }}</th>
+            </tr>
             </thead>
             <tbody>
-                @forelse($this->orders as $po)
-                    <tr class="border-t hover:bg-neutral-50 dark:hover:bg-neutral-800">
-                        <td class="py-2 px-3">
-                            <a class="text-blue-600 hover:underline"
-                               wire:click.prevent="openPoDetail({{ $po->id }})">
-                                {{ $po->po_number ?? __('procflow::po.labels.draft_with_id', ['id' => $po->id]) }}
-                            </a>
-                        </td>
-                        <td class="py-2 px-3">{{ $po->supplier->name ?? '-' }}</td>
-                        <td class="py-2 px-3">{{ $po->requester->name ?? '-' }}</td>
-                        <td class="py-2 px-3">
-                            @php $status = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft'); @endphp
-                            @php
-                                $color = match ($status) {
-                                    'closed' => 'green',
-                                    'issued' => 'yellow',
-                                    'receiving' => 'cyan',
-                                    default  => 'zinc',
-                                };
-                            @endphp
-                            <flux:badge color="{{ $color }}" size="sm">{{ __('procflow::po.status.' . $status) }}</flux:badge>
-                        </td>
-                        <td class="py-2 px-3">¥{{ number_format((float) $po->total, 0) }}</td>
-                    </tr>
-                @empty
-                    <tr><td colspan="5" class="py-6 text-center text-neutral-500">{{ __('procflow::po.table.empty') }}</td></tr>
-                @endforelse
+            @forelse($this->orders as $po)
+                <tr class="border-t hover:bg-neutral-50 dark:hover:bg-neutral-800">
+                    <td class="py-2 px-3">
+                        <a class="text-blue-600 hover:underline"
+                           wire:click.prevent="openPoDetail({{ $po->id }})">
+                            {{ $po->po_number ?? __('procflow::po.labels.draft_with_id', ['id' => $po->id]) }}
+                        </a>
+                    </td>
+                    <td class="py-2 px-3">{{ $po->supplier->name ?? '-' }}</td>
+                    <td class="py-2 px-3">{{ $po->requester->name ?? '-' }}</td>
+                    <td class="py-2 px-3">
+                        @php $status = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft'); @endphp
+                        @php
+                            $color = match ($status) {
+                                'closed' => 'green',
+                                'issued' => 'yellow',
+                                'receiving' => 'cyan',
+                                'canceled' => 'red',
+                                default  => 'zinc',
+                            };
+                        @endphp
+                        <flux:badge color="{{ $color }}" size="sm">{{ __('procflow::po.status.' . $status) }}</flux:badge>
+                    </td>
+                    <td class="py-2 px-3">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTotal($po->total) }}</td>
+                </tr>
+            @empty
+                <tr><td colspan="5" class="py-6 text-center text-neutral-500">{{ __('procflow::po.table.empty') }}</td></tr>
+            @endforelse
             </tbody>
         </table>
     </div>
@@ -329,7 +331,7 @@
                                     </div>
                                     <div class="text-right">
                                         <div class="text-neutral-500">{{ __('procflow::po.create_preview.subtotal_excl_tax') }}</div>
-                                        <div class="font-semibold">¥{{ number_format((float) $p['subtotal'], 0) }}</div>
+                                        <div class="font-semibold">{{ \Lastdino\ProcurementFlow\Support\Format::moneySubtotal($p['subtotal']) }}</div>
                                     </div>
                                 </li>
                             @endforeach
@@ -370,6 +372,7 @@
                                 'closed' => 'green',
                                 'issued' => 'yellow',
                                 'receiving' => 'cyan',
+                                'canceled' => 'red',
                                 default  => 'zinc',
                             };
                         @endphp
@@ -380,15 +383,15 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                     <div class="rounded-lg border p-3 bg-white dark:bg-neutral-900">
                         <div class="text-sm text-neutral-500">{{ __('procflow::po.detail.subtotal') }}</div>
-                        <div class="text-xl font-semibold mt-1">¥{{ number_format((float)($poDetail['subtotal'] ?? 0), 0) }}</div>
+                        <div class="text-xl font-semibold mt-1">{{ \Lastdino\ProcurementFlow\Support\Format::moneySubtotal($poDetail['subtotal'] ?? 0) }}</div>
                     </div>
                     <div class="rounded-lg border p-3 bg-white dark:bg-neutral-900">
                         <div class="text-sm text-neutral-500">{{ __('procflow::po.detail.tax') }}</div>
-                        <div class="text-xl font-semibold mt-1">¥{{ number_format((float)($poDetail['tax'] ?? 0), 0) }}</div>
+                        <div class="text-xl font-semibold mt-1">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTax($poDetail['tax'] ?? 0) }}</div>
                     </div>
                     <div class="rounded-lg border p-3 bg-white dark:bg-neutral-900">
                         <div class="text-sm text-neutral-500">{{ __('procflow::po.detail.total') }}</div>
-                        <div class="text-xl font-semibold mt-1">¥{{ number_format((float)($poDetail['total'] ?? 0), 0) }}</div>
+                        <div class="text-xl font-semibold mt-1">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTotal($poDetail['total'] ?? 0) }}</div>
                     </div>
                 </div>
 
@@ -411,16 +414,36 @@
                             </thead>
                             <tbody>
                                 @forelse(($poDetail['items'] ?? []) as $it)
-                                    <tr class="border-t">
+                                    @php
+                                        $qtyOrdered = (float) ($it['qty_ordered'] ?? 0);
+                                        $qtyCanceled = (float) ($it['qty_canceled'] ?? 0);
+                                        $effectiveQty = max($qtyOrdered - $qtyCanceled, 0);
+                                        $isCanceledLine = $qtyCanceled >= $qtyOrdered - 1e-9;
+                                        $isShipping = ($it['unit_purchase'] ?? '') === 'shipping';
+                                        $poStatus = $poDetail['status'] ?? 'draft';
+                                        $canCancel = in_array($poStatus, ['issued','receiving'], true) && !$isShipping && !$isCanceledLine && $effectiveQty > 0;
+                                    @endphp
+                                    <tr class="border-t {{ $isCanceledLine ? 'line-through text-neutral-500' : '' }}">
                                         <td class="py-2 px-3">{{ $it['material']['sku'] ?? '-' }}</td>
-                                        <td class="py-2 px-3">{{ $it['material']['name'] ?? ($it['description'] ?? '-') }}</td>
-                                        <td class="py-2 px-3">{{ (float)($it['qty_ordered'] ?? 0) }}</td>
+                                        <td class="py-2 px-3">
+                                            <div class="flex items-center gap-2">
+                                                <span>{{ $it['material']['name'] ?? ($it['description'] ?? '-') }}</span>
+                                                @if($qtyCanceled > 0)
+                                                    <flux:badge color="red" size="xs">{{ __('procflow::po.detail.badges.canceled') }}</flux:badge>
+                                                @endif
+                                            </div>
+                                        </td>
+                                        <td class="py-2 px-3">
+                                            {{ \Lastdino\ProcurementFlow\Support\Format::qty($effectiveQty) }}
+                                            @if($qtyCanceled > 0)
+                                                <span class="text-xs text-neutral-500">({{ __('procflow::po.detail.labels.canceled_qty') }}: {{ \Lastdino\ProcurementFlow\Support\Format::qty($qtyCanceled) }})</span>
+                                            @endif
+                                        </td>
                                         <td class="py-2 px-3">{{ $it['unit_purchase'] ?? '' }}</td>
-                                        <td class="py-2 px-3">¥{{ number_format((float)($it['price_unit'] ?? 0), 0) }}</td>
-                                        <td class="py-2 px-3">¥{{ number_format((float)($it['line_total'] ?? 0), 0) }}</td>
+                                        <td class="py-2 px-3">{{ \Lastdino\ProcurementFlow\Support\Format::moneyUnitPrice($it['price_unit'] ?? 0) }}</td>
+                                        <td class="py-2 px-3">{{ \Lastdino\ProcurementFlow\Support\Format::moneyLineTotal($it['line_total'] ?? 0) }}</td>
                                         <td class="py-2 px-3">{{ $it['desired_date'] ?? '-' }}</td>
                                         <td class="py-2 px-3">
-                                            @php $poStatus = $poDetail['status'] ?? 'draft'; @endphp
                                             @if($poStatus !== 'closed')
                                                 <input type="date"
                                                        class="w-40 border rounded p-1 bg-white dark:bg-neutral-900"
@@ -442,6 +465,16 @@
                                                 </flux:button>
                                                 @if (session()->has('po_item_saved_' . $it['id']))
                                                     <span class="text-green-600 text-xs ml-2">{{ __('procflow::po.labels.saved') }}</span>
+                                                @endif
+                                                @if($canCancel)
+                                                    <flux:button size="xs" variant="danger"
+                                                                 class="ml-2"
+                                                                 x-on:click.prevent="if (confirm('{{ __('procflow::po.detail.confirm_cancel_item') }}')) { $wire.cancelItem({{ (int) $it['id'] }}) }"
+                                                                 wire:loading.attr="disabled"
+                                                                 wire:target="cancelItem({{ (int) $it['id'] }})">
+                                                        <span wire:loading.remove wire:target="cancelItem({{ (int) $it['id'] }})">{{ __('procflow::po.buttons.cancel_line') }}</span>
+                                                        <span wire:loading wire:target="cancelItem({{ (int) $it['id'] }})">{{ __('procflow::po.buttons.canceling_line') }}</span>
+                                                    </flux:button>
                                                 @endif
                                             @endif
                                         </td>
@@ -467,10 +500,31 @@
                             </thead>
                             <tbody>
                                 @forelse(($poDetail['receivings'] ?? []) as $rcv)
-                                    <tr class="border-t">
-                                        <td class="py-2 px-3">{{ $rcv['received_at'] ?? '' }}</td>
-                                        <td class="py-2 px-3">{{ $rcv['reference_number'] ?? '-' }}</td>
-                                        <td class="py-2 px-3">{{ count($rcv['items'] ?? []) }}</td>
+                                    <tr class="border-t align-top">
+                                        <td class="py-2 px-3 whitespace-nowrap">{{ $rcv['received_at'] ?? '' }}</td>
+                                        <td class="py-2 px-3 whitespace-nowrap">{{ $rcv['reference_number'] ?? '-' }}</td>
+                                        <td class="py-2 px-3">
+                                            @php $items = $rcv['items'] ?? []; @endphp
+                                            @if(count($items) === 0)
+                                                <span class="text-neutral-500">{{ __('procflow::po.detail.receivings.no_items') }}</span>
+                                            @else
+                                                <ul class="space-y-1">
+                                                    @foreach($items as $rit)
+                                                        @php
+                                                            $sku = $rit['material']['sku'] ?? '';
+                                                            $name = $rit['material']['name'] ?? ($rit['purchase_order_item']['description'] ?? '');
+                                                            $qty = (float) ($rit['qty_received'] ?? 0);
+                                                            $unit = $rit['unit_purchase'] ?? '';
+                                                        @endphp
+                                                        <li class="flex items-center gap-2">
+                                                            <span class="text-neutral-500">{{ $sku }}</span>
+                                                            <span>{{ $name }}</span>
+                                                            <span class="ml-auto tabular-nums">{{ \Lastdino\ProcurementFlow\Support\Format::qty($qty) }} {{ $unit }}</span>
+                                                        </li>
+                                                    @endforeach
+                                                </ul>
+                                            @endif
+                                        </td>
                                     </tr>
                                 @empty
                                     <tr><td colspan="3" class="py-4 text-center text-neutral-500">{{ __('procflow::po.detail.receivings.empty') }}</td></tr>
@@ -484,6 +538,18 @@
             @endif
 
             <div class="mt-4 flex items-center justify-end gap-3">
+                @php $status = $poDetail['status'] ?? 'draft'; @endphp
+                @if($status === 'draft')
+                    <flux:button
+                        variant="danger"
+                        x-on:click.prevent="if (confirm('{{ __('procflow::po.detail.confirm_cancel') }}')) { $wire.cancelPo({{ (int) ($poDetail['id'] ?? 0) }}) }"
+                        wire:loading.attr="disabled"
+                        wire:target="cancelPo({{ (int) ($poDetail['id'] ?? 0) }})"
+                    >
+                        <span wire:loading.remove wire:target="cancelPo({{ (int) ($poDetail['id'] ?? 0) }})">{{ __('procflow::po.buttons.cancel_order') }}</span>
+                        <span wire:loading wire:target="cancelPo({{ (int) ($poDetail['id'] ?? 0) }})">{{ __('procflow::po.buttons.canceling_order') }}</span>
+                    </flux:button>
+                @endif
                 <flux:button variant="outline" x-on:click="$flux.modal('po-detail').close()">{{ __('procflow::po.common.close') }}</flux:button>
             </div>
         </div>
@@ -637,3 +703,4 @@
         </div>
     </flux:modal>
 </div>
+

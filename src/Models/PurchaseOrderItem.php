@@ -24,11 +24,13 @@ class PurchaseOrderItem extends Model
     {
         return [
             'qty_ordered' => 'decimal:6',
+            'qty_canceled' => 'decimal:6',
             'price_unit' => 'decimal:6',
             'tax_rate' => 'decimal:4',
             'line_total' => 'decimal:2',
             'desired_date' => 'date:Y-m-d',
             'expected_date' => 'date:Y-m-d',
+            'canceled_at' => 'datetime',
             'note' => 'string',
             'manufacturer' => 'string',
         ];

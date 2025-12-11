@@ -81,6 +81,7 @@ class ProcurementFlowServiceProvider extends ServiceProvider
         Livewire::component('procurement.settings.taxes.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Taxes\Index::class);
         Livewire::component('procurement.settings.pdf.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Pdf\Index::class);
         Livewire::component('procurement.settings.categories.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Categories\Index::class);
+        Livewire::component('procurement.settings.display.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Display\Index::class);
         // Tokens management and labels
         Livewire::component('procurement.settings.tokens.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Tokens\Index::class);
         Livewire::component('procurement.settings.tokens.labels', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Tokens\Labels::class);

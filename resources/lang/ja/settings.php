@@ -117,6 +117,37 @@ return [
         ],
     ],
 
+    'display' => [
+        'title' => '表示・通貨設定',
+        'back' => '戻る',
+        'decimals' => [
+            'heading' => '小数点桁数',
+            'qty' => '数量 (qty)',
+            'unit_price' => '単価 (unit_price)',
+            'unit_price_materials' => '単価（資材一覧）(unit_price_materials)',
+            'line_total' => '行小計 (line_total)',
+            'subtotal' => '小計 (subtotal)',
+            'tax' => '税額 (tax)',
+            'total' => '合計 (total)',
+            'percent' => 'パーセンテージ (percent)',
+        ],
+        'currency' => [
+            'heading' => '通貨表示',
+            'symbol' => '記号',
+            'position' => '位置',
+            'prefix' => '前置',
+            'suffix' => '後置',
+            'space' => '記号と数値の間にスペースを入れる',
+            'space_hint' => '例: 有効時は "$ 1,234" のように表示',
+        ],
+        'buttons' => [
+            'save' => '保存',
+        ],
+        'flash' => [
+            'saved' => '表示・通貨設定を保存しました。',
+        ],
+    ],
+
     'categories' => [
         'title' => '資材カテゴリの設定',
         'new' => 'カテゴリを追加',

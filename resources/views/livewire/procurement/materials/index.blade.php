@@ -87,7 +87,7 @@
                 <td class="py-2 px-3 w-48">
                             {{ is_null($m->pack_size) ? __('procflow::materials.table.not_set') : (string) (float) $m->pack_size }}
                 </td>
-                        <td class="py-2 px-3">@if(!is_null($m->unit_price)) ¥{{ number_format((float)$m->unit_price, 2) }} @endif</td>
+                        <td class="py-2 px-3">@if(!is_null($m->unit_price)) {{ \Lastdino\ProcurementFlow\Support\Format::moneyUnitPriceMaterials($m->unit_price) }} @endif</td>
                         <td class="py-2 px-3 text-right space-x-2">
                             <flux:dropdown>
                                 <flux:button icon:trailing="chevron-down">{{ __('procflow::materials.buttons.options') }}</flux:button>

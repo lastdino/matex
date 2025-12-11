@@ -7,7 +7,7 @@
         </div>
         <div class="rounded-lg border p-4 bg-white dark:bg-neutral-900">
             <div class="text-sm text-neutral-500">{{ __('procflow::dashboard.cards.this_month_total') }}</div>
-            <div class="text-3xl font-semibold mt-2">¥{{ number_format($this->thisMonthTotal, 0) }}</div>
+            <div class="text-3xl font-semibold mt-2">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTotal($this->thisMonthTotal) }}</div>
         </div>
         <div class="rounded-lg border p-4 bg-white dark:bg-neutral-900">
             <div class="text-sm text-neutral-500">{{ __('procflow::dashboard.cards.low_stock_materials') }}</div>
@@ -29,7 +29,7 @@
                 $pct = (float) ($otif['percent'] ?? 0);
                 $color = $pct < 80 ? 'text-red-600' : ($pct < 95 ? 'text-amber-600' : 'text-emerald-600');
             @endphp
-            <div class="text-3xl font-semibold mt-2 {{ $color }}">{{ number_format($pct, 1) }}%</div>
+            <div class="text-3xl font-semibold mt-2 {{ $color }}">{{ \Lastdino\ProcurementFlow\Support\Format::percent($pct) }}%</div>
             <div class="text-xs text-neutral-500 mt-1">{{ __('procflow::dashboard.cards.otif.on_time_full', ['on' => $otif['on_time_full'] ?? 0, 'total' => $otif['total'] ?? 0]) }}</div>
         </div>
     </div>
@@ -79,7 +79,7 @@
                     @foreach ($tops as $row)
                         <li class="py-2 flex items-center justify-between">
                             <div class="font-medium">{{ $row['name'] }}</div>
-                            <div class="tabular-nums">¥{{ number_format((float) $row['total'], 0) }}</div>
+                            <div class="tabular-nums">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTotal($row['total']) }}</div>
                         </li>
                     @endforeach
                 </ul>
