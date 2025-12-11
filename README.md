@@ -47,11 +47,12 @@ Monorepo（`packages/lastdino/procurement-flow`）での開発中は、ルート
 Lastdino\ProcurementFlow\ProcurementFlowServiceProvider
 ```
 
-3) 設定と翻訳の公開（任意）
+3) 設定・翻訳・ビューの公開（任意）
 
 ```
 php artisan vendor:publish --tag=procurement-flow-config --no-interaction
 php artisan vendor:publish --tag=procurement-flow-lang --no-interaction
+php artisan vendor:publish --tag=procurement-flow-views --no-interaction
 ```
 
 セットアップの注意
@@ -192,6 +193,9 @@ QR / スキャン
 カスタマイズ
 
 - 画面・翻訳の公開と上書き
+  - ビュー公開先: `resources/views/vendor/procflow`
+  - ビューの参照は名前空間 `procflow::` を使用（例: `procflow::livewire.procurement.materials.index`）。
+    上書きする場合は、同一のサブパス・ファイル名で公開先に配置してください。
 - ルートプレフィックス・ミドルウェアの変更
 - GHS 画像の差し替え（ストレージ設定）
 

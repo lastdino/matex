@@ -46,6 +46,11 @@ class ProcurementFlowServiceProvider extends ServiceProvider
         // Expose package views under the "procflow" namespace
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'procflow');
 
+        // Publish views so host apps can override
+        $this->publishes([
+            __DIR__ . '/../resources/views' => resource_path('views/vendor/procflow'),
+        ], 'procurement-flow-views');
+
         // Load translations under the "procflow" namespace
         $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'procflow');
 
