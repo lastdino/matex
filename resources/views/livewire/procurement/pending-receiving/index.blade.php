@@ -41,7 +41,6 @@
                                 };
                             @endphp
                             <flux:badge color="{{ $color }}" size="sm">{{ __('procflow::po.status.' . $status) }}</flux:badge>
-                            {{ __('procflow::po.status.' . $status) }}
                         </td>
                         <td class="py-2 px-3">{{ $po->items->count() }}</td>
                     </tr>
