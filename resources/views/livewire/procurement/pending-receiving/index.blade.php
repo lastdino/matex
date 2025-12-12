@@ -40,5 +40,8 @@
                 @endforelse
             </tbody>
         </table>
+        <div>
+            {{ $this->orders->links() }}
+        </div>
     </div>
 </div>

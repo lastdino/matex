@@ -12,6 +12,7 @@ use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 class Index extends Component
 {
     public string $q = '';
+    public int $perPage = 25;
 
     public function getOrdersProperty()
     {
@@ -82,8 +83,7 @@ class Index extends Component
                 }
             })
             ->latest('id')
-            ->limit(50)
-            ->get();
+            ->paginate($this->perPage);
     }
 
     public function render(): View
