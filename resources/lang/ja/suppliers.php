@@ -9,6 +9,7 @@ return [
         'name' => '名称',
         'code' => 'コード',
         'email' => 'メール',
+        'contact_person' => '担当者',
         'phone' => '電話番号',
         'actions' => '操作',
         'empty' => 'サプライヤーがありません',

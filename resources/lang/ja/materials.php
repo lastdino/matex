@@ -7,6 +7,15 @@ return [
     'badges' => [
         'lot' => 'ロット',
     ],
+    'sections' => [
+        'basic' => '基本情報',
+        'units_conversion' => '単位と換算',
+        'stock_category_supplier' => '在庫・税区分・優先サプライヤー',
+        'ordering_pricing' => '発注条件・価格',
+        'manufacturing_storage' => 'メーカー・保管場所',
+        'safety_regulation' => '安全関連（法令、GHS、保護具）',
+        'options' => 'オプション',
+    ],
     'filters' => [
         'search_placeholder' => 'SKU または 名称で検索',
         'category' => 'カテゴリ',
@@ -23,9 +32,11 @@ return [
         'back' => '戻る',
         'save' => '保存',
         'cancel' => 'キャンセル',
+        'saving' => '保存中...',
         'processing' => '処理中...',
     ],
     'table' => [
+        'ghs' => 'GHS',
         'sku' => 'SKU',
         'name' => '名称',
         'manufacturer' => 'メーカー',
@@ -38,6 +49,7 @@ return [
         'actions' => '操作',
         'no_materials' => '資材がありません',
         'not_set' => '未設定',
+        'na' => 'N/A',
     ],
     'modal' => [
         'material_form_title_new' => '新規資材',
@@ -67,6 +79,7 @@ return [
         'storage_location' => '保管場所',
         'applicable_regulation' => '適用法令',
         'ghs_mark' => 'GHS マーク',
+        'ghs_no_keys' => 'GHS キーが設定されていません。',
         'protective_equipment' => '保護具',
         'manage_by_lot_enable' => 'ロット管理を有効化',
         'separate_shipping' => '別送対象',
@@ -135,6 +148,7 @@ return [
         'upload_label' => 'SDSをアップロード（PDFのみ、最大20MB）',
         'saved' => 'SDSを保存しました',
         'deleted' => 'SDSを削除しました',
+        'delete' => '削除',
         'badge_has' => 'SDSあり',
         'badge_none' => 'SDSなし',
     ],

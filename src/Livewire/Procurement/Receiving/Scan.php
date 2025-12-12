@@ -37,13 +37,23 @@ class Scan extends Component
     /**
      * Display info loaded by lookup.
      *
-     * @var array{po_number: string, po_status: string, material_name: string, material_sku: string, remaining_base: string|float|int}
+     * @var array{
+     *   po_number: string,
+     *   po_status: string,
+     *   material_name: string,
+     *   material_sku: string,
+     *   ordered_base: float|int|string,
+     *   remaining_base: float|int|string,
+     *   manage_by_lot: bool,
+     *   unit_stock: string
+     * }
      */
     public array $info = [
         'po_number' => '',
         'po_status' => '',
         'material_name' => '',
         'material_sku' => '',
+        'ordered_base' => '',
         'remaining_base' => '',
         'manage_by_lot' => false,
         'unit_stock' => '',
@@ -150,6 +160,7 @@ class Scan extends Component
                 'po_status' => (string) $po->status->value,
                 'material_name' => '(アドホック項目)',
                 'material_sku' => '',
+                'ordered_base' => $orderedBase,
                 'remaining_base' => $remainingBase,
                 'manage_by_lot' => false,
                 'unit_stock' => '',
@@ -174,6 +185,7 @@ class Scan extends Component
             'po_status' => (string) $po->status->value,
             'material_name' => (string) $material->name,
             'material_sku' => (string) $material->sku,
+            'ordered_base' => $orderedBase,
             'remaining_base' => $remainingBase,
             'manage_by_lot' => (bool) ($material->manage_by_lot ?? false),
             'unit_stock' => (string) $material->unit_stock,

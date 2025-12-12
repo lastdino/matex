@@ -109,7 +109,7 @@ class Index extends Component
         $q = (string) $this->q;
         $cat = $this->category_id;
         return Material::query()
-            ->with('media')
+            ->when(\Illuminate\Support\Facades\Schema::hasTable('media'), fn ($qrb) => $qrb->with('media'))
             ->withSum('lots', 'qty_on_hand')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {

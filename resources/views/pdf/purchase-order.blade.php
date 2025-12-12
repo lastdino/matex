@@ -64,7 +64,7 @@
             <div class="flex flex-row mb-12">
                 <div>宛先　</div>
                 <div class="border-b-2 border-black w-full font-bold">
-                    {{ $supplier->name }}@if(!empty($supplier->contact_person_name))　{{ $supplier->contact_person_name }}@endif 様
+                    {{ $supplier->name }}@if(!empty($supplier->contact_person_name))　{{ $supplier->contact_person_name }}@endif
                 </div>
             </div>
             <div class="whitespace-pre-line">毎度格別のお引き立てを賜り厚くお礼申し上げます。
@@ -73,7 +73,7 @@
         </div>
         {{-- 右側 --}}
         <div>
-            <div class="font-bold text-xl">@if(!empty($company['name']))<div>TEL：{{ $company['name'] }}</div>@endif</div>
+            <div class="font-bold text-xl">@if(!empty($company['name']))<div>{{ $company['name'] }}</div>@endif</div>
             <div class="m-5">
                 @foreach(($company['address_lines'] ?? []) as $line)
                     <div>{{ $line }}</div>

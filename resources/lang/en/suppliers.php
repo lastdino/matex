@@ -9,6 +9,7 @@ return [
         'name' => 'Name',
         'code' => 'Code',
         'email' => 'Email',
+        'contact_person' => 'Contact Person',
         'phone' => 'Phone',
         'actions' => 'Actions',
         'empty' => 'No suppliers',

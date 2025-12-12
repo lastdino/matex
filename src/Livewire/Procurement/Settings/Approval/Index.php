@@ -16,7 +16,7 @@ class Index extends Component
     public function mount(): void
     {
         $current = AppSetting::get('approval_flow.purchase_order_flow_id');
-        $this->purchaseOrderFlowId = $current !== null && $current !== '' ? (int) $current : null;
+        $this->purchaseOrderFlowId = $current !== null && $current !== '' ? (int) $current : '';
     }
 
     public function save(): void

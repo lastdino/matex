@@ -11,6 +11,7 @@ return [
     'info' => '情報',
     'info_po' => 'PO',
     'info_material' => '資材',
+    'info_ordered_base' => '注文数（基準）',
     'info_remaining_base' => '残数（基準）',
     'qty_received' => '受入数量',
     'reference_number' => '伝票番号（任意）',

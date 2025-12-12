@@ -8,14 +8,12 @@
     <div class="grid gap-4 md:grid-cols-2">
         <div class="rounded border p-4 space-y-4">
             <flux:heading size="sm">{{ __('procflow::receiving.token') }}</flux:heading>
-            <flux:field>
-                <flux:input
-                    id="token"
-                    x-ref="token"
-                    wire:model.live.debounce.300ms="form.token"
-                    placeholder="{{ __('procflow::receiving.token_placeholder') }}"
-                />
-            </flux:field>
+            <flux:input
+                id="token"
+                x-ref="token"
+                wire:model.live.debounce.300ms="form.token"
+                placeholder="{{ __('procflow::receiving.token_placeholder') }}"
+            />
             <div class="flex gap-2">
                 <flux:button
                     variant="outline"
@@ -41,7 +39,8 @@
                 <div class="text-sm text-gray-700 space-y-1">
                     <div>{{ __('procflow::receiving.info_po') }}: <span class="font-medium">{{ $info['po_number'] }}</span> (<span>{{ $info['po_status'] }}</span>)</div>
                     <div>{{ __('procflow::receiving.info_material') }}: <span class="font-medium">{{ $info['material_name'] }}</span> [<span>{{ $info['material_sku'] }}</span>]</div>
-                    <div>{{ __('procflow::receiving.info_remaining_base') }}: <span class="font-medium">{{ $info['remaining_base'] }}</span></div>
+                    <div>{{ __('procflow::receiving.info_ordered_base') }}: <span class="font-medium">{{ $info['ordered_base'] }}</span>@if($info['unit_stock']) <span class="ml-1 text-gray-500">{{ $info['unit_stock'] }}</span>@endif</div>
+                    <div>{{ __('procflow::receiving.info_remaining_base') }}: <span class="font-medium">{{ $info['remaining_base'] }}</span>@if($info['unit_stock']) <span class="ml-1 text-gray-500">{{ $info['unit_stock'] }}</span>@endif</div>
                 </div>
             @endif
 

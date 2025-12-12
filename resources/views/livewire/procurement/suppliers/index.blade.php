@@ -15,8 +15,9 @@
         <table class="min-w-full text-sm">
             <thead>
                 <tr class="text-left text-neutral-500">
-                    <th class="py-2 px-3">{{ __('procflow::suppliers.table.name') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::suppliers.table.code') }}</th>
+                    <th class="py-2 px-3">{{ __('procflow::suppliers.table.name') }}</th>
+                    <th class="py-2 px-3">{{ __('procflow::suppliers.table.contact_person') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::suppliers.table.email') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::suppliers.table.phone') }}</th>
                     <th class="py-2 px-3 text-right">{{ __('procflow::suppliers.table.actions') }}</th>
@@ -25,13 +26,14 @@
             <tbody>
             @forelse($this->suppliers as $s)
                 <tr class="border-t hover:bg-neutral-50 dark:hover:bg-neutral-800">
+                    <td class="py-2 px-3">{{ $s->code }}</td>
                     <td class="py-2 px-3">
                         <a class="text-blue-600 hover:underline"
                            wire:click.prevent="openSupplierDetail({{ $s->id }})">
                             {{ $s->name }}
                         </a>
                     </td>
-                    <td class="py-2 px-3">{{ $s->code }}</td>
+                    <td class="py-2 px-3">{{ $s->contact_person_name }}</td>
                     <td class="py-2 px-3">{{ $s->email }}</td>
                     <td class="py-2 px-3">{{ $s->phone }}</td>
                     <td class="py-2 px-3 text-right">
@@ -40,7 +42,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="py-6 text-center text-neutral-500">{{ __('procflow::suppliers.table.empty') }}</td></tr>
+                <tr><td colspan="6" class="py-6 text-center text-neutral-500">{{ __('procflow::suppliers.table.empty') }}</td></tr>
             @endforelse
             </tbody>
         </table>

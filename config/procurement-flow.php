@@ -9,6 +9,20 @@ return [
 
     'enabled' => true,
 
+    // Mail settings for the procurement package
+    'mail' => [
+        // Override the sender for procurement mails (optional)
+        // If 'address' is empty or not set, Laravel's global mail.from is used.
+        'from' => [
+            // When true and a requester exists with an email, the requester will be used as the From address
+            // Precedence: requester (when enabled) > package from > global mail.from
+            'use_requester' => env('PROCUREMENT_MAIL_FROM_USE_REQUESTER', false),
+
+            'address' => env('PROCUREMENT_MAIL_FROM_ADDRESS'),
+            'name' => env('PROCUREMENT_MAIL_FROM_NAME', 'Procurement'),
+        ],
+    ],
+
     // GHS pictogram image configuration (package default)
     'ghs' => [
         // Storage disk name for GHS label images

@@ -11,6 +11,7 @@ return [
     'info' => 'Information',
     'info_po' => 'PO',
     'info_material' => 'Material',
+    'info_ordered_base' => 'Ordered (base)',
     'info_remaining_base' => 'Remaining (base)',
     'qty_received' => 'Quantity Received',
     'reference_number' => 'Reference No. (optional)',

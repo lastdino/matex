@@ -7,6 +7,15 @@ return [
     'badges' => [
         'lot' => 'Lot',
     ],
+    'sections' => [
+        'basic' => 'Basic Information',
+        'units_conversion' => 'Units & Conversion',
+        'stock_category_supplier' => 'Stock, Tax, Preferred Supplier',
+        'ordering_pricing' => 'Ordering & Pricing',
+        'manufacturing_storage' => 'Manufacturer & Storage',
+        'safety_regulation' => 'Safety (Regulations, GHS, PPE)',
+        'options' => 'Options',
+    ],
     'filters' => [
         'search_placeholder' => 'Search SKU or Name',
         'category' => 'Category',
@@ -27,6 +36,7 @@ return [
         'processing' => 'Processing...',
     ],
     'table' => [
+        'ghs' => 'GHS',
         'sku' => 'SKU',
         'name' => 'Name',
         'manufacturer' => 'Manufacturer',
@@ -39,6 +49,7 @@ return [
         'actions' => 'Actions',
         'no_materials' => 'No materials',
         'not_set' => 'Not set',
+        'na' => 'N/A',
     ],
     'modal' => [
         'material_form_title_new' => 'New Material',
@@ -68,6 +79,7 @@ return [
         'storage_location' => 'Storage Location',
         'applicable_regulation' => 'Applicable Regulation',
         'ghs_mark' => 'GHS Mark',
+        'ghs_no_keys' => 'No GHS keys configured.',
         'protective_equipment' => 'Protective Equipment',
         'manage_by_lot_enable' => 'Enable lot management',
         'separate_shipping' => 'Separate Shipping Applies',

@@ -79,17 +79,7 @@ class Index extends Component
         ],
     ];
 
-    // Detail modal state
-    public bool $showPoDetailModal = false;
-    public ?int $selectedPoId = null;
-    public ?array $poDetail = null;
-    /**
-     * Editing buffer for per-line expected_date in the detail modal.
-     * Keyed by purchase_order_item id => 'Y-m-d' string or null.
-     *
-     * @var array<int, string|null>
-     */
-    public array $itemExpectedDates = [];
+    // Detail modal removed — use Show page instead
 
     public function getOrdersProperty()
     {
@@ -1439,48 +1429,7 @@ class Index extends Component
         }
     }
 
-    // Detail modal helpers
-    public function openPoDetail(int $id): void
-    {
-        $this->selectedPoId = $id;
-        $this->loadPoDetail();
-        $this->showPoDetailModal = true;
-    }
-
-    public function closePoDetail(): void
-    {
-        $this->showPoDetailModal = false;
-        $this->selectedPoId = null;
-        $this->poDetail = null;
-    }
-
-    public function loadPoDetail(): void
-    {
-        if (! $this->selectedPoId) {
-            $this->poDetail = null;
-            return;
-        }
-
-        /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrder $model */
-        $model = \Lastdino\ProcurementFlow\Models\PurchaseOrder::query()
-            ->with([
-                'supplier',
-                'items.material',
-                'receivings.items',
-                'receivings.items.material',
-                'receivings.items.purchaseOrderItem',
-                'requester',
-            ])
-            ->findOrFail($this->selectedPoId);
-        $this->poDetail = $model->toArray();
-
-        // Initialize editing buffer for expected dates
-        $this->itemExpectedDates = [];
-        foreach ($model->items as $it) {
-            /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrderItem $it */
-            $this->itemExpectedDates[$it->id] = $it->expected_date?->format('Y-m-d');
-        }
-    }
+    // Detail modal helpers removed — detail is handled on the Show page
 
     /**
      * Cancel a draft Purchase Order. Only allowed when current status is Draft.
@@ -1504,10 +1453,7 @@ class Index extends Component
         $po->status = PurchaseOrderStatus::Canceled;
         $po->save();
 
-        // If the canceled PO is currently opened in the detail modal, refresh it
-        if ($this->selectedPoId === $po->id) {
-            $this->loadPoDetail();
-        }
+        // Detail modal removed; no in-place refresh needed
 
         // Refresh the list by resetting the page to trigger re-query
         $this->resetPage();
@@ -1610,9 +1556,7 @@ class Index extends Component
             $po->save();
         }
 
-        if ($this->selectedPoId === $po->id) {
-            $this->loadPoDetail();
-        }
+        // Detail modal removed; no in-place refresh needed
 
         $this->dispatch('toast', type: 'success', message: __('procflow::po.detail.item_canceled_toast'));
     }
@@ -1641,49 +1585,7 @@ class Index extends Component
         $po->save();
     }
 
-    /**
-     * Update a single Purchase Order Item expected_date from the detail modal.
-     */
-    public function updateItemExpectedDate(int $itemId): void
-    {
-        if (! $this->selectedPoId) {
-            return;
-        }
-
-        $date = $this->itemExpectedDates[$itemId] ?? null;
-
-        // Validate date format (nullable|date)
-        $this->validate([
-            'itemExpectedDates.' . $itemId => ['nullable', 'date'],
-        ]);
-
-        /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrder $po */
-        $po = \Lastdino\ProcurementFlow\Models\PurchaseOrder::query()
-            ->with('items')
-            ->findOrFail($this->selectedPoId);
-
-        // Do not allow changes on closed POs
-        $status = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft');
-        if ($status === 'closed') {
-            abort(403, 'Cannot edit items on a closed purchase order.');
-        }
-
-        /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrderItem|null $item */
-        $item = $po->items->firstWhere('id', $itemId);
-        if (! $item) {
-            abort(404, 'Item not found for this purchase order.');
-        }
-
-        // Persist
-        $item->expected_date = $date ? \Carbon\Carbon::parse($date) : null;
-        $item->save();
-
-        // Refresh detail data to reflect changes
-        $this->loadPoDetail();
-
-        // Optional: flash message for UX
-        session()->flash('po_item_saved_' . $itemId, 'Expected date updated');
-    }
+    // Item expected date editing moved to Show component
 
     protected function resetPoForm(): void
     {

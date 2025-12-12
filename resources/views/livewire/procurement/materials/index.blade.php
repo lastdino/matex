@@ -24,7 +24,7 @@
         <table class="min-w-full text-sm">
             <thead>
                 <tr class="text-left text-neutral-500">
-                    <th class="py-2 px-3 w-28">GHS</th>
+                    <th class="py-2 px-3 w-28">{{ __('procflow::materials.table.ghs') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::materials.table.sku') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::materials.table.name') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::materials.filters.category') }}</th>
@@ -50,11 +50,11 @@
                             @if(!empty($urls))
                                 <div class="flex flex-wrap items-center gap-1">
                                     @foreach($urls as $u)
-                                        <img src="{{ $u }}" alt="GHS" class="w-6 h-6 object-contain" loading="lazy">
+                                        <img src="{{ $u }}" alt="{{ __('procflow::materials.form.ghs_mark') }}" class="w-6 h-6 object-contain" loading="lazy">
                                     @endforeach
                                 </div>
                             @else
-                                <div class="w-10 h-10 bg-neutral-100 dark:bg-neutral-800 text-[10px] grid place-items-center text-neutral-400">N/A</div>
+                                <div class="w-10 h-10 bg-neutral-100 dark:bg-neutral-800 text-[10px] grid place-items-center text-neutral-400">{{ __('procflow::materials.table.na') }}</div>
                             @endif
                         </td>
                         <td class="py-2 px-3">{{ $m->sku }}</td>
@@ -72,7 +72,7 @@
                                 @if($m->manage_by_lot)
                                     <flux:badge size="sm" color="purple">{{ __('procflow::materials.badges.lot') }}</flux:badge>
                                 @endif
-                                @php($hasSds = (bool) $m->getFirstMedia('sds'))
+                                @php($hasSds = \Illuminate\Support\Facades\Schema::hasTable('media') ? (bool) $m->getFirstMedia('sds') : false)
                                     <flux:badge size="sm" color="{{ $hasSds ? 'emerald' : 'zinc' }}">{{ $hasSds ? __('procflow::materials.sds.badge_has') : __('procflow::materials.sds.badge_none') }}</flux:badge>
                             </div>
 
@@ -96,7 +96,7 @@
                                     <flux:navmenu.item  href="{{ route('procurement.materials.issue', ['material' => $m->id]) }}" icon="arrow-left-start-on-rectangle">{{ __('procflow::materials.buttons.issue') }}</flux:navmenu.item>
                                     <flux:navmenu.item href="{{ route('procurement.settings.labels') }}" icon="qr-code">{{ __('procflow::materials.buttons.shelf_labels') }}</flux:navmenu.item>
                                     <flux:menu.item icon="qr-code" wire:click="openTokenModal({{ $m->id }})">{{ __('procflow::materials.buttons.issue_token') }}</flux:menu.item>
-                                    @php($sds = $m->getFirstMedia('sds'))
+                                    @php($sds = \Illuminate\Support\Facades\Schema::hasTable('media') ? $m->getFirstMedia('sds') : null)
                                     @if($sds)
                                         @php($dl = URL::temporarySignedRoute('procurement.materials.sds.download', now()->addMinutes(10), ['material' => $m->id]))
                                         <flux:menu.item icon="document-text" href="{{ $dl }}" target="_blank">{{ __('procflow::materials.sds.download') }}</flux:menu.item>
@@ -119,179 +119,153 @@
         <div class="w-full md:w-[56rem] max-w-full">
             <h3 class="text-lg font-semibold mb-3">{{ $editingMaterialId ? __('procflow::materials.modal.material_form_title_edit') : __('procflow::materials.modal.material_form_title_new') }}</h3>
 
-            <div class="space-y-3">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.sku') }}</label>
-                        <input class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.sku" />
-                        @error('materialForm.sku') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.name') }}</label>
-                        <input class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.name" />
-                        @error('materialForm.name') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.unit_stock') }}</label>
-                        <input class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.unit_stock" />
-                        @error('materialForm.unit_stock') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.unit_order') }}</label>
-                        <input class="w-full border rounded p-2 bg-white dark:bg-neutral-900" placeholder="{{ __('procflow::materials.form.unit_order_placeholder') }}" wire:model.live="materialForm.unit_purchase_default" />
-                        @error('materialForm.unit_purchase_default') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.conversion') }}</label>
-                        <input type="number" step="0.000001" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" placeholder="{{ __('procflow::materials.form.conversion_placeholder') }}" wire:model.live="materialForm.conversion_factor_purchase_to_stock" />
-                        @error('materialForm.conversion_factor_purchase_to_stock') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.safety_stock') }}</label>
-                        <input type="number" step="0.000001" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.safety_stock" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.current_stock') }}</label>
-                        <input type="number" step="0.000001" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.current_stock" />
-                    </div>
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.tax_code') }}</label>
-                        <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.tax_code">
-                            @foreach($this->taxCodes as $code)
-                                <option value="{{ $code }}">{{ ucfirst($code) }}</option>
-                            @endforeach
-                        </select>
-                        @error('materialForm.tax_code') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.category') }}</label>
-                        <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.category_id">
-                            <option value="">-</option>
-                            @foreach($this->categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.preferred_supplier') }}</label>
-                        <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.preferred_supplier_id">
-                            <option value="">-</option>
-                            @foreach($this->suppliers as $s)
-                                <option value="{{ $s->id }}">{{ $s->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('materialForm.preferred_supplier_id') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-
-                {{-- Ordering Constraints: MOQ & Pack Size --}}
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.moq') }}</label>
-                        <input type="number" step="0.000001" min="0" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.moq" />
-                        @error('materialForm.moq') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                    </div>
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.pack_size') }}</label>
-                        <input type="number" step="0.000001" min="0" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.pack_size" />
-                        @error('materialForm.pack_size') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.manufacturer_name') }}</label>
-                        <input class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.manufacturer_name" />
-                    </div>
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.storage_location') }}</label>
-                        <input class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.storage_location" />
-                    </div>
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.unit_price') }}</label>
-                        <input type="number" step="0.01" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.unit_price" />
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.applicable_regulation') }}</label>
-                        <input class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.applicable_regulation" />
-                    </div>
-                    <div class="md:col-span-2">
-                        <label class="block text-sm text-neutral-600 mb-1">GHS</label>
-                        @php($ghsCfg = (array) (config('procurement-flow.ghs') ?? config('procurement_flow.ghs') ?? []))
-                        @php($ghsMap = (array) ($ghsCfg['map'] ?? []))
-                        @php($ghsKeys = array_keys($ghsMap))
-                        @php($disk = (string) ($ghsCfg['disk'] ?? 'public'))
-                        @php($dir = trim((string) ($ghsCfg['directory'] ?? 'ghs_labels'), '/'))
-                        @php($placeholder = isset($ghsCfg['placeholder']) ? (string) $ghsCfg['placeholder'] : null)
-                        @if(!empty($ghsKeys))
-                            <div class="flex flex-wrap gap-2 py-2">
-                                @foreach($ghsKeys as $key)
-                                    @php($filename = $ghsMap[$key] ?? null)
-                                    @php($imgUrl = null)
-                                    @if(is_string($filename) && $filename !== '')
-                                        @php($path = $dir.'/'.ltrim($filename, '/'))
-                                        @if(\Illuminate\Support\Facades\Storage::disk($disk)->exists($path))
-                                            @php($imgUrl = \Illuminate\Support\Facades\Storage::disk($disk)->url($path))
-                                        @endif
-                                    @endif
-                                    @if(!$imgUrl && is_string($placeholder) && $placeholder !== '')
-                                        @php($phPath = $dir.'/'.ltrim($placeholder, '/'))
-                                        @if(\Illuminate\Support\Facades\Storage::disk($disk)->exists($phPath))
-                                            @php($imgUrl = \Illuminate\Support\Facades\Storage::disk($disk)->url($phPath))
-                                        @endif
-                                    @endif
-                                    <label class="inline-flex items-center gap-2 px-2 py-1 rounded border bg-white dark:bg-neutral-900">
-                                        <input type="checkbox" class="h-4 w-4" value="{{ $key }}" wire:model.live="materialForm.ghs_mark_options">
-                                        @if($imgUrl)
-                                            <img src="{{ $imgUrl }}" alt="{{ $key }}" class="w-6 h-6 object-contain" loading="lazy">
-                                        @else
-                                            <span class="inline-block w-6 h-6 rounded bg-neutral-100 dark:bg-neutral-800"></span>
-                                        @endif
-                                        <span class="text-sm">{{ $key }}</span>
-                                    </label>
+            <div class="space-y-6">
+                <div class="space-y-3">
+                    <flux:heading size="sm">{{ __('procflow::materials.sections.basic') }}</flux:heading>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <flux:input wire:model="materialForm.sku" label="{{ __('procflow::materials.form.sku') }}"/>
+                        <flux:input wire:model="materialForm.name" label="{{ __('procflow::materials.form.name') }}"/>
+                        <flux:input wire:model="materialForm.manufacturer_name" label="{{ __('procflow::materials.form.manufacturer_name') }}"/>
+                        <flux:input wire:model="materialForm.storage_location" label="{{ __('procflow::materials.form.storage_location') }}"/>
+                        <flux:field>
+                            <flux:label>{{ __('procflow::materials.form.category') }}</flux:label>
+                            <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model="materialForm.category_id">
+                                <option value="">-</option>
+                                @foreach($this->categories as $cat)
+                                    <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                                 @endforeach
-                            </div>
-                            @error('materialForm.ghs_mark_options') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                            @error('materialForm.ghs_mark_options.*') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
-                        @else
-                            <div class="text-sm text-neutral-500">No GHS keys configured.</div>
-                        @endif
+                            </select>
+                            <flux:error name="materialForm.category_id" />
+                        </flux:field>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.protective_equipment') }}</label>
-                        <input class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="materialForm.protective_equipment" />
+                <flux:separator />
+
+                <div class="space-y-3">
+                    <flux:heading size="sm">{{ __('procflow::materials.sections.units_conversion') }}</flux:heading>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <flux:input wire:model="materialForm.unit_stock" label="{{ __('procflow::materials.form.unit_stock') }}"/>
+                        <flux:input placeholder="{{ __('procflow::materials.form.unit_order_placeholder') }}" wire:model="materialForm.unit_purchase_default" label="{{ __('procflow::materials.form.unit_order') }}"/>
+                        <flux:input type="number" step="0.000001" placeholder="{{ __('procflow::materials.form.conversion_placeholder') }}" wire:model="materialForm.conversion_factor_purchase_to_stock" label="{{ __('procflow::materials.form.conversion') }}"/>
+                        <flux:input type="number" step="0.000001" wire:model="materialForm.safety_stock" label="{{ __('procflow::materials.form.safety_stock') }}"/>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div class="md:col-span-1 flex items-center gap-2">
-                        <input id="manage_by_lot" type="checkbox" class="h-4 w-4" wire:model.live="materialForm.manage_by_lot" />
-                        <label for="manage_by_lot" class="text-sm text-neutral-700">{{ __('procflow::materials.form.manage_by_lot_enable') }}</label>
+                <flux:separator />
+
+                <div class="space-y-3">
+                    <flux:heading size="sm">{{ __('procflow::materials.sections.stock_category_supplier') }}</flux:heading>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <flux:input type="number" step="0.000001" wire:model="materialForm.current_stock" label="{{ __('procflow::materials.form.current_stock') }}"/>
+
+                        <flux:field >
+                            <flux:label>{{ __('procflow::materials.form.tax_code') }}</flux:label>
+                            <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model="materialForm.tax_code">
+                                @foreach($this->taxCodes as $code)
+                                    <option value="{{ $code }}">{{ ucfirst($code) }}</option>
+                                @endforeach
+                            </select>
+                            <flux:error name="materialForm.tax_code" />
+                        </flux:field>
+
+                        <flux:field class="md:col-span-2">
+                            <flux:label>{{ __('procflow::materials.form.preferred_supplier') }}</flux:label>
+                            <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model="materialForm.preferred_supplier_id">
+                                <option value="">-</option>
+                                @foreach($this->suppliers as $s)
+                                    <option value="{{ $s->id }}">{{ $s->name }}</option>
+                                @endforeach
+                            </select>
+                            <flux:error name="materialForm.preferred_supplier_id" />
+                        </flux:field>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div class="md:col-span-1 flex items-center gap-2">
-                        <input id="separate_shipping" type="checkbox" class="h-4 w-4" wire:model.live="materialForm.separate_shipping" />
-                        <label for="separate_shipping" class="text-sm text-neutral-700">{{ __('procflow::materials.form.separate_shipping') }}</label>
+                <flux:separator />
+
+                <div class="space-y-3">
+                    <flux:heading size="sm">{{ __('procflow::materials.sections.ordering_pricing') }}</flux:heading>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <flux:input type="number" step="0.000001" min="0" wire:model="materialForm.moq" label="{{ __('procflow::materials.form.moq') }}"/>
+                        <flux:input type="number" step="0.01" wire:model="materialForm.unit_price" label="{{ __('procflow::materials.form.unit_price') }}"/>
                     </div>
-                    <div class="md:col-span-1">
-                        <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::materials.form.shipping_fee_per_order') }}</label>
-                        <input type="number" step="0.01" min="0" class="w-full border rounded p-2 bg-white dark:bg-neutral-900 disabled:opacity-60" wire:model.live="materialForm.shipping_fee_per_order" :disabled="!$wire.materialForm.separate_shipping" />
-                        <div class="text-xs text-neutral-500 mt-1">{{ __('procflow::materials.form.shipping_fee_help') }}</div>
-                        @error('materialForm.shipping_fee_per_order') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
+                </div>
+
+                <flux:separator />
+
+                <div class="space-y-3">
+                    <flux:heading size="sm">{{ __('procflow::materials.sections.safety_regulation') }}</flux:heading>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <flux:textarea rows="2" label="{{ __('procflow::materials.form.applicable_regulation') }}" wire:model="materialForm.applicable_regulation"/>
+                        <div class="md:col-span-2">
+                            <flux:field >
+                                <flux:label>{{ __('procflow::materials.form.ghs_mark') }}</flux:label>
+                                @php($ghsCfg = (array) (config('procurement-flow.ghs') ?? config('procurement_flow.ghs') ?? []))
+                                @php($ghsMap = (array) ($ghsCfg['map'] ?? []))
+                                @php($ghsKeys = array_keys($ghsMap))
+                                @php($disk = (string) ($ghsCfg['disk'] ?? 'public'))
+                                @php($dir = trim((string) ($ghsCfg['directory'] ?? 'ghs_labels'), '/'))
+                                @php($placeholder = isset($ghsCfg['placeholder']) ? (string) $ghsCfg['placeholder'] : null)
+                                @if(!empty($ghsKeys))
+                                    <div class="flex flex-wrap gap-2 py-2">
+                                        @foreach($ghsKeys as $key)
+                                            @php($filename = $ghsMap[$key] ?? null)
+                                            @php($imgUrl = null)
+                                            @if(is_string($filename) && $filename !== '')
+                                                @php($path = $dir.'/'.ltrim($filename, '/'))
+                                                @if(\Illuminate\Support\Facades\Storage::disk($disk)->exists($path))
+                                                    @php($imgUrl = \Illuminate\Support\Facades\Storage::disk($disk)->url($path))
+                                                @endif
+                                            @endif
+                                            @if(!$imgUrl && is_string($placeholder) && $placeholder !== '')
+                                                @php($phPath = $dir.'/'.ltrim($placeholder, '/'))
+                                                @if(\Illuminate\Support\Facades\Storage::disk($disk)->exists($phPath))
+                                                    @php($imgUrl = \Illuminate\Support\Facades\Storage::disk($disk)->url($phPath))
+                                                @endif
+                                            @endif
+                                            <label class="inline-flex items-center gap-2 px-2 py-1 rounded border bg-white dark:bg-neutral-900">
+                                                <input type="checkbox" class="h-4 w-4" value="{{ $key }}" wire:model="materialForm.ghs_mark_options">
+                                                @if($imgUrl)
+                                                    <img src="{{ $imgUrl }}" alt="{{ $key }}" class="w-6 h-6 object-contain" loading="lazy">
+                                                @else
+                                                    <span class="inline-block w-6 h-6 rounded bg-neutral-100 dark:bg-neutral-800"></span>
+                                                @endif
+                                                <span class="text-sm">{{ $key }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                    @error('materialForm.ghs_mark_options') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
+                                    @error('materialForm.ghs_mark_options.*') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
+                                @else
+                                    <div class="text-sm text-neutral-500">{{ __('procflow::materials.form.ghs_no_keys') }}</div>
+                                @endif
+                            </flux:field>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <flux:input wire:model="materialForm.protective_equipment" label="{{ __('procflow::materials.form.protective_equipment') }}"/>
+                    </div>
+                </div>
+
+                <flux:separator />
+
+                <div class="space-y-3">
+                    <flux:heading size="sm">{{ __('procflow::materials.sections.options') }}</flux:heading>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="md:col-span-1 flex items-center gap-2">
+                            <flux:switch wire:model="materialForm.manage_by_lot" label="{{ __('procflow::materials.form.manage_by_lot_enable') }}" align="left"/>
+
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="md:col-span-1 flex items-center gap-2">
+                            <flux:switch wire:model.live="materialForm.separate_shipping" label="{{ __('procflow::materials.form.separate_shipping') }}" align="left"/>
+                        </div>
+                        <div>
+                            <flux:input type="number" step="0.01" min="0" class="disabled:opacity-60" wire:model="materialForm.shipping_fee_per_order" :disabled="! $this->materialForm['separate_shipping']" label="{{ __('procflow::materials.form.shipping_fee_per_order') }}"/>
+                            <flux:text class="text-xs mt-1">{{ __('procflow::materials.form.shipping_fee_help') }}</flux:text>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -332,7 +306,7 @@
             <h3 class="text-lg font-semibold mb-3">{{ __('procflow::materials.sds.title') }}</h3>
             <div class="space-y-4">
                 @if($sdsMaterialId)
-                    @php($current = optional(\Lastdino\ProcurementFlow\Models\Material::find($sdsMaterialId))->getFirstMedia('sds'))
+                    @php($current = \Illuminate\Support\Facades\Schema::hasTable('media') ? optional(\Lastdino\ProcurementFlow\Models\Material::find($sdsMaterialId))->getFirstMedia('sds') : null)
                     @if($current)
                         <div class="flex items-center justify-between p-3 rounded bg-neutral-100 dark:bg-neutral-800">
                             <div class="flex items-center gap-3">
