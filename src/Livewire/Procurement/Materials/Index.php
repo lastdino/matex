@@ -5,30 +5,45 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\Materials;
 
 use Illuminate\Contracts\View\View;
-use Livewire\Component;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Lastdino\ProcurementFlow\Models\Material;
 use Lastdino\ProcurementFlow\Models\MaterialCategory;
-use Illuminate\Validation\Rule;
-use Lastdino\ProcurementFlow\Support\Tables;
+use Lastdino\ProcurementFlow\Models\OrderingToken;
 use Lastdino\ProcurementFlow\Models\UnitConversion;
 use Lastdino\ProcurementFlow\Support\Settings;
-use Illuminate\Support\Str;
-use Lastdino\ProcurementFlow\Models\OrderingToken;
+use Lastdino\ProcurementFlow\Support\Tables;
 use Livewire\Attributes\Validate;
+use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 
 class Index extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
+
     public string $q = '';
+
     public ?int $category_id = null;
+
+    public function updatingQ(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCategoryId(): void
+    {
+        $this->resetPage();
+    }
 
     // Inline MOQ/Pack management has been removed. Use modals for create/edit instead.
 
     // Modal state for create/edit Material
     public bool $showMaterialModal = false;
+
     public ?int $editingMaterialId = null;
+
     /**
      * @var array{
      *   sku:?string,name:?string,unit_stock:?string,unit_purchase_default:?string|null,safety_stock:?string|float|int|null,
@@ -85,7 +100,9 @@ class Index extends Component
 
     // Ordering Token issuance modal state
     public bool $showTokenModal = false;
+
     public ?int $tokenMaterialId = null;
+
     /**
      * @var array{token:?string, material_id:?int, unit_purchase:?string|null, default_qty:?float|int|null, enabled:bool, expires_at:?string|null}
      */
@@ -100,7 +117,9 @@ class Index extends Component
 
     // SDS 管理モーダル
     public bool $showSdsModal = false;
+
     public ?int $sdsMaterialId = null;
+
     #[Validate('nullable|file|mimetypes:application/pdf|max:20480')] // 20MB
     public ?TemporaryUploadedFile $sdsUpload = null;
 
@@ -108,6 +127,7 @@ class Index extends Component
     {
         $q = (string) $this->q;
         $cat = $this->category_id;
+
         return Material::query()
             ->when(\Illuminate\Support\Facades\Schema::hasTable('media'), fn ($qrb) => $qrb->with('media'))
             ->withSum('lots', 'qty_on_hand')
@@ -119,8 +139,7 @@ class Index extends Component
             })
             ->when($cat, fn ($qrb) => $qrb->where('category_id', $cat))
             ->orderBy('sku')
-            ->limit(100)
-            ->get();
+            ->paginate(20);
     }
 
     // Removed inline rules/fillEdit/saveEdits methods
@@ -138,7 +157,7 @@ class Index extends Component
         $m = Material::query()->findOrFail($id);
         $this->editingMaterialId = $m->id;
         $conversionFactor = null;
-        if (!empty($m->unit_purchase_default) && !empty($m->unit_stock)) {
+        if (! empty($m->unit_purchase_default) && ! empty($m->unit_stock)) {
             /** @var UnitConversion|null $conv */
             $conv = UnitConversion::query()
                 ->where('material_id', $m->id)
@@ -208,8 +227,8 @@ class Index extends Component
     protected function tokenRules(): array
     {
         return [
-            'tokenForm.token' => ['required', 'string', 'max:255', 'unique:' . Tables::name('ordering_tokens') . ',token'],
-            'tokenForm.material_id' => ['required', 'integer', 'exists:' . Tables::name('materials') . ',id'],
+            'tokenForm.token' => ['required', 'string', 'max:255', 'unique:'.Tables::name('ordering_tokens').',token'],
+            'tokenForm.material_id' => ['required', 'integer', 'exists:'.Tables::name('materials').',id'],
             'tokenForm.unit_purchase' => ['nullable', 'string', 'max:32'],
             'tokenForm.default_qty' => ['nullable', 'numeric', 'gt:0'],
             'tokenForm.enabled' => ['boolean'],
@@ -264,7 +283,7 @@ class Index extends Component
             'materialForm.unit_stock' => ['required', 'string', 'max:32'],
             'materialForm.unit_purchase_default' => ['nullable', 'string', 'max:32'],
             'materialForm.safety_stock' => ['nullable', 'numeric', 'min:0'],
-            'materialForm.category_id' => ['nullable', 'integer', 'exists:' . Tables::name('material_categories') . ',id'],
+            'materialForm.category_id' => ['nullable', 'integer', 'exists:'.Tables::name('material_categories').',id'],
             'materialForm.current_stock' => ['nullable', 'numeric', 'min:0'],
             'materialForm.manufacturer_name' => ['nullable', 'string', 'max:255'],
             'materialForm.storage_location' => ['nullable', 'string', 'max:255'],
@@ -276,7 +295,7 @@ class Index extends Component
             'materialForm.protective_equipment' => ['nullable', 'string', 'max:255'],
             'materialForm.unit_price' => ['nullable', 'numeric', 'min:0'],
             'materialForm.conversion_factor_purchase_to_stock' => ['nullable', 'numeric', 'gt:0'],
-            'materialForm.preferred_supplier_id' => ['nullable', 'integer', 'exists:' . Tables::name('suppliers') . ',id'],
+            'materialForm.preferred_supplier_id' => ['nullable', 'integer', 'exists:'.Tables::name('suppliers').',id'],
             // Shipping fields
             'materialForm.separate_shipping' => ['boolean'],
             'materialForm.shipping_fee_per_order' => ['nullable', 'numeric', 'min:0'],
@@ -302,11 +321,13 @@ class Index extends Component
         array_unshift($keys, 'standard');
         // unique & preserve order
         $keys = array_values(array_unique($keys));
+
         return $keys;
     }
 
     /**
      * Blade から参照しやすいように公開のコンピューテッドとしても提供。
+     *
      * @return array<int,string>
      */
     public function getTaxCodesProperty(): array
@@ -414,7 +435,9 @@ class Index extends Component
 
     public function render(): View
     {
-        return view('procflow::livewire.procurement.materials.index');
+        return view('procflow::livewire.procurement.materials.index', [
+            'materials' => $this->materials,
+        ]);
     }
 
     // --- SDS 管理 ---

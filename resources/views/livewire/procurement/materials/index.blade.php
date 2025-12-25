@@ -123,6 +123,10 @@
         </table>
     </div>
 
+    <div class="mt-4">
+        {{ $this->materials->links() }}
+    </div>
+
     {{-- Modal for create/edit material (Flux UI) --}}
     <flux:modal wire:model.self="showMaterialModal" name="material-form">
         <div class="w-full md:w-[56rem] max-w-full">
