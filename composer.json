@@ -19,7 +19,7 @@
     "require": {
         "php": "^8.0",
         "illuminate/support": "^12.0",
-        "lastdino/approval-flow": "^0.1",
+        "lastdino/approval-flow": "^0.2",
         "tuncaybahadir/quar": "^1.7",
         "lastdino/chrome-laravel": "^0.1",
         "spatie/laravel-medialibrary": "^11.0",
