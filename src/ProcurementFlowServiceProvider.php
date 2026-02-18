@@ -13,8 +13,10 @@ use Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders\Show as PoShowC
 use Lastdino\ProcurementFlow\Livewire\Procurement\Suppliers\Index as SuppliersIndexComponent;
 use Lastdino\ProcurementFlow\Models\Receiving;
 use Lastdino\ProcurementFlow\Models\ReceivingItem;
+use Lastdino\ProcurementFlow\Models\StockMovement;
 use Lastdino\ProcurementFlow\Observers\ReceivingItemObserver;
 use Lastdino\ProcurementFlow\Observers\ReceivingObserver;
+use Lastdino\ProcurementFlow\Observers\StockMovementObserver;
 use Livewire\Livewire;
 
 class ProcurementFlowServiceProvider extends ServiceProvider
@@ -71,6 +73,7 @@ class ProcurementFlowServiceProvider extends ServiceProvider
         // Register model observers
         Receiving::observe(ReceivingObserver::class);
         ReceivingItem::observe(ReceivingItemObserver::class);
+        StockMovement::observe(StockMovementObserver::class);
     }
 
     // custom methods for livewire components

@@ -27,6 +27,8 @@ class Material extends Model implements HasMedia
         'manage_by_lot',
         // activation
         'is_active',
+        // monox integration
+        'sync_to_monox',
     ];
 
     public function getTable()
@@ -47,6 +49,7 @@ class Material extends Model implements HasMedia
             'shipping_fee_per_order' => 'decimal:2',
             'manage_by_lot' => 'boolean',
             'is_active' => 'boolean',
+            'sync_to_monox' => 'boolean',
         ];
     }
 

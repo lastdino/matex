@@ -53,4 +53,10 @@ return [
         'placeholder' => null,
     ],
 
+    // monox integration settings
+    'monox' => [
+        'base_url' => env('PROCUREMENT_MONOX_API_BASE_URL', env('MONOX_API_BASE_URL')),
+        'api_key' => env('PROCUREMENT_MONOX_API_KEY', env('MONOX_API_KEY')),
+    ],
+
 ];

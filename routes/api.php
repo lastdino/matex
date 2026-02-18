@@ -11,4 +11,6 @@ Route::group([
         ->name('procurement.api.stock-in');
     Route::post('/stock-out', [StockMovementController::class, 'stockOut'])
         ->name('procurement.api.stock-out');
+    Route::get('/stock-movements', [StockMovementController::class, 'history'])
+        ->name('procurement.api.stock-movements');
 });

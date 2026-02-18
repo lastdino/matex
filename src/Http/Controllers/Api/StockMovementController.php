@@ -25,6 +25,7 @@ class StockMovementController extends Controller
             'qty' => 'required|numeric|min:0.000001',
             'reason' => 'nullable|string',
             'occurred_at' => 'nullable|date',
+            'is_external_sync' => 'nullable|boolean',
         ]);
 
         $material = Material::where('sku', $validated['sku'])->first();
@@ -51,6 +52,7 @@ class StockMovementController extends Controller
                 'unit' => $material->unit_stock,
                 'occurred_at' => $validated['occurred_at'] ?? now(),
                 'reason' => $validated['reason'] ?? 'API Stock In',
+                'is_external_sync' => (bool) ($validated['is_external_sync'] ?? false),
                 'causer_type' => $request->user() ? get_class($request->user()) : null,
                 'causer_id' => $request->user() ? $request->user()->getKey() : null,
             ]);
@@ -82,6 +84,7 @@ class StockMovementController extends Controller
             'qty' => 'required|numeric|min:0.000001',
             'reason' => 'nullable|string',
             'occurred_at' => 'nullable|date',
+            'is_external_sync' => 'nullable|boolean',
         ]);
 
         $material = Material::where('sku', $validated['sku'])->first();
@@ -119,6 +122,7 @@ class StockMovementController extends Controller
                 'unit' => $material->unit_stock,
                 'occurred_at' => $validated['occurred_at'] ?? now(),
                 'reason' => $validated['reason'] ?? 'API Stock Out',
+                'is_external_sync' => (bool) ($validated['is_external_sync'] ?? false),
                 'causer_type' => $request->user() ? get_class($request->user()) : null,
                 'causer_id' => $request->user() ? $request->user()->getKey() : null,
             ]);
@@ -137,5 +141,58 @@ class StockMovementController extends Controller
                 'new_material_stock' => $material->current_stock,
             ]);
         });
+    }
+
+    /**
+     * Stock Movement History (入出庫履歴参照)
+     */
+    public function history(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'sku' => 'required|string',
+            'lot_no' => 'nullable|string',
+            'limit' => 'nullable|integer|min:1|max:100',
+        ]);
+
+        $material = Material::where('sku', $validated['sku'])->first();
+
+        if (! $material) {
+            return response()->json(['message' => 'Material not found for SKU: '.$validated['sku']], 404);
+        }
+
+        $query = StockMovement::with('lot')
+            ->where('material_id', $material->id)
+            ->latest('occurred_at')
+            ->latest('id');
+
+        if (! empty($validated['lot_no'])) {
+            $lot = MaterialLot::where('material_id', $material->id)
+                ->where('lot_no', $validated['lot_no'])
+                ->first();
+
+            if (! $lot) {
+                return response()->json(['message' => 'Lot not found: '.$validated['lot_no'].' for SKU: '.$validated['sku']], 404);
+            }
+
+            $query->where('lot_id', $lot->id);
+        }
+
+        $limit = $validated['limit'] ?? 50;
+        $movements = $query->limit((int) $limit)->get();
+
+        return response()->json([
+            'sku' => $material->sku,
+            'name' => $material->name,
+            'current_stock' => $material->current_stock,
+            'history' => $movements->map(fn ($m) => [
+                'type' => $m->type,
+                'qty' => $m->qty_base,
+                'unit' => $m->unit,
+                'lot_no' => $m->lot?->lot_no,
+                'occurred_at' => $m->occurred_at?->toDateTimeString(),
+                'reason' => $m->reason,
+                'source_type' => $m->source_type,
+            ]),
+        ]);
     }
 }

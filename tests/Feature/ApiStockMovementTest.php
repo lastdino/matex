@@ -154,3 +154,76 @@ test('returns 422 for insufficient stock in lot', function () {
     $response->assertStatus(422)
         ->assertJsonFragment(['message' => 'Insufficient stock in lot']);
 });
+
+test('can get stock movement history via api', function () {
+    $material = Material::create([
+        'sku' => 'SKU-HISTORY',
+        'name' => 'History Material',
+        'unit_stock' => 'kg',
+        'current_stock' => 100,
+        'is_active' => true,
+    ]);
+
+    $lot1 = MaterialLot::create([
+        'material_id' => $material->id,
+        'lot_no' => 'LOT-1',
+        'qty_on_hand' => 50,
+    ]);
+
+    $lot2 = MaterialLot::create([
+        'material_id' => $material->id,
+        'lot_no' => 'LOT-2',
+        'qty_on_hand' => 50,
+    ]);
+
+    // Create some history
+    StockMovement::create([
+        'material_id' => $material->id,
+        'lot_id' => $lot1->id,
+        'type' => 'in',
+        'qty_base' => 50,
+        'unit' => 'kg',
+        'occurred_at' => now()->subDays(2),
+        'reason' => 'First In',
+    ]);
+
+    StockMovement::create([
+        'material_id' => $material->id,
+        'lot_id' => $lot2->id,
+        'type' => 'in',
+        'qty_base' => 50,
+        'unit' => 'kg',
+        'occurred_at' => now()->subDays(1),
+        'reason' => 'Second In',
+    ]);
+
+    StockMovement::create([
+        'material_id' => $material->id,
+        'lot_id' => $lot1->id,
+        'type' => 'out',
+        'qty_base' => 10,
+        'unit' => 'kg',
+        'occurred_at' => now(),
+        'reason' => 'Usage',
+    ]);
+
+    // Test history for material
+    $response = $this->getJson(route('procurement.api.stock-movements', ['sku' => 'SKU-HISTORY']), ['X-API-KEY' => 'test-api-key']);
+
+    $response->assertStatus(200)
+        ->assertJsonCount(3, 'history')
+        ->assertJsonPath('history.0.type', 'out')
+        ->assertJsonPath('history.2.type', 'in');
+
+    // Test history filtered by lot
+    $response = $this->getJson(route('procurement.api.stock-movements', ['sku' => 'SKU-HISTORY', 'lot_no' => 'LOT-1']), ['X-API-KEY' => 'test-api-key']);
+
+    $response->assertStatus(200)
+        ->assertJsonCount(2, 'history')
+        ->assertJsonPath('history.0.lot_no', 'LOT-1')
+        ->assertJsonPath('history.1.lot_no', 'LOT-1');
+
+    // Test unknown lot
+    $response = $this->getJson(route('procurement.api.stock-movements', ['sku' => 'SKU-HISTORY', 'lot_no' => 'UNKNOWN']), ['X-API-KEY' => 'test-api-key']);
+    $response->assertStatus(404);
+});

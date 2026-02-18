@@ -283,6 +283,11 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div class="md:col-span-1 flex items-center gap-2">
+                            <flux:switch wire:model="materialForm.sync_to_monox" label="monox連動" align="left"/>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="md:col-span-1 flex items-center gap-2">
                             <flux:switch wire:model.live="materialForm.separate_shipping" label="{{ __('procflow::materials.form.separate_shipping') }}" align="left"/>
                         </div>
                         <div>

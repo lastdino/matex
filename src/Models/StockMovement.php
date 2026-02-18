@@ -12,7 +12,7 @@ class StockMovement extends Model
 {
     protected $fillable = [
         'material_id', 'lot_id', 'type', 'source_type', 'source_id', 'qty_base', 'unit', 'occurred_at', 'reason',
-        'causer_type', 'causer_id',
+        'causer_type', 'causer_id', 'is_external_sync',
     ];
 
     public function getTable()
@@ -25,6 +25,7 @@ class StockMovement extends Model
         return [
             'qty_base' => 'decimal:6',
             'occurred_at' => 'datetime',
+            'is_external_sync' => 'boolean',
         ];
     }
 

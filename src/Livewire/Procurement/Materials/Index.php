@@ -57,7 +57,8 @@ class Index extends Component
      *   moq:?string|float|int|null,
      *   pack_size:?string|float|int|null,
      *   min_stock:?string|float|int|null,
-     *   max_stock:?string|float|int|null
+     *   max_stock:?string|float|int|null,
+     *   sync_to_monox:bool
      * }
      */
     public array $materialForm = [
@@ -193,6 +194,8 @@ class Index extends Component
             'separate_shipping' => (bool) $m->separate_shipping,
             'shipping_fee_per_order' => $m->shipping_fee_per_order,
             'manage_by_lot' => (bool) ($m->manage_by_lot ?? false),
+            // monox integration
+            'sync_to_monox' => (bool) ($m->sync_to_monox ?? false),
             // Ordering constraints
             'moq' => $m->moq,
             'pack_size' => $m->pack_size,
@@ -306,6 +309,8 @@ class Index extends Component
             'materialForm.shipping_fee_per_order' => ['nullable', 'numeric', 'min:0'],
             // Lot management
             'materialForm.manage_by_lot' => ['boolean'],
+            // monox integration
+            'materialForm.sync_to_monox' => ['boolean'],
             // Ordering constraints
             'materialForm.moq' => ['nullable', 'numeric', 'gt:0'],
             'materialForm.pack_size' => ['nullable', 'numeric', 'gt:0'],
@@ -366,6 +371,9 @@ class Index extends Component
         // Normalize lot management toggle
         $payload['manage_by_lot'] = (bool) ($payload['manage_by_lot'] ?? false);
 
+        // Normalize monox integration
+        $payload['sync_to_monox'] = (bool) ($payload['sync_to_monox'] ?? false);
+
         // Normalize ordering constraints
         if (array_key_exists('moq', $payload) && ($payload['moq'] === '' || is_null($payload['moq']))) {
             $payload['moq'] = null;
@@ -413,6 +421,8 @@ class Index extends Component
             'separate_shipping' => false,
             'shipping_fee_per_order' => null,
             'manage_by_lot' => false,
+            // monox integration
+            'sync_to_monox' => false,
             // Ordering constraints
             'moq' => null,
             'pack_size' => null,
