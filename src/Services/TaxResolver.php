@@ -20,6 +20,7 @@ final class TaxResolver
                 $rate = (float) $itemTax['rates'][$code];
             }
         }
+
         return $rate;
     }
 }

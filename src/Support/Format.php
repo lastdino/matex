@@ -18,42 +18,49 @@ final class Format
     public static function qty(null|int|float $value): string
     {
         $num = (float) ($value ?? 0);
+
         return number_format($num, self::decimals('qty'));
     }
 
     public static function unitPrice(null|int|float $value): string
     {
         $num = (float) ($value ?? 0);
+
         return number_format($num, self::decimals('unit_price'));
     }
 
     public static function unitPriceMaterials(null|int|float $value): string
     {
         $num = (float) ($value ?? 0);
+
         return number_format($num, self::decimals('unit_price_materials'));
     }
 
     public static function lineTotal(null|int|float $value): string
     {
         $num = (float) ($value ?? 0);
+
         return number_format($num, self::decimals('line_total'));
     }
 
     public static function subtotal(null|int|float $value): string
     {
         $num = (float) ($value ?? 0);
+
         return number_format($num, self::decimals('subtotal'));
     }
 
     public static function tax(null|int|float $value): string
     {
         $num = (float) ($value ?? 0);
+
         return number_format($num, self::decimals('tax'));
     }
 
     public static function total(null|int|float $value): string
     {
         $num = (float) ($value ?? 0);
+
         return number_format($num, self::decimals('total'));
     }
 
@@ -65,6 +72,7 @@ final class Format
         if (abs($num) <= 1) {
             $num *= 100;
         }
+
         return number_format($num, self::decimals('percent'));
     }
 
@@ -81,8 +89,8 @@ final class Format
         $sp = $space ? ' ' : '';
 
         return $position === 'suffix'
-            ? $formattedNumber . $sp . $symbol
-            : $symbol . $sp . $formattedNumber;
+            ? $formattedNumber.$sp.$symbol
+            : $symbol.$sp.$formattedNumber;
     }
 
     // 金額系（通貨記号付き）

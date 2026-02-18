@@ -17,7 +17,7 @@ class Material extends Model implements HasMedia
     use InteractsWithMedia;
 
     protected $fillable = [
-        'sku', 'name', 'tax_code', 'unit_stock', 'unit_purchase_default', 'safety_stock', 'category_id', 'current_stock', 'preferred_supplier_id',
+        'sku', 'name', 'tax_code', 'unit_stock', 'unit_purchase_default', 'min_stock', 'max_stock', 'category_id', 'current_stock', 'preferred_supplier_id',
         'manufacturer_name', 'storage_location', 'applicable_regulation', 'ghs_mark', 'protective_equipment', 'unit_price',
         // 発注制約
         'moq', 'pack_size',
@@ -37,7 +37,8 @@ class Material extends Model implements HasMedia
     protected function casts(): array
     {
         return [
-            'safety_stock' => 'decimal:6',
+            'min_stock' => 'decimal:6',
+            'max_stock' => 'decimal:6',
             'current_stock' => 'decimal:6',
             'unit_price' => 'decimal:2',
             'moq' => 'decimal:6',
@@ -100,6 +101,7 @@ class Material extends Model implements HasMedia
         }
         /** @var array<int, string> $tokens */
         $tokens = array_map('trim', preg_split('/[\s,|]+/', $raw) ?: []);
+
         return array_values(array_filter($tokens, static fn (string $t): bool => $t !== ''));
     }
 
@@ -127,15 +129,16 @@ class Material extends Model implements HasMedia
         foreach ($this->ghsMarkList() as $key) {
             $filename = $map[$key] ?? null;
             if (is_string($filename) && $filename !== '') {
-                $path = $dir . '/' . ltrim($filename, '/');
+                $path = $dir.'/'.ltrim($filename, '/');
                 if (Storage::disk($disk)->exists($path)) {
                     $urls[] = Storage::disk($disk)->url($path);
+
                     continue;
                 }
             }
 
             if (is_string($placeholder) && $placeholder !== '') {
-                $phPath = $dir . '/' . ltrim($placeholder, '/');
+                $phPath = $dir.'/'.ltrim($placeholder, '/');
                 if (Storage::disk($disk)->exists($phPath)) {
                     $urls[] = Storage::disk($disk)->url($phPath);
                 }

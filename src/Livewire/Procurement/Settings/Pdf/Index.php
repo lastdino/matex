@@ -5,17 +5,23 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Pdf;
 
 use Illuminate\Contracts\View\View;
-use Livewire\Component;
 use Lastdino\ProcurementFlow\Support\Settings;
+use Livewire\Component;
 
 class Index extends Component
 {
     public string $companyName = '';
+
     public string $companyTel = '';
+
     public string $companyFax = '';
+
     public string $addressLines = '';
+
     public string $paymentTerms = '';
+
     public string $deliveryLocation = '';
+
     public string $footnotes = '';
 
     public function mount(): void

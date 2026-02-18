@@ -5,8 +5,8 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Lastdino\ProcurementFlow\Support\Tables;
 use Illuminate\Support\Str;
+use Lastdino\ProcurementFlow\Support\Tables;
 
 return new class extends Migration
 {
@@ -48,12 +48,14 @@ return new class extends Migration
         $shippingRows = \DB::table($table)
             ->where('unit_purchase', 'shipping')
             ->whereNull('shipping_for_item_id')
-            ->select('id','purchase_order_id','description')
+            ->select('id', 'purchase_order_id', 'description')
             ->get();
 
         foreach ($shippingRows as $row) {
             $desc = (string) ($row->description ?? '');
-            if ($desc === '') { continue; }
+            if ($desc === '') {
+                continue;
+            }
 
             // Extract inner-most parentheses content: 送料（...） or 送料(...)
             $key = null;
@@ -61,7 +63,9 @@ return new class extends Migration
                 $key = (string) ($m[1] ?: ($m[2] ?? ''));
                 $key = trim($key);
             }
-            if ($key === null || $key === '') { continue; }
+            if ($key === null || $key === '') {
+                continue;
+            }
 
             $targetId = null;
 
@@ -77,8 +81,8 @@ return new class extends Migration
 
             // SKU match in same PO
             if ($targetId === null) {
-                $targetId = \DB::table($table . ' as i')
-                    ->join($materials . ' as m', 'm.id', '=', 'i.material_id')
+                $targetId = \DB::table($table.' as i')
+                    ->join($materials.' as m', 'm.id', '=', 'i.material_id')
                     ->where('i.purchase_order_id', $row->purchase_order_id)
                     ->where('i.unit_purchase', '!=', 'shipping')
                     ->where('m.sku', $key)
@@ -87,8 +91,8 @@ return new class extends Migration
 
             // Material name exact match in same PO
             if ($targetId === null) {
-                $targetId = \DB::table($table . ' as i')
-                    ->join($materials . ' as m', 'm.id', '=', 'i.material_id')
+                $targetId = \DB::table($table.' as i')
+                    ->join($materials.' as m', 'm.id', '=', 'i.material_id')
                     ->where('i.purchase_order_id', $row->purchase_order_id)
                     ->where('i.unit_purchase', '!=', 'shipping')
                     ->where('m.name', $key)

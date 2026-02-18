@@ -6,13 +6,13 @@ namespace Lastdino\ProcurementFlow\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Lastdino\ProcurementFlow\Support\Tables;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\AppSetting;
-use Lastdino\ApprovalFlow\Models\ApprovalFlow;
 use Illuminate\Validation\Rule;
-use Lastdino\ProcurementFlow\Models\{OptionGroup, Option};
+use Lastdino\ApprovalFlow\Models\ApprovalFlow;
+use Lastdino\ProcurementFlow\Models\AppSetting;
+use Lastdino\ProcurementFlow\Models\Material;
+use Lastdino\ProcurementFlow\Models\OptionGroup;
 use Lastdino\ProcurementFlow\Services\OptionSelectionRuleBuilder;
+use Lastdino\ProcurementFlow\Support\Tables;
 
 class StorePurchaseOrderRequest extends FormRequest
 {
@@ -26,11 +26,11 @@ class StorePurchaseOrderRequest extends FormRequest
         // Use prefixed table names for exists rules
         $rules = [
             // New flow (materials-based) allows supplier_id to be omitted. Ad-hoc flow still requires it (enforced in withValidator).
-            'supplier_id' => ['nullable', 'exists:' . Tables::name('suppliers') . ',id'],
+            'supplier_id' => ['nullable', 'exists:'.Tables::name('suppliers').',id'],
             'expected_date' => ['nullable', 'date'],
             // 発注ごとの納品先（未指定の場合はPDF設定の値を用いてバックエンドで補完）
-            'delivery_location' => ['nullable','string'],
-            'items' => ['required','array','min:1'],
+            'delivery_location' => ['nullable', 'string'],
+            'items' => ['required', 'array', 'min:1'],
             // Allow ordering without registering material
             // Require either material_id or description
             // 資材は「有効（is_active = true）」なものに限定する
@@ -40,19 +40,19 @@ class StorePurchaseOrderRequest extends FormRequest
                     ->where(fn ($q) => $q->where('is_active', true)),
                 'required_without:items.*.description',
             ],
-            'items.*.unit_purchase' => ['required','string','max:32'],
-            'items.*.qty_ordered' => ['required','numeric','gt:0'],
-            'items.*.price_unit' => ['required','numeric','gte:0'],
-            'items.*.tax_rate' => ['nullable','numeric','between:0,1'],
-            'items.*.description' => ['nullable','string','required_without:items.*.material_id'],
-            'items.*.manufacturer' => ['nullable','string','max:255'],
+            'items.*.unit_purchase' => ['required', 'string', 'max:32'],
+            'items.*.qty_ordered' => ['required', 'numeric', 'gt:0'],
+            'items.*.price_unit' => ['required', 'numeric', 'gte:0'],
+            'items.*.tax_rate' => ['nullable', 'numeric', 'between:0,1'],
+            'items.*.description' => ['nullable', 'string', 'required_without:items.*.material_id'],
+            'items.*.manufacturer' => ['nullable', 'string', 'max:255'],
             'items.*.desired_date' => ['nullable', 'date'],
             'items.*.expected_date' => ['nullable', 'date'],
-            'items.*.note' => ['nullable','string','max:1000'],
+            'items.*.note' => ['nullable', 'string', 'max:1000'],
         ];
 
         // オプショングループ: 有効なグループごとに必須にする（共通ビルダーを利用）
-        $activeGroups = OptionGroup::query()->active()->ordered()->get(['id','name']);
+        $activeGroups = OptionGroup::query()->active()->ordered()->get(['id', 'name']);
         if ($activeGroups->isNotEmpty()) {
             /** @var OptionSelectionRuleBuilder $builder */
             $builder = app(OptionSelectionRuleBuilder::class);
@@ -101,6 +101,7 @@ class StorePurchaseOrderRequest extends FormRequest
                 if (empty($materialId)) {
                     // Ad-hoc line
                     $hasAdhoc = true;
+
                     continue;
                 }
 
@@ -141,13 +142,14 @@ class StorePurchaseOrderRequest extends FormRequest
     {
         // Provide friendly messages for required options per active group
         $messages = [];
-        $activeGroups = OptionGroup::query()->active()->ordered()->get(['id','name']);
+        $activeGroups = OptionGroup::query()->active()->ordered()->get(['id', 'name']);
         foreach ($activeGroups as $group) {
             $gid = (int) $group->getKey();
             $gname = (string) $group->getAttribute('name');
             $messages["items.*.options.$gid.required"] = "『{$gname}』の選択は必須です。";
             $messages["items.*.options.$gid.exists"] = "『{$gname}』の選択が不正です。有効なオプションを選択してください。";
         }
+
         // Generic fallbacks
         return $messages + [
             'items.*.options.required' => 'オプションの選択は必須です。',

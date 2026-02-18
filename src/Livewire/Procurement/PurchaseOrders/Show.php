@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders;
 
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
+use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
 use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
 use Lastdino\ProcurementFlow\Services\UnitConversionService;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 class Show extends Component
@@ -18,7 +18,9 @@ class Show extends Component
 
     // Modal state for editing expected date (per line)
     public bool $showExpectedModal = false;
+
     public ?int $editingItemId = null;
+
     public ?string $editingExpectedDate = null; // Y-m-d
 
     public function mount(PurchaseOrder $po): void
@@ -50,6 +52,7 @@ class Show extends Component
 
         if (! $po) {
             $this->dispatch('toast', type: 'error', message: 'Purchase order not found');
+
             return;
         }
 
@@ -57,6 +60,7 @@ class Show extends Component
         $statusValue = is_string($po->status) ? $po->status : ($po->status->value ?? '');
         if ($statusValue !== PurchaseOrderStatus::Draft->value) {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.cancel_not_allowed'));
+
             return;
         }
 
@@ -93,18 +97,21 @@ class Show extends Component
         $item = PurchaseOrderItem::query()->with(['purchaseOrder', 'material'])->find($itemId);
         if (! $item) {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_not_found'));
+
             return;
         }
 
         $po = $item->purchaseOrder;
         if (! in_array($po->status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Receiving], true)) {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_not_allowed'));
+
             return;
         }
 
         // Do not cancel shipping lines via this action
         if ($item->unit_purchase === 'shipping') {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_shipping_not_allowed'));
+
             return;
         }
 
@@ -113,6 +120,7 @@ class Show extends Component
         $canceled = (float) ($item->qty_canceled ?? 0);
         if ($canceled >= $ordered - 1e-9) {
             $this->dispatch('toast', type: 'info', message: __('procflow::po.detail.item_already_canceled'));
+
             return;
         }
 
@@ -133,6 +141,7 @@ class Show extends Component
         $remaining = max($ordered - $receivedPurchase - $alreadyCanceled, 0.0);
         if ($remaining <= 1e-9) {
             $this->dispatch('toast', type: 'info', message: __('procflow::po.detail.item_no_remaining_to_cancel'));
+
             return;
         }
 
@@ -191,6 +200,7 @@ class Show extends Component
         $statusValue = is_string($po->status) ? $po->status : ($po->status->value ?? '');
         if ($statusValue === PurchaseOrderStatus::Closed->value) {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.cancel_not_allowed'));
+
             return;
         }
 
@@ -198,12 +208,14 @@ class Show extends Component
         $item = $po->items->firstWhere('id', $itemId);
         if (! $item) {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_not_found'));
+
             return;
         }
 
         // Do not allow for shipping lines
         if ($item->unit_purchase === 'shipping') {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_shipping_not_allowed'));
+
             return;
         }
 
@@ -233,6 +245,7 @@ class Show extends Component
         $statusValue = is_string($po->status) ? $po->status : ($po->status->value ?? '');
         if ($statusValue === PurchaseOrderStatus::Closed->value) {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.cancel_not_allowed'));
+
             return;
         }
 
@@ -240,11 +253,13 @@ class Show extends Component
         $item = $po->items->firstWhere('id', $this->editingItemId);
         if (! $item) {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_not_found'));
+
             return;
         }
 
         if ($item->unit_purchase === 'shipping') {
             $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_shipping_not_allowed'));
+
             return;
         }
 

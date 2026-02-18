@@ -8,24 +8,21 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Blade;
-use Illuminate\Support\Str;
 use LastDino\ChromeLaravel\Facades\Chrome;
+use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 
 class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public PurchaseOrder $po)
-    {
-    }
+    public function __construct(public PurchaseOrder $po) {}
 
     public function build(): static
     {
         // Prefer already-loaded relations, avoid unnecessary DB hits
         $po = $this->po->loadMissing(['supplier', 'items.material', 'requester']);
-        $poNumber = $po->po_number ?: ('Draft-' . $po->getKey());
+        $poNumber = $po->po_number ?: ('Draft-'.$po->getKey());
 
         // Choose From header in order of precedence (when enabled):
         // 1) Requester (PO creator) → if config 'use_requester' true and requester has email
@@ -60,7 +57,7 @@ class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
                 'po' => $po,
             ])
             ->attach($tmpPath, [
-                'as'   => "PO-{$poNumber}.pdf",
+                'as' => "PO-{$poNumber}.pdf",
                 'mime' => 'application/pdf',
             ]);
 

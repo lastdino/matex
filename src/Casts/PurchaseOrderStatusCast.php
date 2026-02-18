@@ -47,6 +47,7 @@ class PurchaseOrderStatusCast implements CastsAttributes
         if ($v === 'cancelled') {
             return 'canceled';
         }
+
         return $v;
     }
 }

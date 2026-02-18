@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\Ordering;
 
 use Illuminate\Contracts\View\View as ViewContract;
-use Livewire\Component;
+use Illuminate\Http\Request;
 use Lastdino\ProcurementFlow\Actions\Ordering\CreateDraftPurchaseOrderFromScanAction;
 use Lastdino\ProcurementFlow\Models\OrderingToken;
-use Illuminate\Http\Request;
-use Lastdino\ProcurementFlow\Models\{OptionGroup, Option};
-use Lastdino\ProcurementFlow\Services\{OptionCatalogService, OptionSelectionRuleBuilder};
+use Lastdino\ProcurementFlow\Services\OptionCatalogService;
+use Lastdino\ProcurementFlow\Services\OptionSelectionRuleBuilder;
+use Livewire\Component;
 
 class Scan extends Component
 {
@@ -48,6 +48,7 @@ class Scan extends Component
     public array $optionsByGroup = [];
 
     public string $message = '';
+
     public bool $ok = false;
 
     protected function rules(): array
@@ -77,6 +78,7 @@ class Scan extends Component
             $this->resetInfo();
             $this->message = '';
             $this->ok = false;
+
             return;
         }
 
@@ -104,6 +106,7 @@ class Scan extends Component
         if (! $ot || ! $ot->enabled || ($ot->expires_at && now()->greaterThan($ot->expires_at))) {
             $this->resetInfo();
             $this->setMessage(__('procflow::ordering.messages.invalid_or_expired_token'), false);
+
             return;
         }
 
@@ -111,12 +114,14 @@ class Scan extends Component
         if (! $mat) {
             $this->resetInfo();
             $this->setMessage(__('procflow::ordering.messages.material_not_found'), false);
+
             return;
         }
 
         if (! (bool) ($mat->is_active ?? true)) {
             $this->resetInfo();
             $this->setMessage(__('procflow::ordering.messages.material_not_found'), false);
+
             return;
         }
 

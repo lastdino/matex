@@ -197,7 +197,7 @@ return [
         ],
         'delivery' => [
             'label' => '納品先（デフォルトはPDF設定）',
-            'placeholder' => '納品先住所を入力（未入力時はPDF設定を使用）'
+            'placeholder' => '納品先住所を入力（未入力時はPDF設定を使用）',
         ],
         'items' => [
             'title' => '明細',
@@ -226,7 +226,7 @@ return [
         ],
         'delivery' => [
             'label' => '納品先（デフォルトはPDF設定）',
-            'placeholder' => '納品先住所を入力（未入力時はPDF設定を使用）'
+            'placeholder' => '納品先住所を入力（未入力時はPDF設定を使用）',
         ],
         'items' => [
             'title' => '単発明細（資材未登録）',

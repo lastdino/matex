@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\Materials;
 
 use Illuminate\Contracts\View\View as ViewContract;
-use Livewire\Component;
 use Lastdino\ProcurementFlow\Models\Material;
 use Lastdino\ProcurementFlow\Models\MaterialLot;
 use Lastdino\ProcurementFlow\Models\StockMovement;
+use Livewire\Component;
 
 class Show extends Component
 {
@@ -25,6 +25,7 @@ class Show extends Component
         $m = Material::query()->with(['lots' => function ($q) {
             $q->orderBy('expiry_date')->orderBy('lot_no');
         }])->findOrFail($this->materialId);
+
         return $m;
     }
 

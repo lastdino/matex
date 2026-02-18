@@ -1,26 +1,25 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Lastdino\ProcurementFlow\Http\Controllers\MaterialSdsDownloadController;
+use Lastdino\ProcurementFlow\Http\Controllers\PurchaseOrderPdfController;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Dashboard as DashboardComponent;
+use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Index as MaterialsIndexComponent;
+use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Issue as MaterialsIssueComponent;
+use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Show as MaterialsShowComponent;
+use Lastdino\ProcurementFlow\Livewire\Procurement\Ordering\Scan as OrderingScanComponent;
+use Lastdino\ProcurementFlow\Livewire\Procurement\PendingReceiving\Index as PendingReceivingIndexComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders\Index as PoIndexComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders\Show as PoShowComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\PendingReceiving\Index as PendingReceivingIndexComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Index as MaterialsIndexComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Show as MaterialsShowComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Issue as MaterialsIssueComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Suppliers\Index as SuppliersIndexComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Receiving\Scan as ReceivingScanComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Ordering\Scan as OrderingScanComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Options\Index as OptionsSettingsComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Approval\Index as ApprovalSettingsComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Taxes\Index as TaxesSettingsComponent;
+use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Categories\Index as CategoriesSettingsComponent;
+use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Options\Index as OptionsSettingsComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Pdf\Index as PdfSettingsComponent;
+use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Taxes\Index as TaxesSettingsComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Tokens\Index as TokensSettingsComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Tokens\Labels as TokenLabelsComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Categories\Index as CategoriesSettingsComponent;
-use Lastdino\ProcurementFlow\Http\Controllers\PurchaseOrderPdfController;
-use Lastdino\ProcurementFlow\Http\Controllers\MaterialSdsDownloadController;
-
+use Lastdino\ProcurementFlow\Livewire\Procurement\Suppliers\Index as SuppliersIndexComponent;
 
 Route::group([
     'prefix' => config('procurement_flow.route_prefix', 'procurement'),
@@ -41,7 +40,6 @@ Route::group([
     // Purchase Order PDF download
     Route::get('/purchase-orders/{po}/pdf', PurchaseOrderPdfController::class)
         ->name('procurement.purchase-orders.pdf');
-
 
     // Pending Receiving
     Route::get('/pending-receiving', PendingReceivingIndexComponent::class)
@@ -103,4 +101,3 @@ Route::group([
     Route::get('/ordering/scan', OrderingScanComponent::class)
         ->name('procurement.ordering.scan');
 });
-

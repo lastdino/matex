@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow;
 
 use Illuminate\Support\ServiceProvider;
-use Lastdino\ProcurementFlow\Models\Receiving;
-use Lastdino\ProcurementFlow\Models\ReceivingItem;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Dashboard;
+use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Index as MaterialsIndexComponent;
+use Lastdino\ProcurementFlow\Livewire\Procurement\PendingReceiving\Index as PendingReceivingIndexComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders\Index as PoIndexComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders\Show as PoShowComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\PendingReceiving\Index as PendingReceivingIndexComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Index as MaterialsIndexComponent;
 use Lastdino\ProcurementFlow\Livewire\Procurement\Suppliers\Index as SuppliersIndexComponent;
-use Lastdino\ProcurementFlow\Observers\ReceivingObserver;
+use Lastdino\ProcurementFlow\Models\Receiving;
+use Lastdino\ProcurementFlow\Models\ReceivingItem;
 use Lastdino\ProcurementFlow\Observers\ReceivingItemObserver;
+use Lastdino\ProcurementFlow\Observers\ReceivingObserver;
 use Livewire\Livewire;
 
 class ProcurementFlowServiceProvider extends ServiceProvider
@@ -25,7 +25,7 @@ class ProcurementFlowServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Use underscore in config key to avoid edge cases when accessing via dot notation
-        $this->mergeConfigFrom(__DIR__ . '/../config/procurement-flow.php', 'procurement_flow');
+        $this->mergeConfigFrom(__DIR__.'/../config/procurement-flow.php', 'procurement_flow');
     }
 
     /**
@@ -33,32 +33,37 @@ class ProcurementFlowServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
         // Web routes (Volt UI) and views namespace
-        $webRoutes = __DIR__ . '/../routes/web.php';
+        $webRoutes = __DIR__.'/../routes/web.php';
         if (file_exists($webRoutes)) {
             $this->loadRoutesFrom($webRoutes);
         }
 
+        $apiRoutes = __DIR__.'/../routes/api.php';
+        if (file_exists($apiRoutes)) {
+            $this->loadRoutesFrom($apiRoutes);
+        }
+
         // Expose package views under the "procflow" namespace
-        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'procflow');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'procflow');
 
         // Publish views so host apps can override
         $this->publishes([
-            __DIR__ . '/../resources/views' => resource_path('views/vendor/procflow'),
+            __DIR__.'/../resources/views' => resource_path('views/vendor/procflow'),
         ], 'procurement-flow-views');
 
         // Load translations under the "procflow" namespace
-        $this->loadTranslationsFrom(__DIR__ . '/../resources/lang', 'procflow');
+        $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'procflow');
 
         $this->publishes([
-            __DIR__ . '/../config/procurement-flow.php' => config_path('procurement-flow.php'),
+            __DIR__.'/../config/procurement-flow.php' => config_path('procurement-flow.php'),
         ], 'procurement-flow-config');
 
         // Publish translations so host apps can override
         $this->publishes([
-            __DIR__ . '/../resources/lang' => lang_path('vendor/procflow'),
+            __DIR__.'/../resources/lang' => lang_path('vendor/procflow'),
         ], 'procurement-flow-lang');
 
         $this->loadLivewireComponents();
@@ -71,7 +76,7 @@ class ProcurementFlowServiceProvider extends ServiceProvider
     // custom methods for livewire components
     protected function loadLivewireComponents(): void
     {
-        Livewire::component('procurement.dashboard',  Dashboard::class);
+        Livewire::component('procurement.dashboard', Dashboard::class);
         Livewire::component('purchase-orders.index', PoIndexComponent::class);
         Livewire::component('purchase-orders.show', PoShowComponent::class);
         Livewire::component('suppliers.index', SuppliersIndexComponent::class);

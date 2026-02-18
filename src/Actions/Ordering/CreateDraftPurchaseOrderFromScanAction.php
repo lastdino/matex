@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace Lastdino\ProcurementFlow\Actions\Ordering;
 
-use Illuminate\Support\Facades\Validator;
-use Lastdino\ProcurementFlow\Models\{Material, OrderingToken, PurchaseOrder};
-use Lastdino\ProcurementFlow\Services\{OptionCatalogService, OptionSelectionRuleBuilder, PurchaseOrderOptionSyncService, PurchaseOrderFactory, ApprovalFlowRegistrar, OptionSelectionService};
+use Lastdino\ProcurementFlow\Models\Material;
+use Lastdino\ProcurementFlow\Models\OrderingToken;
+use Lastdino\ProcurementFlow\Models\PurchaseOrder;
+use Lastdino\ProcurementFlow\Services\ApprovalFlowRegistrar;
+use Lastdino\ProcurementFlow\Services\OptionCatalogService;
+use Lastdino\ProcurementFlow\Services\OptionSelectionRuleBuilder;
+use Lastdino\ProcurementFlow\Services\OptionSelectionService;
+use Lastdino\ProcurementFlow\Services\PurchaseOrderFactory;
+use Lastdino\ProcurementFlow\Services\PurchaseOrderOptionSyncService;
 
 class CreateDraftPurchaseOrderFromScanAction
 {
@@ -17,11 +23,10 @@ class CreateDraftPurchaseOrderFromScanAction
         public PurchaseOrderFactory $poFactory,
         public ApprovalFlowRegistrar $approvalRegistrar,
         public OptionSelectionService $optionService,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array{token:string, qty:float|int, note?:string|null, options?:array<int,int|string|null>} $input
+     * @param  array{token:string, qty:float|int, note?:string|null, options?:array<int,int|string|null>}  $input
      */
     public function handle(array $input): PurchaseOrder
     {

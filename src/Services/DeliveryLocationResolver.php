@@ -14,6 +14,7 @@ final class DeliveryLocationResolver
         if ($value !== '') {
             return $value;
         }
+
         return (string) (Settings::pdf()['delivery_location'] ?? '');
     }
 }

@@ -26,7 +26,7 @@ return [
         ],
         'buttons' => [
             'download' => 'Download',
-            'creating' => 'Creating...'
+            'creating' => 'Creating...',
         ],
         'validation' => [
             'receiving_required' => 'Please specify the receiving date range (From/To).',
@@ -197,7 +197,7 @@ return [
         ],
         'delivery' => [
             'label' => 'Delivery Location (default: PDF settings)',
-            'placeholder' => 'Enter delivery address (fallback to PDF settings if empty)'
+            'placeholder' => 'Enter delivery address (fallback to PDF settings if empty)',
         ],
         'items' => [
             'title' => 'Items',
@@ -226,7 +226,7 @@ return [
         ],
         'delivery' => [
             'label' => 'Delivery Location (default: PDF settings)',
-            'placeholder' => 'Enter delivery address (fallback to PDF settings if empty)'
+            'placeholder' => 'Enter delivery address (fallback to PDF settings if empty)',
         ],
         'items' => [
             'title' => 'Items (no material registration)',

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Display;
 
 use Illuminate\Contracts\View\View;
-use Livewire\Component;
 use Lastdino\ProcurementFlow\Support\Settings;
+use Livewire\Component;
 
 class Index extends Component
 {
@@ -23,7 +23,9 @@ class Index extends Component
     ];
 
     public string $currencySymbol = '¥';
+
     public string $currencyPosition = 'prefix';
+
     public bool $currencySpace = false;
 
     public function mount(): void

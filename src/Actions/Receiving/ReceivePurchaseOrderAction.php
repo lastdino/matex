@@ -19,10 +19,10 @@ class ReceivePurchaseOrderAction
         public ReceivingLineService $line,
         public PurchaseOrderCompletionService $poCompletion,
         public UnitConversionService $conversion,
-    ) { }
+    ) {}
 
     /**
-     * @param array{received_at:string, reference_number?:string|null, notes?:string|null, items: array<int, array{purchase_order_item_id:int, qty_received:float|int, unit_purchase?:string, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null}>} $payload
+     * @param  array{received_at:string, reference_number?:string|null, notes?:string|null, items: array<int, array{purchase_order_item_id:int, qty_received:float|int, unit_purchase?:string, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null}>}  $payload
      */
     public function byItems(PurchaseOrder $po, array $payload): Receiving
     {
@@ -56,7 +56,7 @@ class ReceivePurchaseOrderAction
     }
 
     /**
-     * @param array{token:string, qty:float|int, received_at?:string|null, reference_number?:string|null, notes?:string|null, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null} $payload
+     * @param  array{token:string, qty:float|int, received_at?:string|null, reference_number?:string|null, notes?:string|null, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null}  $payload
      */
     public function byScan(array $payload): Receiving
     {

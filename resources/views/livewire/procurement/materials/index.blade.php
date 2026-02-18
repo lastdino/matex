@@ -27,11 +27,13 @@
                     <th class="py-2 px-3 w-28">{{ __('procflow::materials.table.ghs') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::materials.table.sku') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::materials.table.name') }}</th>
+                    <th class="py-2 px-3">{{ __('procflow::materials.form.applicable_regulation') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::materials.filters.category') }}</th>
-                    <th class="py-2 px-3">{{ __('procflow::materials.table.manufacturer') }}</th>
-                    <th class="py-2 px-3">{{ __('procflow::materials.table.stock') }}</th>
-                    <th class="py-2 px-3">{{ __('procflow::materials.table.safety') }}</th>
-                    <th class="py-2 px-3">{{ __('procflow::materials.table.unit') }}</th>
+                    <th class="py-2 px-3 text-neutral-500">{{ __('procflow::materials.table.manufacturer') }}</th>
+                    <th class="py-2 px-3 text-neutral-500">{{ __('procflow::materials.table.stock') }}</th>
+                    <th class="py-2 px-3 text-neutral-500">{{ __('procflow::materials.table.min_stock') }}</th>
+                    <th class="py-2 px-3 text-neutral-500">{{ __('procflow::materials.table.max_stock') }}</th>
+                    <th class="py-2 px-3 text-neutral-500">{{ __('procflow::materials.table.unit') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::materials.table.moq') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::materials.table.pack_size') }}</th>
                     <th class="py-2 px-3">{{ __('procflow::materials.table.unit_price') }}</th>
@@ -42,7 +44,7 @@
                 @forelse($this->materials as $m)
                     @php
                         $stockValue = $m->manage_by_lot ? (float) ($m->lots_sum_qty_on_hand ?? 0) : (float) ($m->current_stock ?? 0);
-                        $low = !is_null($m->safety_stock) && $stockValue < (float) $m->safety_stock;
+                        $low = !is_null($m->min_stock) && $stockValue < (float) $m->min_stock;
                     @endphp
                     <tr class="border-t hover:bg-neutral-50 dark:hover:bg-neutral-800 {{ $low ? 'bg-red-50/40 dark:bg-red-950/20' : '' }}">
                         <td class="py-2 px-3">
@@ -67,6 +69,11 @@
                             </div>
                         </td>
                         <td class="py-2 px-3">
+                            <div class="max-w-48 truncate" title="{{ $m->applicable_regulation }}">
+                                {{ $m->applicable_regulation }}
+                            </div>
+                        </td>
+                        <td class="py-2 px-3">
                             <div>
                                 @if(!empty($m->category->name))
                                     {{ $m->category->name }}
@@ -81,10 +88,11 @@
                             </div>
 
                         </td>
-                        <td class="py-2 px-3">{{ $m->manufacturer_name }}</td>
+                        <td class="py-2 px-3 text-neutral-500">{{ $m->manufacturer_name }}</td>
                         <td class="py-2 px-3 {{ $low ? 'text-red-600 font-medium' : '' }}">{{ $stockValue }}</td>
-                        <td class="py-2 px-3">{{ (float) $m->safety_stock }}</td>
-                        <td class="py-2 px-3">{{ $m->unit_stock }}</td>
+                        <td class="py-2 px-3">{{ is_null($m->min_stock) ? '-' : (float) $m->min_stock }}</td>
+                        <td class="py-2 px-3">{{ is_null($m->max_stock) ? '-' : (float) $m->max_stock }}</td>
+                        <td class="py-2 px-3 text-neutral-500">{{ $m->unit_stock }}</td>
                         <td class="py-2 px-3 w-40">
                             {{ is_null($m->moq) ? __('procflow::materials.table.not_set') : (string) (float) $m->moq }}
                     </td>
@@ -161,7 +169,6 @@
                         <flux:input wire:model="materialForm.unit_stock" label="{{ __('procflow::materials.form.unit_stock') }}"/>
                         <flux:input placeholder="{{ __('procflow::materials.form.unit_order_placeholder') }}" wire:model="materialForm.unit_purchase_default" label="{{ __('procflow::materials.form.unit_order') }}"/>
                         <flux:input type="number" step="0.000001" placeholder="{{ __('procflow::materials.form.conversion_placeholder') }}" wire:model="materialForm.conversion_factor_purchase_to_stock" label="{{ __('procflow::materials.form.conversion') }}"/>
-                        <flux:input type="number" step="0.000001" wire:model="materialForm.safety_stock" label="{{ __('procflow::materials.form.safety_stock') }}"/>
                     </div>
                 </div>
 
@@ -169,9 +176,12 @@
 
                 <div class="space-y-3">
                     <flux:heading size="sm">{{ __('procflow::materials.sections.stock_category_supplier') }}</flux:heading>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <flux:input type="number" step="0.000001" wire:model="materialForm.current_stock" label="{{ __('procflow::materials.form.current_stock') }}"/>
-
+                        <flux:input type="number" step="0.000001" min="0" wire:model="materialForm.min_stock" label="{{ __('procflow::materials.form.min_stock') }}"/>
+                        <flux:input type="number" step="0.000001" min="0" wire:model="materialForm.max_stock" label="{{ __('procflow::materials.form.max_stock') }}"/>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <flux:field >
                             <flux:label>{{ __('procflow::materials.form.tax_code') }}</flux:label>
                             <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model="materialForm.tax_code">

@@ -21,7 +21,7 @@ return [
             'sku' => 'SKU',
             'name' => '名称',
             'stock' => '在庫',
-            'safety' => '安全在庫',
+            'min_qty' => '最小量',
         ],
         'lot_badge' => 'ロット',
         'empty' => 'アラートはありません',

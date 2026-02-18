@@ -32,7 +32,7 @@ class OptionSelectionRuleBuilder
             $gid = (int) $group->getKey();
             $rules["{$optionsKey}.{$gid}"] = [
                 'required',
-                Rule::exists((new Option())->getTable(), 'id')
+                Rule::exists((new Option)->getTable(), 'id')
                     ->where(fn ($q) => $q->where('group_id', $gid)
                         ->where('is_active', true)
                         ->whereNull('deleted_at')

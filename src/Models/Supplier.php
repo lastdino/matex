@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Lastdino\ProcurementFlow\Models;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Lastdino\ProcurementFlow\Support\Tables;
-use Illuminate\Database\Eloquent\Model;
 
 class Supplier extends Model
 {

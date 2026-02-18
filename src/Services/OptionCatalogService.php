@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Services;
 
 use Illuminate\Support\Collection;
-use Lastdino\ProcurementFlow\Models\{OptionGroup, Option};
+use Lastdino\ProcurementFlow\Models\Option;
+use Lastdino\ProcurementFlow\Models\OptionGroup;
 
 class OptionCatalogService
 {
@@ -31,6 +32,7 @@ class OptionCatalogService
                 'name' => (string) $opt->getAttribute('name'),
             ];
         }
+
         return $by;
     }
 }

@@ -5,18 +5,20 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\PendingReceiving;
 
 use Illuminate\Contracts\View\View;
-use Livewire\Component;
 use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
 use Lastdino\ProcurementFlow\Models\PurchaseOrder;
+use Livewire\Component;
 
 class Index extends Component
 {
     public string $q = '';
+
     public int $perPage = 25;
 
     public function getOrdersProperty()
     {
         $q = (string) $this->q;
+
         return PurchaseOrder::query()
             ->with(['supplier', 'items', 'items.material', 'requester'])
             ->whereIn('status', [
@@ -36,7 +38,7 @@ class Index extends Component
                                 ->orWhereHas('items.material', function ($mq) use ($like) {
                                     $mq->where(function ($mm) use ($like) {
                                         $mm->where('name', 'like', $like)
-                                           ->orWhere('manufacturer_name', 'like', $like);
+                                            ->orWhere('manufacturer_name', 'like', $like);
                                     });
                                 })
                                 // 発注アイテムの説明/単発メーカー名
@@ -65,7 +67,7 @@ class Index extends Component
                             ->orWhereHas('items.material', function ($mq) use ($single) {
                                 $mq->where(function ($mm) use ($single) {
                                     $mm->where('name', 'like', "%{$single}%")
-                                       ->orWhere('manufacturer_name', 'like', "%{$single}%");
+                                        ->orWhere('manufacturer_name', 'like', "%{$single}%");
                                 });
                             })
                             // 発注アイテムのスキャン用トークン（先頭一致/全一致）

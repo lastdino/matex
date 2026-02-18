@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Lastdino\ProcurementFlow\Models;
 
-use Lastdino\ProcurementFlow\Support\Tables;
 use Illuminate\Database\Eloquent\Model;
+use Lastdino\ProcurementFlow\Support\Tables;
 
 class UnitConversion extends Model
 {
     protected $fillable = [
-        'material_id','from_unit','to_unit','factor',
+        'material_id', 'from_unit', 'to_unit', 'factor',
     ];
 
     public function getTable()

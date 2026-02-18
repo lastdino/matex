@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace Lastdino\ProcurementFlow\Services;
 
-use Lastdino\ProcurementFlow\Models\{Option, PurchaseOrderItem, PurchaseOrderItemOptionValue};
+use Lastdino\ProcurementFlow\Models\Option;
+use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
+use Lastdino\ProcurementFlow\Models\PurchaseOrderItemOptionValue;
 
 class PurchaseOrderOptionSyncService
 {
     /**
      * Sync selected options for a PO item. Invalid/inactive selections are ignored.
      *
-     * @param  PurchaseOrderItem  $item
      * @param  array<int,int|string>  $selectedOptions  [group_id => option_id]
      */
     public function syncItemOptions(PurchaseOrderItem $item, array $selectedOptions): void

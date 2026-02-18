@@ -39,7 +39,8 @@ final class Settings
 
     /**
      * Persist item tax configuration as an array.
-     * @param array{default_rate?:float,rates?:array<string,float>,schedule?:array<int,array<string,mixed>>} $value
+     *
+     * @param  array{default_rate?:float,rates?:array<string,float>,schedule?:array<int,array<string,mixed>>}  $value
      */
     public static function saveItemTax(array $value): void
     {
@@ -65,7 +66,7 @@ final class Settings
     }
 
     /**
-     * @param array{taxable?:bool,tax_rate?:float} $value
+     * @param  array{taxable?:bool,tax_rate?:float}  $value
      */
     public static function saveShipping(array $value): void
     {
@@ -84,11 +85,12 @@ final class Settings
             // Backward compatibility: support both keys in config
             $cfg = (array) (config('procurement-flow.pdf') ?? config('procurement_flow.pdf') ?? []);
         }
+
         return $cfg;
     }
 
     /**
-     * @param array<string,mixed> $value
+     * @param  array<string,mixed>  $value
      */
     public static function savePdf(array $value): void
     {
@@ -116,12 +118,14 @@ final class Settings
         foreach ($cfg as $k => $v) {
             $out[(string) $k] = (int) $v;
         }
+
         return $out;
     }
 
     /**
      * Persist display decimals map.
-     * @param array<string,int|float|string> $map
+     *
+     * @param  array<string,int|float|string>  $map
      */
     public static function saveDisplayDecimals(array $map): void
     {
@@ -160,7 +164,8 @@ final class Settings
 
     /**
      * Save currency display configuration.
-     * @param array{symbol?:string,position?:string,space?:bool} $cfg
+     *
+     * @param  array{symbol?:string,position?:string,space?:bool}  $cfg
      */
     public static function saveDisplayCurrency(array $cfg): void
     {

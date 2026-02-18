@@ -25,6 +25,7 @@ class AppSetting extends Model
     {
         /** @var self|null $row */
         $row = static::query()->where('key', $key)->first();
+
         return $row?->value ?? $default;
     }
 
@@ -45,13 +46,14 @@ class AppSetting extends Model
             return $default;
         }
         $decoded = json_decode($raw, true);
+
         return is_array($decoded) ? $decoded : $default;
     }
 
     /**
      * Set JSON array setting.
      *
-     * @param array<mixed>|null $value
+     * @param  array<mixed>|null  $value
      */
     public static function setArray(string $key, ?array $value): void
     {

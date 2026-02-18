@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement;
 
 use Illuminate\Contracts\View\View;
-use Livewire\Component;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
 use Lastdino\ProcurementFlow\Models\Material;
 use Lastdino\ProcurementFlow\Models\PurchaseOrder;
-use Illuminate\Support\Facades\Cache;
 use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Illuminate\Support\Collection;
+use Livewire\Component;
 
 class Dashboard extends Component
 {
@@ -49,27 +49,27 @@ class Dashboard extends Component
     public function getLowStocksProperty()
     {
         $query = fn () => Material::query()
-            ->select(['id', 'sku', 'name', 'manage_by_lot', 'current_stock', 'safety_stock'])
+            ->select(['id', 'sku', 'name', 'manage_by_lot', 'current_stock', 'min_stock'])
             ->withSum('lots', 'qty_on_hand')
-            ->whereNotNull('safety_stock')
+            ->whereNotNull('min_stock')
             ->where(function ($q) {
-                // Lot-managed: compare sum(lots.qty_on_hand) with safety_stock
+                // Lot-managed: compare sum(lots.qty_on_hand) with min_stock
                 $q->where(function ($sq) {
-                    $lotsTable = (new \Lastdino\ProcurementFlow\Models\MaterialLot())->getTable();
-                    $materialsTable = (new \Lastdino\ProcurementFlow\Models\Material())->getTable();
+                    $lotsTable = (new \Lastdino\ProcurementFlow\Models\MaterialLot)->getTable();
+                    $materialsTable = (new \Lastdino\ProcurementFlow\Models\Material)->getTable();
 
                     $sub = "(select COALESCE(sum({$lotsTable}.qty_on_hand), 0) from {$lotsTable} where {$lotsTable}.material_id = {$materialsTable}.id)";
 
                     $sq->where('manage_by_lot', true)
-                        ->whereRaw("{$sub} < COALESCE(safety_stock, 0)");
+                        ->whereRaw("{$sub} < COALESCE(min_stock, 0)");
                 })
-                // Non-lot: compare current_stock with safety_stock
-                ->orWhere(function ($sq) {
-                    $sq->where(function ($w) {
-                        $w->whereNull('manage_by_lot')->orWhere('manage_by_lot', false);
-                    })
-                    ->whereRaw('COALESCE(current_stock, 0) < COALESCE(safety_stock, 0)');
-                });
+                // Non-lot: compare current_stock with min_stock
+                    ->orWhere(function ($sq) {
+                        $sq->where(function ($w) {
+                            $w->whereNull('manage_by_lot')->orWhere('manage_by_lot', false);
+                        })
+                            ->whereRaw('COALESCE(current_stock, 0) < COALESCE(min_stock, 0)');
+                    });
             })
             // Using the alias from withSum() is safe in ORDER BY
             ->orderByRaw('CASE WHEN manage_by_lot THEN COALESCE(lots_sum_qty_on_hand, 0) ELSE COALESCE(current_stock, 0) END asc')
@@ -123,18 +123,18 @@ class Dashboard extends Component
 
     public function getLowStockCriticalCountProperty(): int
     {
-        // Critical: stock <= 50% of safety_stock
+        // Critical: stock <= 50% of min_stock
         $query = function () {
             $materials = Material::query()
-                ->select(['id', 'manage_by_lot', 'current_stock', 'safety_stock'])
+                ->select(['id', 'manage_by_lot', 'current_stock', 'min_stock'])
                 ->withSum('lots', 'qty_on_hand')
-                ->whereNotNull('safety_stock')
+                ->whereNotNull('min_stock')
                 ->get();
 
             $count = 0;
             foreach ($materials as $m) {
-                $safety = (float) ($m->safety_stock ?? 0);
-                $threshold = 0.5 * $safety;
+                $minQty = (float) ($m->min_stock ?? 0);
+                $threshold = 0.5 * $minQty;
                 $stock = (float) (
                     $m->manage_by_lot
                         ? ($m->lots_sum_qty_on_hand ?? 0)
@@ -259,7 +259,7 @@ class Dashboard extends Component
                 // Exclude only shipping fee rows (unit_purchase = 'shipping')
                 ->where(function ($q) {
                     $q->whereNull('unit_purchase')
-                      ->orWhere('unit_purchase', '!=', 'shipping');
+                        ->orWhere('unit_purchase', '!=', 'shipping');
                 })
                 ->get();
 
@@ -274,6 +274,7 @@ class Dashboard extends Component
                 if ($ordered <= 0) {
                     // No effective order quantity -> skip from denominator
                     $total--;
+
                     continue;
                 }
                 $receivedTotal = 0.0;

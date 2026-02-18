@@ -5,20 +5,23 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Taxes;
 
 use Illuminate\Contracts\View\View;
-use Livewire\Component;
 use Lastdino\ProcurementFlow\Models\AppSetting;
 use Lastdino\ProcurementFlow\Support\Settings;
+use Livewire\Component;
 
 class Index extends Component
 {
     // Item tax
     public float $itemDefaultRate = 0.10;
+
     /** @var array<int,array{key:string,rate:float}> */
     public array $itemRates = [];
+
     public string $itemScheduleJson = '';
 
     // Shipping
     public bool $shippingTaxable = true;
+
     public float $shippingTaxRate = 0.10;
 
     public function mount(): void
@@ -77,6 +80,7 @@ class Index extends Component
             $decoded = json_decode($this->itemScheduleJson, true);
             if (! is_array($decoded)) {
                 $this->addError('itemScheduleJson', __('procflow::settings.taxes.errors.invalid_json'));
+
                 return;
             }
             $schedule = $decoded;

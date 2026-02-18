@@ -7,7 +7,6 @@ namespace Lastdino\ProcurementFlow\Domain\Receiving;
 use Lastdino\ProcurementFlow\Domain\Lot\LotService;
 use Lastdino\ProcurementFlow\Domain\Stock\StockMovementService;
 use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\MaterialLot;
 use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
 use Lastdino\ProcurementFlow\Models\Receiving;
@@ -21,10 +20,10 @@ class ReceivingLineService
         public OverDeliveryGuard $guard,
         public LotService $lot,
         public StockMovementService $movement,
-    ) { }
+    ) {}
 
     /**
-     * @param array{qty:float|int, unit_purchase?:string|null, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null} $line
+     * @param  array{qty:float|int, unit_purchase?:string|null, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null}  $line
      */
     public function handle(PurchaseOrder $po, Receiving $receiving, PurchaseOrderItem $poi, array $line): void
     {

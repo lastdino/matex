@@ -13,11 +13,10 @@ final class OptionSelectionService
         public OptionCatalogService $catalog,
         public OptionSelectionRuleBuilder $ruleBuilder,
         public PurchaseOrderOptionSyncService $sync,
-    ) {
-    }
+    ) {}
 
     /**
-     * @param array<int,int|string|null> $raw
+     * @param  array<int,int|string|null>  $raw
      * @return array<int,int>
      */
     public function normalizeAndValidate(array $raw): array
@@ -31,6 +30,7 @@ final class OptionSelectionService
                 }
                 $selected[(int) $gid] = (int) $oid;
             }
+
             return $selected;
         }
 
@@ -58,11 +58,12 @@ final class OptionSelectionService
             }
             $selected[(int) $gid] = (int) $oid;
         }
+
         return $selected;
     }
 
     /**
-     * @param array<int,int> $selected
+     * @param  array<int,int>  $selected
      */
     public function syncToItem(PurchaseOrderItem $item, array $selected): void
     {

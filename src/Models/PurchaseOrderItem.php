@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Lastdino\ProcurementFlow\Models;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Lastdino\ProcurementFlow\Support\Tables;
-use Illuminate\Database\Eloquent\Model;
 
 class PurchaseOrderItem extends Model
 {
@@ -36,11 +36,25 @@ class PurchaseOrderItem extends Model
         ];
     }
 
-    public function purchaseOrder(): BelongsTo { return $this->belongsTo(PurchaseOrder::class); }
-    public function material(): BelongsTo { return $this->belongsTo(Material::class); }
-    public function receivingItems(): HasMany { return $this->hasMany(ReceivingItem::class, 'purchase_order_item_id'); }
+    public function purchaseOrder(): BelongsTo
+    {
+        return $this->belongsTo(PurchaseOrder::class);
+    }
 
-    public function optionValues(): HasMany { return $this->hasMany(PurchaseOrderItemOptionValue::class, 'purchase_order_item_id'); }
+    public function material(): BelongsTo
+    {
+        return $this->belongsTo(Material::class);
+    }
+
+    public function receivingItems(): HasMany
+    {
+        return $this->hasMany(ReceivingItem::class, 'purchase_order_item_id');
+    }
+
+    public function optionValues(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderItemOptionValue::class, 'purchase_order_item_id');
+    }
 
     public function optionValueForGroup(int $groupId): ?PurchaseOrderItemOptionValue
     {
@@ -57,7 +71,6 @@ class PurchaseOrderItem extends Model
     {
         return $this->hasMany(self::class, 'shipping_for_item_id');
     }
-
 
     protected static function booted(): void
     {

@@ -18,8 +18,7 @@ final class PurchaseOrderFactory
         public TaxResolver $taxResolver,
         public OptionSelectionService $optionService,
         public DeliveryLocationResolver $deliveryLocationResolver,
-    ) {
-    }
+    ) {}
 
     /**
      * @param array{
@@ -104,7 +103,7 @@ final class PurchaseOrderFactory
                         $shippingTaxable = (bool) ($shipping['taxable'] ?? true);
                         $shippingRate = $shippingTaxable ? (float) ($shipping['tax_rate'] ?? 0.10) : 0.0;
 
-                        $desc = '送料（' . (string) ($material->getAttribute('name') ?? $material->getAttribute('sku') ?? '対象資材') . '）';
+                        $desc = '送料（'.(string) ($material->getAttribute('name') ?? $material->getAttribute('sku') ?? '対象資材').'）';
                         PurchaseOrderItem::create([
                             'purchase_order_id' => $po->id,
                             'material_id' => null,

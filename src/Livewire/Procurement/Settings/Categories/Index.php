@@ -11,9 +11,11 @@ use Livewire\Component;
 class Index extends Component
 {
     public bool $openModal = false;
+
     public ?int $editingId = null;
 
     public string $name = '';
+
     public string $code = '';
 
     /**
@@ -25,7 +27,7 @@ class Index extends Component
 
         return [
             'name' => ['required', 'string', 'max:100'],
-            'code' => ['required', 'string', 'max:50', 'regex:/^[A-Z0-9_\-]+$/', 'unique:' . (new MaterialCategory())->getTable() . ',code' . ($id ? ',' . $id : '')],
+            'code' => ['required', 'string', 'max:50', 'regex:/^[A-Z0-9_\-]+$/', 'unique:'.(new MaterialCategory)->getTable().',code'.($id ? ','.$id : '')],
         ];
     }
 

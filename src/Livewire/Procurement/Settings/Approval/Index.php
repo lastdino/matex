@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Approval;
 
 use Illuminate\Contracts\View\View;
-use Lastdino\ProcurementFlow\Models\AppSetting;
 use Lastdino\ApprovalFlow\Models\ApprovalFlow;
+use Lastdino\ProcurementFlow\Models\AppSetting;
 use Livewire\Component;
 
 class Index extends Component

@@ -4,27 +4,27 @@ declare(strict_types=1);
 
 namespace Lastdino\ProcurementFlow\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
-use Lastdino\ProcurementFlow\Casts\PurchaseOrderStatusCast;
-use Lastdino\ProcurementFlow\Support\Tables;
-use Illuminate\Database\Eloquent\Model;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Mail;
+use Lastdino\ApprovalFlow\Traits\HasApprovalFlow;
+use Lastdino\ProcurementFlow\Casts\PurchaseOrderStatusCast;
+use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
 use Lastdino\ProcurementFlow\Mail\PurchaseOrderIssuedMail;
 use Lastdino\ProcurementFlow\Services\PoNumberGenerator;
-use Lastdino\ApprovalFlow\Traits\HasApprovalFlow;
+use Lastdino\ProcurementFlow\Support\Tables;
 
 class PurchaseOrder extends Model
 {
     use HasApprovalFlow;
 
     protected $fillable = [
-        'po_number','supplier_id','status','issue_date','expected_date','subtotal','tax','total',
-        'shipping_total','shipping_tax_total',
-        'invoice_number','delivery_note_number','notes','created_by',
+        'po_number', 'supplier_id', 'status', 'issue_date', 'expected_date', 'subtotal', 'tax', 'total',
+        'shipping_total', 'shipping_tax_total',
+        'invoice_number', 'delivery_note_number', 'notes', 'created_by',
         // 発注ごとの納品先
         'delivery_location',
         // UI からの個別指定は廃止。サプライヤー設定に基づき自動送信する。
@@ -52,10 +52,25 @@ class PurchaseOrder extends Model
         ];
     }
 
-    public function supplier(): BelongsTo { return $this->belongsTo(Supplier::class); }
-    public function requester(): BelongsTo { return $this->belongsTo(User::class, 'created_by'); }
-    public function items(): HasMany { return $this->hasMany(PurchaseOrderItem::class); }
-    public function receivings(): HasMany { return $this->hasMany(Receiving::class); }
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function requester(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(PurchaseOrderItem::class);
+    }
+
+    public function receivings(): HasMany
+    {
+        return $this->hasMany(Receiving::class);
+    }
 
     /**
      * 承認完了時の処理：PO発行し、必要であればサプライヤーへメール送信
@@ -82,7 +97,7 @@ class PurchaseOrder extends Model
         if ($shouldAutoSend) {
             $to = $supplier?->email;
             if (! empty($to)) {
-                $mailable = new PurchaseOrderIssuedMail($this->fresh(['supplier','items']));
+                $mailable = new PurchaseOrderIssuedMail($this->fresh(['supplier', 'items']));
 
                 // CCはカンマ区切りを配列に正規化
                 $ccs = [];

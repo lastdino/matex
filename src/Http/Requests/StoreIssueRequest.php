@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Lastdino\ProcurementFlow\Support\Tables;
 
 class StoreIssueRequest extends FormRequest
 {

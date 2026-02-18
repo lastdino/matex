@@ -5,17 +5,12 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\Receiving;
 
 use Illuminate\Contracts\View\View as ViewContract;
-use Illuminate\Support\Facades\DB;
-use Livewire\Component;
 use Lastdino\ProcurementFlow\Actions\Receiving\ReceivePurchaseOrderAction;
 use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
 use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Lastdino\ProcurementFlow\Models\Receiving;
-use Lastdino\ProcurementFlow\Models\ReceivingItem;
-use Lastdino\ProcurementFlow\Models\StockMovement;
 use Lastdino\ProcurementFlow\Services\UnitConversionService;
+use Livewire\Component;
 
 class Scan extends Component
 {
@@ -60,6 +55,7 @@ class Scan extends Component
     ];
 
     public string $message = '';
+
     public bool $ok = false;
 
     protected function rules(): array
@@ -83,7 +79,8 @@ class Scan extends Component
     public function getCanReceiveProperty(): bool
     {
         $qty = $this->form['qty'];
-        return !empty($this->form['token']) && is_numeric($qty) && (float) $qty > 0;
+
+        return ! empty($this->form['token']) && is_numeric($qty) && (float) $qty > 0;
     }
 
     public function setMessage(string $text, bool $ok = false): void
@@ -103,6 +100,7 @@ class Scan extends Component
             $this->resetInfo();
             $this->message = '';
             $this->ok = false;
+
             return;
         }
 
@@ -110,8 +108,6 @@ class Scan extends Component
         $conversion = app(\Lastdino\ProcurementFlow\Services\UnitConversionService::class);
         $this->lookup($conversion);
     }
-
-
 
     public function lookup(UnitConversionService $conversion): void
     {
@@ -123,16 +119,18 @@ class Scan extends Component
             ->with(['purchaseOrder', 'material'])
             ->first();
 
-        if (!$poi) {
+        if (! $poi) {
             $this->resetInfo();
             $this->setMessage(__('procflow::receiving.messages.token_not_found'), false);
+
             return;
         }
 
         $po = $poi->purchaseOrder;
-        if (!in_array($po->status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Receiving], true)) {
+        if (! in_array($po->status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Receiving], true)) {
             $this->resetInfo();
             $this->setMessage(__('procflow::receiving.messages.not_receivable_status'), false);
+
             return;
         }
 
@@ -140,11 +138,12 @@ class Scan extends Component
         if ($poi->unit_purchase === 'shipping') {
             $this->resetInfo();
             $this->setMessage(__('procflow::receiving.messages.shipping_line_excluded'), false);
+
             return;
         }
 
         $material = $poi->material;
-        if (!$material) {
+        if (! $material) {
             // Ad-hoc line (no material): show minimal info without conversion
             $orderedBase = max((float) $poi->qty_ordered - (float) ($poi->qty_canceled ?? 0), 0.0);
             $receivedBase = (float) $poi->receivingItems()->sum('qty_base');
@@ -152,6 +151,7 @@ class Scan extends Component
             if ($remainingBase <= 0.0) {
                 $this->resetInfo();
                 $this->setMessage(__('procflow::receiving.messages.not_receivable_status'), false);
+
                 return;
             }
 
@@ -167,6 +167,7 @@ class Scan extends Component
             ];
 
             $this->setMessage(__('procflow::receiving.messages.recognized_enter_qty_adhoc'), true);
+
             return;
         }
 
@@ -177,6 +178,7 @@ class Scan extends Component
         if ($remainingBase <= 0.0) {
             $this->resetInfo();
             $this->setMessage(__('procflow::receiving.messages.not_receivable_status'), false);
+
             return;
         }
 

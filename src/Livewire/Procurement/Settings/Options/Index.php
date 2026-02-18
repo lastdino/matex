@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rule;
 use Lastdino\ProcurementFlow\Models\Option;
 use Lastdino\ProcurementFlow\Models\OptionGroup;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
 use Lastdino\ProcurementFlow\Models\PurchaseOrderItemOptionValue;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -19,6 +18,7 @@ class Index extends Component
     use WithPagination;
 
     public string $groupSearch = '';
+
     public string $optionSearch = '';
 
     public ?int $selectedGroupId = null;
@@ -44,6 +44,7 @@ class Index extends Component
     ];
 
     public bool $showGroupModal = false;
+
     public bool $showOptionModal = false;
 
     public function mount(): void
@@ -85,7 +86,7 @@ class Index extends Component
             ->when($this->optionSearch !== '', function (Builder $q): void {
                 $q->where(function (Builder $qq): void {
                     $qq->where('name', 'like', "%{$this->optionSearch}%")
-                       ->orWhere('code', 'like', "%{$this->optionSearch}%");
+                        ->orWhere('code', 'like', "%{$this->optionSearch}%");
                 });
             })
             ->orderBy('sort_order')
@@ -217,10 +218,10 @@ class Index extends Component
         $currentId = (int) ($this->optionForm['id'] ?? 0);
 
         $validated = $this->validate([
-            'optionForm.group_id' => ['required', Rule::exists((new OptionGroup())->getTable(), 'id')],
+            'optionForm.group_id' => ['required', Rule::exists((new OptionGroup)->getTable(), 'id')],
             'optionForm.code' => [
                 'required', 'string', 'max:100',
-                Rule::unique((new Option())->getTable(), 'code')
+                Rule::unique((new Option)->getTable(), 'code')
                     ->ignore($currentId)
                     ->where(fn ($q) => $q->where('group_id', $gid)),
             ],

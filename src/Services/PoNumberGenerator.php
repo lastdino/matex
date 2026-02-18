@@ -18,10 +18,11 @@ class PoNumberGenerator
         $table = Tables::name('purchase_orders');
         $count = (int) DB::table($table)
             ->whereNotNull('po_number')
-            ->where('po_number', 'like', $prefix . '-%')
+            ->where('po_number', 'like', $prefix.'-%')
             ->count();
 
         $seq = $count + 1;
+
         return sprintf('%s-%04d', $prefix, $seq);
     }
 }

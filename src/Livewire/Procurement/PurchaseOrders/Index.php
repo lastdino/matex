@@ -4,36 +4,41 @@ declare(strict_types=1);
 
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders;
 
-use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Contracts\View\View;
-use Livewire\Component;
-use Livewire\WithPagination;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
-use Lastdino\ProcurementFlow\Models\OptionGroup;
+use Illuminate\Support\Carbon;
 use Lastdino\ProcurementFlow\Models\Option;
-
-use Lastdino\ProcurementFlow\Support\Settings;
+use Lastdino\ProcurementFlow\Models\OptionGroup;
+use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 use Lastdino\ProcurementFlow\Models\Receiving;
 use Lastdino\ProcurementFlow\Models\ReceivingItem;
+use Lastdino\ProcurementFlow\Support\Settings;
+use Livewire\Component;
+use Livewire\WithPagination;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\Support\Carbon;
 
 class Index extends Component
 {
     use WithPagination;
+
     public string $q = '';
+
     public string $status = '';
+
     // Separate filters
     public string $poNumber = '';
+
     public string $supplierId = '';
+
     public string $requesterId = '';
+
     // Date range filters (YYYY-MM-DD)
     public array $issueDate = [
         'start' => null,
         'end' => null,
     ];
+
     public array $expectedDate = [
         'start' => null,
         'end' => null,
@@ -47,13 +52,17 @@ class Index extends Component
 
     // Export modal state
     public bool $showExportModal = false;
+
     // Matrix options
     public ?int $rowGroupId = null;
+
     public ?int $colGroupId = null;
+
     public string $aggregateType = 'amount'; // amount|quantity
 
     // Modal state for creating a PO
     public bool $showPoModal = false;
+
     /** @var array{supplier_id:?int,expected_date:?string,items:array<int,array{material_id:?int,unit_purchase:?string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,description:?string,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
     public array $poForm = [
         'supplier_id' => null,
@@ -65,6 +74,7 @@ class Index extends Component
 
     // Modal state for creating an Ad-hoc PO (materials not registered)
     public bool $showAdhocPoModal = false;
+
     /** @var array{supplier_id:?int,expected_date:?string,items:array<int,array{description:string|null,manufacturer:string|null,unit_purchase:string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
     public array $adhocForm = [
         'supplier_id' => null,
@@ -127,7 +137,7 @@ class Index extends Component
                     // - purchase_order_items.manufacturer（単発注文のメーカー名）
                     foreach ($keywords as $word) {
                         $like = "%{$word}%";
-                        $query->where(function ($and) use ($like, $word) {
+                        $query->where(function ($and) use ($like) {
                             $and
                                 // 資材マスタの品名／メーカー名
                                 ->orWhereHas('items.material', function ($mq) use ($like) {
@@ -286,17 +296,19 @@ class Index extends Component
 
         if ($from === '' || $to === '') {
             $this->addError('receivingDate', __('procflow::po.export.validation.receiving_required'));
+
             return null;
         }
 
         if (! in_array($this->aggregateType, ['amount', 'quantity'], true)) {
             $this->addError('aggregateType', __('procflow::po.export.validation.aggregate_required'));
+
             return null;
         }
 
         // Build dataset
         $items = ReceivingItem::query()
-            ->join((new Receiving())->getTable() . ' as r', 'r.id', '=', (new ReceivingItem())->getTable() . '.receiving_id')
+            ->join((new Receiving)->getTable().' as r', 'r.id', '=', (new ReceivingItem)->getTable().'.receiving_id')
             ->whereDate('r.received_at', '>=', $from)
             ->whereDate('r.received_at', '<=', $to)
             ->with([
@@ -312,11 +324,11 @@ class Index extends Component
                 'purchaseOrderItem.optionValues.group:id,name,sort_order',
             ])
             ->orderBy('r.received_at', 'asc')
-            ->select((new ReceivingItem())->getTable() . '.*', 'r.received_at')
+            ->select((new ReceivingItem)->getTable().'.*', 'r.received_at')
             ->get();
 
         // Spreadsheet
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         // Build dynamic option group headers based on data in range
         $baseBeforeOptionHeaders = [
@@ -363,6 +375,7 @@ class Index extends Component
             if ($a['sort'] === $b['sort']) {
                 return strcmp($a['name'], $b['name']);
             }
+
             return $a['sort'] <=> $b['sort'];
         });
 
@@ -453,12 +466,18 @@ class Index extends Component
         // If neither axis selected by user, auto-detect preferred axes
         if (! $userSelectedRow && ! $userSelectedCol && $rowGroup === null) {
             foreach ($sortedGroups as $g) {
-                if ($g['name'] === '費用区分') { $rowGroup = $g; break; }
+                if ($g['name'] === '費用区分') {
+                    $rowGroup = $g;
+                    break;
+                }
             }
         }
         if (! $userSelectedRow && ! $userSelectedCol && $colGroup === null) {
             foreach ($sortedGroups as $g) {
-                if ($g['name'] === '部門区分') { $colGroup = $g; break; }
+                if ($g['name'] === '部門区分') {
+                    $colGroup = $g;
+                    break;
+                }
             }
         }
         if (! $userSelectedRow && $rowGroup === null && ! empty($sortedGroups)) {
@@ -467,13 +486,19 @@ class Index extends Component
         // If user selected only row group, keep single-axis (do not auto-fill column)
         if (! $userSelectedRow && $colGroup === null) {
             foreach ($sortedGroups as $g) {
-                if (! $rowGroup || $g['id'] !== $rowGroup['id']) { $colGroup = $g; break; }
+                if (! $rowGroup || $g['id'] !== $rowGroup['id']) {
+                    $colGroup = $g;
+                    break;
+                }
             }
         }
         // If user selected only column group and row is still null, try to auto-pick a different row group
         if ($userSelectedCol && ! $userSelectedRow && $rowGroup === null) {
             foreach ($sortedGroups as $g) {
-                if ($g['id'] !== $colGroup['id']) { $rowGroup = $g; break; }
+                if ($g['id'] !== $colGroup['id']) {
+                    $rowGroup = $g;
+                    break;
+                }
             }
             // Fallback: if nothing else, allow same group as row
             if ($rowGroup === null && $colGroup !== null) {
@@ -630,7 +655,7 @@ class Index extends Component
     {
         return \Lastdino\ProcurementFlow\Models\Supplier::query()
             ->orderBy('name')
-            ->get(['id','name','auto_send_po']);
+            ->get(['id', 'name', 'auto_send_po']);
     }
 
     public function getMaterialsProperty()
@@ -646,13 +671,13 @@ class Index extends Component
         return \App\Models\User::query()
             ->orderBy('name')
             ->limit(100)
-            ->get(['id','name']);
+            ->get(['id', 'name']);
     }
 
     // Active option groups and options for Create PO modal (UI auto-reflection)
     public function getActiveGroupsProperty()
     {
-        return OptionGroup::query()->active()->ordered()->get(['id','name']);
+        return OptionGroup::query()->active()->ordered()->get(['id', 'name']);
     }
 
     /**
@@ -660,7 +685,7 @@ class Index extends Component
      */
     public function getActiveOptionsByGroupProperty(): array
     {
-        $options = Option::query()->active()->ordered()->get(['id','name','group_id']);
+        $options = Option::query()->active()->ordered()->get(['id', 'name', 'group_id']);
         $by = [];
         foreach ($options as $opt) {
             $gid = (int) $opt->getAttribute('group_id');
@@ -669,11 +694,13 @@ class Index extends Component
                 'name' => (string) $opt->getAttribute('name'),
             ];
         }
+
         return $by;
     }
 
     /**
      * Preview grouping of current form items by supplier based on each material's preferred supplier.
+     *
      * @return array<int, array{supplier_id:int,name:string,lines:int,subtotal:float}>
      */
     public function getPoSupplierPreviewProperty(): array
@@ -712,6 +739,7 @@ class Index extends Component
             $g['subtotal'] = (float) $g['subtotal'];
             $preview[] = $g;
         }
+
         return $preview;
     }
 
@@ -722,7 +750,7 @@ class Index extends Component
             return;
         }
 
-        $rules = (new \Lastdino\ProcurementFlow\Http\Requests\StorePurchaseOrderRequest())->rules();
+        $rules = (new \Lastdino\ProcurementFlow\Http\Requests\StorePurchaseOrderRequest)->rules();
 
         // Normalize items payload to ensure keys existence (especially options)
         $items = array_map(function ($line) {
@@ -750,7 +778,6 @@ class Index extends Component
             ],
         ];
         $validated = $this->validatePurchaseOrderPayload('poForm', $payload, $rules);
-
 
         // Path A: legacy/single-supplier explicit flow when supplier_id provided
         if (! empty($validated['supplier_id'])) {
@@ -790,6 +817,7 @@ class Index extends Component
 
             $this->showPoModal = false;
             $this->redirectToPoShow($po);
+
             return;
         }
 
@@ -801,12 +829,14 @@ class Index extends Component
             if (is_null($matId)) {
                 // Should be prevented by validator for this flow
                 $this->addError('poForm.items.'.$idx.'.material_id', 'アドホック行はこのフローでは使用できません。');
+
                 return;
             }
             /** @var \Lastdino\ProcurementFlow\Models\Material|null $mat */
             $mat = \Lastdino\ProcurementFlow\Models\Material::find((int) $matId);
             if (! $mat || is_null($mat->preferred_supplier_id)) {
                 $this->addError('poForm.items.'.$idx.'.material_id', 'この資材に紐づくサプライヤーが未設定のため、自動発注できません。');
+
                 return;
             }
             $sid = (int) $mat->preferred_supplier_id;
@@ -854,7 +884,7 @@ class Index extends Component
         $count = count($created);
         $this->dispatch('toast', type: 'success', message: $count.'件の発注書を作成しました');
         // Stay on index; optionally we could redirect when only one created.
-        }
+    }
 
     // When supplier changes, prefill auto_send flag from supplier default
     public function updatedPoFormSupplierId($value): void
@@ -912,7 +942,7 @@ class Index extends Component
         }
 
         // Reuse same rules; items will have material_id null and require description
-        $rules = (new \Lastdino\ProcurementFlow\Http\Requests\StorePurchaseOrderRequest())->rules();
+        $rules = (new \Lastdino\ProcurementFlow\Http\Requests\StorePurchaseOrderRequest)->rules();
 
         // Map adhoc items to expected structure (material_id => null)
         $items = array_map(function ($line) {
@@ -946,6 +976,7 @@ class Index extends Component
         // アドホック発注フローでは supplier_id は必須（FormRequest の withValidator は使っていないため、ここで強制）
         if (empty($validated['supplier_id'])) {
             $this->addError('adhocForm.supplier_id', 'アドホック行が含まれるため、サプライヤーの選択が必要です。');
+
             return;
         }
 
@@ -986,6 +1017,7 @@ class Index extends Component
 
     /**
      * 現在（または予定日）に有効な商品税セットを返す。
+     *
      * @return array{default_rate: float, rates: array<string,float>}
      */
     protected function resolveCurrentItemTaxSet(?\Carbon\Carbon $at): array
@@ -1016,6 +1048,7 @@ class Index extends Component
         $code = $material ? (string) ($material->getAttribute('tax_code') ?? 'standard') : 'standard';
         $default = (float) ($taxSet['default_rate'] ?? 0.10);
         $rates = (array) ($taxSet['rates'] ?? []);
+
         return match ($code) {
             'reduced' => (float) ($rates['reduced'] ?? $default),
             default => $default,
@@ -1032,6 +1065,7 @@ class Index extends Component
         if ($materialId === 0) {
             // Reset unit when material cleared
             $this->poForm['items'][$index]['unit_purchase'] = '';
+
             return;
         }
 
@@ -1044,6 +1078,7 @@ class Index extends Component
                 $this->poForm['items'][$index]['material_id'] = null;
                 $this->poForm['items'][$index]['unit_purchase'] = '';
                 $this->addError("poForm.items.$index.material_id", 'この資材に紐づくサプライヤーが未設定です。資材に指定サプライヤーを設定してください。');
+
                 return;
             }
             // If supplier is not chosen yet and material has preferred supplier, auto-assign it
@@ -1070,7 +1105,7 @@ class Index extends Component
     // When expected_date changes, re-evaluate auto-applied (null) tax rates
     public function updatedPoFormExpectedDate($value): void
     {
-        $exp = !empty($value) ? \Carbon\Carbon::parse($value) : null;
+        $exp = ! empty($value) ? \Carbon\Carbon::parse($value) : null;
         $taxSet = $this->resolveCurrentItemTaxSet($exp);
         foreach ($this->poForm['items'] as $i => $line) {
             $current = $line['tax_rate'] ?? null;
@@ -1105,7 +1140,6 @@ class Index extends Component
             }
         }
     }
-
 
     protected function resetPoForm(): void
     {
@@ -1144,7 +1178,7 @@ class Index extends Component
         $prefixed = [];
 
         foreach ($rules as $key => $rule) {
-            $newKey = $prefix . $key;
+            $newKey = $prefix.$key;
 
             // Prefix field references inside dependent validation rules (strings)
             // Only for rules where other field names are referenced (required_with/without and their variants)
@@ -1162,8 +1196,10 @@ class Index extends Component
                     if ($field === '') {
                         return $field;
                     }
-                    return str_starts_with($field, $prefix) ? $field : $prefix . $field;
+
+                    return str_starts_with($field, $prefix) ? $field : $prefix.$field;
                 }, $parts);
+
                 return implode(',', $parts);
             };
 
@@ -1175,10 +1211,11 @@ class Index extends Component
                     }
                     [$name, $value] = explode(':', $seg, 2);
                     if (in_array($name, $dependentRuleNames, true)) {
-                        $seg = $name . ':' . $prefixFieldList($value);
+                        $seg = $name.':'.$prefixFieldList($value);
                     }
                 }
                 unset($seg);
+
                 return implode('|', $segments);
             };
 
@@ -1189,6 +1226,7 @@ class Index extends Component
                     if (is_string($r)) {
                         return $transformStringRule($r);
                     }
+
                     // Leave Rule objects and other instances as-is
                     return $r;
                 }, $newRule);
@@ -1210,30 +1248,36 @@ class Index extends Component
             $flowId = (int) ($flowIdStr ?? 0);
             if ($flowId <= 0 || ! \Lastdino\ApprovalFlow\Models\ApprovalFlow::query()->whereKey($flowId)->exists()) {
                 $this->addError('approval_flow', '承認フローが未設定のため発注できません。管理者に連絡してください。');
+
                 return false;
             }
+
             return true;
         } catch (\Throwable $e) {
             $this->addError('approval_flow', '承認フローが未設定のため発注できません。管理者に連絡してください。');
+
             return false;
         }
     }
 
     /**
      * 共通: フォームごとのプレフィックスでバリデーションを実行して該当フォーム配下の配列を返す。
+     *
      * @param  array<string,mixed>  $payload
      * @param  array<string,mixed>  $rules
      * @return array<string,mixed>
      */
     protected function validatePurchaseOrderPayload(string $formKey, array $payload, array $rules): array
     {
-        $prefixedRules = $this->prefixFormRules($rules, $formKey . '.');
+        $prefixedRules = $this->prefixFormRules($rules, $formKey.'.');
         $validatedAll = validator($payload, $prefixedRules)->validate();
+
         return $validatedAll[$formKey] ?? [];
     }
 
     /**
      * 共通: よく使うサービスの取得。
+     *
      * @return array{0:\Lastdino\ProcurementFlow\Services\OptionSelectionService,1:\Lastdino\ProcurementFlow\Services\PurchaseOrderFactory,2:\Lastdino\ProcurementFlow\Services\ApprovalFlowRegistrar}
      */
     protected function services(): array
@@ -1241,6 +1285,7 @@ class Index extends Component
         $optionService = app(\Lastdino\ProcurementFlow\Services\OptionSelectionService::class);
         $factory = app(\Lastdino\ProcurementFlow\Services\PurchaseOrderFactory::class);
         $approval = app(\Lastdino\ProcurementFlow\Services\ApprovalFlowRegistrar::class);
+
         return [$optionService, $factory, $approval];
     }
 
@@ -1251,6 +1296,7 @@ class Index extends Component
     {
         if (\Illuminate\Support\Facades\Route::has('procurement.purchase-orders.show')) {
             $this->redirectRoute('procurement.purchase-orders.show', ['po' => $po->id]);
+
             return;
         }
         if (\Illuminate\Support\Facades\Route::has('purchase-orders.show')) {

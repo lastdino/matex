@@ -43,7 +43,7 @@
                         <th class="py-2">{{ __('procflow::dashboard.low_stock.table.sku') }}</th>
                         <th class="py-2">{{ __('procflow::dashboard.low_stock.table.name') }}</th>
                         <th class="py-2">{{ __('procflow::dashboard.low_stock.table.stock') }}</th>
-                        <th class="py-2">{{ __('procflow::dashboard.low_stock.table.safety') }}</th>
+                        <th class="py-2">{{ __('procflow::dashboard.low_stock.table.min_qty') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,7 +60,7 @@
                             @endif
                         </td>
                         <td class="py-2 text-red-600">{{ $stockValue }}</td>
-                        <td class="py-2">{{ (float) $m->safety_stock }}</td>
+                        <td class="py-2">{{ (float) $m->min_stock }}</td>
                     </tr>
                 @empty
                     <tr><td class="py-4 text-neutral-500" colspan="4">{{ __('procflow::dashboard.low_stock.empty') }}</td></tr>

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Lastdino\ProcurementFlow\Models;
 
-use Lastdino\ProcurementFlow\Support\Tables;
 use Illuminate\Database\Eloquent\Model;
+use Lastdino\ProcurementFlow\Support\Tables;
 
 class MaterialCategory extends Model
 {

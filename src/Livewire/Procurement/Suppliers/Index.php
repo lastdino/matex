@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow\Livewire\Procurement\Suppliers;
 
 use Illuminate\Contracts\View\View;
+use Lastdino\ProcurementFlow\Models\Supplier;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Lastdino\ProcurementFlow\Models\Supplier;
 
 class Index extends Component
 {
@@ -19,7 +19,9 @@ class Index extends Component
 
     // Modal state for create/edit supplier
     public bool $showSupplierModal = false;
+
     public ?int $editingSupplierId = null;
+
     /** @var array{name:?string,code:?string,email:?string,email_cc:?string,phone:?string,address:?string,contact_person_name:?string,is_active:bool,auto_send_po:bool} */
     public array $supplierForm = [
         'name' => null,
@@ -35,11 +37,14 @@ class Index extends Component
 
     // Detail modal state
     public bool $showSupplierDetailModal = false;
+
     public ?int $selectedSupplierId = null;
+
     public ?array $supplierDetail = null;
 
     // Delete confirmation state
     public bool $showDeleteConfirm = false;
+
     public ?int $deletingSupplierId = null;
 
     /**
@@ -48,6 +53,7 @@ class Index extends Component
     public function getSuppliersProperty()
     {
         $q = (string) $this->q;
+
         return Supplier::query()
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
@@ -158,6 +164,7 @@ class Index extends Component
         if ($s->purchaseOrders()->exists()) {
             $this->dispatch('toast', type: 'error', message: __('procflow::suppliers.delete.has_pos_error'));
             $this->cancelDelete();
+
             return;
         }
 
@@ -185,6 +192,7 @@ class Index extends Component
     {
         if (! $this->selectedSupplierId) {
             $this->supplierDetail = null;
+
             return;
         }
 

@@ -3,12 +3,12 @@
 declare(strict_types=1);
 
 namespace Lastdino\ProcurementFlow\Observers;
+
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
 use Lastdino\ProcurementFlow\Models\Receiving;
 use Lastdino\ProcurementFlow\Models\ReceivingItem;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
 
 class ReceivingObserver implements ShouldHandleEventsAfterCommit
 {

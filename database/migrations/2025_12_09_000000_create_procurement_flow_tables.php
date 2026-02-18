@@ -7,7 +7,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Lastdino\ProcurementFlow\Support\Tables;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // material_categories
@@ -113,7 +114,7 @@ return new class extends Migration {
             $table->integer('sort_order')->default(0);
             $table->softDeletes();
             $table->timestamps();
-            $table->unique(['group_id', 'code'], Tables::name('options') . '_group_code_unique');
+            $table->unique(['group_id', 'code'], Tables::name('options').'_group_code_unique');
         });
 
         // purchase_order_items

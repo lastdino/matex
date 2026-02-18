@@ -7,11 +7,11 @@ namespace Lastdino\ProcurementFlow\Livewire\Procurement\Materials;
 use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Livewire\Component;
 use Lastdino\ProcurementFlow\Models\Material;
 use Lastdino\ProcurementFlow\Models\MaterialLot;
 use Lastdino\ProcurementFlow\Models\StockMovement;
 use Lastdino\ProcurementFlow\Services\UnitConversionService;
+use Livewire\Component;
 
 class Issue extends Component
 {
@@ -32,6 +32,7 @@ class Issue extends Component
     public string $reason = '';
 
     public string $message = '';
+
     public bool $ok = false;
 
     public function mount(Material $material): void
@@ -61,7 +62,7 @@ class Issue extends Component
                     $this->prefLotId = $lotId;
                     // Optional preset quantity (?qty=)
                     $qty = request()->query('qty');
-                    if (!is_null($qty)) {
+                    if (! is_null($qty)) {
                         $qtyNum = (float) $qty;
                         if ($qtyNum > 0) {
                             $this->lotQty[$lotId] = $qtyNum;
@@ -83,6 +84,7 @@ class Issue extends Component
     {
         /** @var Material $m */
         $m = Material::query()->findOrFail($this->materialId);
+
         return $m;
     }
 
@@ -111,13 +113,18 @@ class Issue extends Component
                 if ((bool) ($material->manage_by_lot ?? false)) {
                     $hasAny = false;
                     foreach ($this->lotQty as $lotId => $q) {
-                        if ($q !== null && (float) $q > 0) { $hasAny = true; break; }
+                        if ($q !== null && (float) $q > 0) {
+                            $hasAny = true;
+                            break;
+                        }
                     }
                     abort_if(! $hasAny, 422, '数量を入力してください。');
 
                     foreach ($this->lotQty as $lotId => $qty) {
                         $qty = $qty === null ? 0.0 : (float) $qty;
-                        if ($qty <= 0) { continue; }
+                        if ($qty <= 0) {
+                            continue;
+                        }
                         /** @var MaterialLot|null $lot */
                         $lot = MaterialLot::query()->where('material_id', $material->id)->whereKey((int) $lotId)->lockForUpdate()->first();
                         abort_if(! $lot, 422, '対象ロットが見つかりません。');
@@ -190,7 +197,7 @@ class Issue extends Component
             // keep reason as entered for consecutive issues
         } catch (\Throwable $e) {
             $this->ok = false;
-            $this->message = '出庫に失敗しました: ' . $e->getMessage();
+            $this->message = '出庫に失敗しました: '.$e->getMessage();
         }
     }
 

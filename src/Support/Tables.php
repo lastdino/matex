@@ -9,11 +9,12 @@ final class Tables
     public static function prefix(): string
     {
         $configured = (string) (config('procurement-flow.table_prefix') ?? '');
+
         return $configured !== '' ? $configured : 'procurement_flow_';
     }
 
     public static function name(string $base): string
     {
-        return self::prefix() . $base;
+        return self::prefix().$base;
     }
 }

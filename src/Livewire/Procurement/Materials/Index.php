@@ -55,7 +55,9 @@ class Index extends Component
      *   tax_code:?string|null,
      *   manage_by_lot:bool,
      *   moq:?string|float|int|null,
-     *   pack_size:?string|float|int|null
+     *   pack_size:?string|float|int|null,
+     *   min_stock:?string|float|int|null,
+     *   max_stock:?string|float|int|null
      * }
      */
     public array $materialForm = [
@@ -64,7 +66,8 @@ class Index extends Component
         'tax_code' => 'standard',
         'unit_stock' => null,
         'unit_purchase_default' => null,
-        'safety_stock' => 0,
+        'min_stock' => 0,
+        'max_stock' => null,
         'category_id' => null,
         'current_stock' => null,
         'manufacturer_name' => null,
@@ -174,7 +177,8 @@ class Index extends Component
             'tax_code' => $m->tax_code ?? 'standard',
             'unit_stock' => $m->unit_stock,
             'unit_purchase_default' => $m->unit_purchase_default,
-            'safety_stock' => $m->safety_stock,
+            'min_stock' => $m->min_stock,
+            'max_stock' => $m->max_stock,
             'category_id' => $m->category_id,
             'current_stock' => $m->current_stock,
             'manufacturer_name' => $m->manufacturer_name,
@@ -282,7 +286,8 @@ class Index extends Component
             'materialForm.tax_code' => ['nullable', 'string', Rule::in($this->taxCodeOptions())],
             'materialForm.unit_stock' => ['required', 'string', 'max:32'],
             'materialForm.unit_purchase_default' => ['nullable', 'string', 'max:32'],
-            'materialForm.safety_stock' => ['nullable', 'numeric', 'min:0'],
+            'materialForm.min_stock' => ['nullable', 'numeric', 'min:0'],
+            'materialForm.max_stock' => ['nullable', 'numeric', 'min:0'],
             'materialForm.category_id' => ['nullable', 'integer', 'exists:'.Tables::name('material_categories').',id'],
             'materialForm.current_stock' => ['nullable', 'numeric', 'min:0'],
             'materialForm.manufacturer_name' => ['nullable', 'string', 'max:255'],
@@ -392,7 +397,8 @@ class Index extends Component
             'tax_code' => 'standard',
             'unit_stock' => null,
             'unit_purchase_default' => null,
-            'safety_stock' => 0,
+            'min_stock' => 0,
+            'max_stock' => null,
             'category_id' => null,
             'current_stock' => null,
             'manufacturer_name' => null,

@@ -25,11 +25,13 @@ class PurchaseOrderCompletionService
                 $effectiveOrdered = max((float) ($item->qty_ordered ?? 0) - (float) ($item->qty_canceled ?? 0), 0.0);
                 $orderedBase = $effectiveOrdered * (float) $conv->factor($mat, $item->unit_purchase, $mat->unit_stock);
                 $receivedBase = (float) $item->receivingItems()->sum('qty_base');
+
                 return $receivedBase >= $orderedBase - 1e-9;
             }
 
             $orderedBase = max((float) ($item->qty_ordered ?? 0) - (float) ($item->qty_canceled ?? 0), 0.0);
             $receivedBase = (float) $item->receivingItems()->sum('qty_base');
+
             return $receivedBase >= $orderedBase - 1e-9;
         });
     }
