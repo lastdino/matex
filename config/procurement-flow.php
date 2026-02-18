@@ -9,7 +9,10 @@ return [
 
     'enabled' => true,
 
-    // Mail settings for the procurement package
+    // API 認証設定
+    'api_key' => env('PROCUREMENT_API_KEY'),
+    'api_middleware' => ['api', \Lastdino\ProcurementFlow\Http\Middleware\VerifyApiKey::class],
+
     'mail' => [
         // Override the sender for procurement mails (optional)
         // If 'address' is empty or not set, Laravel's global mail.from is used.
