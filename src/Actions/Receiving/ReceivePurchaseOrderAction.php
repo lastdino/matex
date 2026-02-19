@@ -22,7 +22,7 @@ class ReceivePurchaseOrderAction
     ) {}
 
     /**
-     * @param  array{received_at:string, reference_number?:string|null, notes?:string|null, items: array<int, array{purchase_order_item_id:int, qty_received:float|int, unit_purchase?:string, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null}>}  $payload
+     * @param  array{received_at:string, reference_number?:string|null, notes?:string|null, items: array<int, array{purchase_order_item_id:int, qty_received:float|int, unit_purchase?:string, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null, storage_location_id?:int|null}>}  $payload
      */
     public function byItems(PurchaseOrder $po, array $payload): Receiving
     {
@@ -46,6 +46,7 @@ class ReceivePurchaseOrderAction
                     'lot_no' => $line['lot_no'] ?? null,
                     'mfg_date' => $line['mfg_date'] ?? null,
                     'expiry_date' => $line['expiry_date'] ?? null,
+                    'storage_location_id' => $line['storage_location_id'] ?? null,
                 ]);
             }
 
@@ -56,7 +57,7 @@ class ReceivePurchaseOrderAction
     }
 
     /**
-     * @param  array{token:string, qty:float|int, received_at?:string|null, reference_number?:string|null, notes?:string|null, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null}  $payload
+     * @param  array{token:string, qty:float|int, unit_purchase?:string|null, received_at?:string|null, reference_number?:string|null, notes?:string|null, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null, storage_location_id?:int|null}  $payload
      */
     public function byScan(array $payload): Receiving
     {
@@ -79,10 +80,11 @@ class ReceivePurchaseOrderAction
 
             $this->line->handle($po, $receiving, $poi, [
                 'qty' => (float) $payload['qty'],
-                'unit_purchase' => $poi->unit_purchase,
+                'unit_purchase' => $payload['unit_purchase'] ?? $poi->unit_purchase,
                 'lot_no' => $payload['lot_no'] ?? null,
                 'mfg_date' => $payload['mfg_date'] ?? null,
                 'expiry_date' => $payload['expiry_date'] ?? null,
+                'storage_location_id' => $payload['storage_location_id'] ?? null,
             ]);
 
             $this->updatePoStatus($po);

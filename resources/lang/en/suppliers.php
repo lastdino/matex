@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 return [
     'title' => 'Suppliers',
-    'search_placeholder' => 'Search name or code',
+    'search_placeholder' => 'Search name',
     'table' => [
         'name' => 'Name',
-        'code' => 'Code',
         'email' => 'Email',
         'contact_person' => 'Contact Person',
         'phone' => 'Phone',
@@ -29,7 +28,6 @@ return [
     ],
     'form' => [
         'name' => 'Name',
-        'code' => 'Code',
         'email' => 'Email',
         'email_cc' => 'Email CC (comma separated)',
         'email_cc_placeholder' => 'cc1@example.com, cc2@example.com',

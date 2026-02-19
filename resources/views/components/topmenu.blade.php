@@ -21,6 +21,7 @@
                             <flux:menu.item href="{{ route('procurement.settings.taxes') }}">{{ __('procflow::menu.taxes') }}</flux:menu.item>
                             <flux:menu.item href="{{ route('procurement.settings.display') }}">{{ __('procflow::menu.display') }}</flux:menu.item>
                             <flux:menu.item href="{{ route('procurement.settings.categories') }}">{{ __('procflow::menu.categories') }}</flux:menu.item>
+                            <flux:menu.item href="{{ route('procurement.settings.storage-locations') }}">{{ __('procflow::menu.storage_locations') }}</flux:menu.item>
                             <flux:menu.item href="{{ route('procurement.settings.pdf') }}">{{ __('procflow::menu.pdf') }}</flux:menu.item>
                             <flux:menu.separator />
                         </flux:menu>

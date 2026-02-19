@@ -55,7 +55,7 @@ return new class extends Migration
             $table->decimal('moq', 24, 6)->nullable();
             $table->decimal('pack_size', 24, 6)->nullable();
             $table->boolean('separate_shipping')->default(false);
-            $table->decimal('shipping_fee_per_order', 10, 2)->default(0);
+            $table->decimal('shipping_fee_per_order', 10, 2)->nullable();
             $table->string('unit_purchase_default', 32)->nullable();
             $table->foreignId('preferred_supplier_id')->nullable()->constrained(Tables::name('suppliers'));
             $table->timestamps();
@@ -65,8 +65,8 @@ return new class extends Migration
         Schema::create(Tables::name('unit_conversions'), function (Blueprint $table): void {
             $table->id();
             $table->foreignId('material_id')->constrained(Tables::name('materials'));
-            $table->string('from_unit', 32);
-            $table->string('to_unit', 32);
+            $table->string('from_unit', 32)->nullable();
+            $table->string('to_unit', 32)->nullable();
             $table->decimal('factor', 18, 6);
             $table->timestamps();
             $table->unique(['material_id', 'from_unit', 'to_unit'], 'pf_unit_conv_unique');

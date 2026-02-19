@@ -5,12 +5,6 @@ declare(strict_types=1);
 namespace Lastdino\ProcurementFlow;
 
 use Illuminate\Support\ServiceProvider;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Dashboard;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Index as MaterialsIndexComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\PendingReceiving\Index as PendingReceivingIndexComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders\Index as PoIndexComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\PurchaseOrders\Show as PoShowComponent;
-use Lastdino\ProcurementFlow\Livewire\Procurement\Suppliers\Index as SuppliersIndexComponent;
 use Lastdino\ProcurementFlow\Models\Receiving;
 use Lastdino\ProcurementFlow\Models\ReceivingItem;
 use Lastdino\ProcurementFlow\Models\StockMovement;
@@ -51,6 +45,10 @@ class ProcurementFlowServiceProvider extends ServiceProvider
         // Expose package views under the "procflow" namespace
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'procflow');
 
+        if (class_exists(\Illuminate\Support\Facades\Blade::class)) {
+            \Illuminate\Support\Facades\Blade::anonymousComponentPath(__DIR__.'/../resources/views/flux', 'flux');
+        }
+
         // Publish views so host apps can override
         $this->publishes([
             __DIR__.'/../resources/views' => resource_path('views/vendor/procflow'),
@@ -79,24 +77,9 @@ class ProcurementFlowServiceProvider extends ServiceProvider
     // custom methods for livewire components
     protected function loadLivewireComponents(): void
     {
-        Livewire::component('procurement.dashboard', Dashboard::class);
-        Livewire::component('purchase-orders.index', PoIndexComponent::class);
-        Livewire::component('purchase-orders.show', PoShowComponent::class);
-        Livewire::component('suppliers.index', SuppliersIndexComponent::class);
-        Livewire::component('procurement.materials', MaterialsIndexComponent::class);
-        Livewire::component('procurement.pending-receiving.index', PendingReceivingIndexComponent::class);
-        Livewire::component('procurement.materials.issue', \Lastdino\ProcurementFlow\Livewire\Procurement\Materials\Issue::class);
-        Livewire::component('procurement.receiving.scan', \Lastdino\ProcurementFlow\Livewire\Procurement\Receiving\Scan::class);
-        Livewire::component('procurement.settings.options.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Options\Index::class);
-        Livewire::component('procurement.settings.approval.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Approval\Index::class);
-        Livewire::component('procurement.settings.taxes.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Taxes\Index::class);
-        Livewire::component('procurement.settings.pdf.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Pdf\Index::class);
-        Livewire::component('procurement.settings.categories.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Categories\Index::class);
-        Livewire::component('procurement.settings.display.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Display\Index::class);
-        // Tokens management and labels
-        Livewire::component('procurement.settings.tokens.index', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Tokens\Index::class);
-        Livewire::component('procurement.settings.tokens.labels', \Lastdino\ProcurementFlow\Livewire\Procurement\Settings\Tokens\Labels::class);
-        // Ordering scan (QR → 発注ドラフト作成)
-        Livewire::component('procurement.ordering.scan', \Lastdino\ProcurementFlow\Livewire\Procurement\Ordering\Scan::class);
+        Livewire::addNamespace(
+            namespace: 'procflow',
+            viewPath: __DIR__.'/../resources/views/livewire',
+        );
     }
 }

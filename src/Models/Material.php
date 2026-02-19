@@ -7,7 +7,6 @@ namespace Lastdino\ProcurementFlow\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 use Lastdino\ProcurementFlow\Support\Tables;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -18,13 +17,14 @@ class Material extends Model implements HasMedia
 
     protected $fillable = [
         'sku', 'name', 'tax_code', 'unit_stock', 'unit_purchase_default', 'min_stock', 'max_stock', 'category_id', 'current_stock', 'preferred_supplier_id',
-        'manufacturer_name', 'storage_location', 'applicable_regulation', 'ghs_mark', 'protective_equipment', 'unit_price',
+        'manufacturer_name', 'applicable_regulation', 'ghs_mark', 'protective_equipment', 'unit_price',
         // 発注制約
         'moq', 'pack_size',
         // shipping
         'separate_shipping', 'shipping_fee_per_order',
-        // lot management
-        'manage_by_lot',
+        // is chemical
+        'is_chemical',
+        'cas_no', 'physical_state', 'ghs_hazard_details', 'specified_quantity', 'emergency_contact', 'disposal_method',
         // activation
         'is_active',
         // monox integration
@@ -47,7 +47,8 @@ class Material extends Model implements HasMedia
             'pack_size' => 'decimal:6',
             'separate_shipping' => 'boolean',
             'shipping_fee_per_order' => 'decimal:2',
-            'manage_by_lot' => 'boolean',
+            'is_chemical' => 'boolean',
+            'specified_quantity' => 'decimal:6',
             'is_active' => 'boolean',
             'sync_to_monox' => 'boolean',
         ];
@@ -81,6 +82,21 @@ class Material extends Model implements HasMedia
         return $this->hasMany(StockMovement::class, 'material_id');
     }
 
+    public function conversions(): HasMany
+    {
+        return $this->hasMany(UnitConversion::class, 'material_id');
+    }
+
+    public function riskAssessments(): HasMany
+    {
+        return $this->hasMany(MaterialRiskAssessment::class, 'material_id');
+    }
+
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(MaterialInspection::class, 'material_id');
+    }
+
     /**
      * Register media collections for this model.
      */
@@ -109,45 +125,38 @@ class Material extends Model implements HasMedia
     }
 
     /**
-     * Build public URLs for GHS images based on config mapping and stored keys.
+     * Build public URLs for GHS images (deprecated - using icons instead).
      *
      * @return array<int, string>
      */
     public function ghsImageUrls(): array
     {
-        // Prefer hyphen key if the host app publishes its own config file, else fall back to merged underscore key
-        /** @var array<string, mixed> $cfg */
-        $cfg = (array) (config('procurement-flow.ghs') ?? config('procurement_flow.ghs') ?? []);
+        return [];
+    }
 
-        /** @var string $disk */
-        $disk = (string) ($cfg['disk'] ?? 'public');
-        /** @var string $dir */
-        $dir = trim((string) ($cfg['directory'] ?? 'ghs_labels'), '/');
-        /** @var array<string, string> $map */
-        $map = (array) ($cfg['map'] ?? []);
-        /** @var string|null $placeholder */
-        $placeholder = isset($cfg['placeholder']) ? (string) $cfg['placeholder'] : null;
+    /**
+     * Get the Flux icon names for the GHS marks.
+     *
+     * @return array<int, string>
+     */
+    public function ghsIconNames(): array
+    {
+        return array_map(function (string $key) {
+            // Convert GHS01 to ghs-01
+            return strtolower(preg_replace('/(GHS)(\d+)/i', '$1-$2', $key) ?? $key);
+        }, $this->ghsMarkList());
+    }
 
-        $urls = [];
-        foreach ($this->ghsMarkList() as $key) {
-            $filename = $map[$key] ?? null;
-            if (is_string($filename) && $filename !== '') {
-                $path = $dir.'/'.ltrim($filename, '/');
-                if (Storage::disk($disk)->exists($path)) {
-                    $urls[] = Storage::disk($disk)->url($path);
-
-                    continue;
-                }
-            }
-
-            if (is_string($placeholder) && $placeholder !== '') {
-                $phPath = $dir.'/'.ltrim($placeholder, '/');
-                if (Storage::disk($disk)->exists($phPath)) {
-                    $urls[] = Storage::disk($disk)->url($phPath);
-                }
-            }
-        }
-
-        return $urls;
+    /**
+     * Get the default GHS keys.
+     *
+     * @return array<int, string>
+     */
+    public static function defaultGhsKeys(): array
+    {
+        return [
+            'GHS01', 'GHS02', 'GHS03', 'GHS04', 'GHS05',
+            'GHS06', 'GHS07', 'GHS08', 'GHS09',
+        ];
     }
 }

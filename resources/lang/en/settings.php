@@ -155,7 +155,6 @@ return [
         'new' => 'Add Category',
         'fields' => [
             'name' => 'Name',
-            'code' => 'Code',
         ],
         'empty' => 'No categories.',
         'edit_title' => 'Edit Category',

@@ -10,7 +10,7 @@ use Lastdino\ProcurementFlow\Support\Tables;
 class MaterialCategory extends Model
 {
     protected $fillable = [
-        'name', 'code',
+        'name',
     ];
 
     public function getTable()
