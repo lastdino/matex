@@ -37,8 +37,9 @@ new class extends Component
 
 ?>
 
-<div>
-    <div class="mx-auto w-full max-w-2xl p-6">
+<div class="p-6 space-y-6">
+    <x-procflow::topmenu />
+    <div class="mx-auto w-full max-w-2xl">
         <flux:heading size="xl" class="mb-6">{{ __('procflow::settings.approval.title') }}</flux:heading>
 
         <div class="space-y-5">

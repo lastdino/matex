@@ -67,10 +67,38 @@ new class extends Component
         $this->ok = $ok;
     }
 
+    protected function normalizeToken(string $raw): string
+    {
+        $token = trim($raw);
+        try {
+            if (preg_match('/token=([A-Za-z0-9\-]+)/', $token, $m)) {
+                return (string) ($m[1] ?? $token);
+            }
+
+            if (filter_var($token, FILTER_VALIDATE_URL)) {
+                $q = parse_url($token, PHP_URL_QUERY) ?: '';
+                if (is_string($q) && $q !== '') {
+                    parse_str($q, $qs);
+                    if (! empty($qs['token'])) {
+                        return (string) $qs['token'];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        return $token;
+    }
+
     public function updatedFormToken(string $value): void
     {
-        $token = trim((string) $value);
-        if ($token === '') {
+        $parsed = $this->normalizeToken((string) $value);
+        if ($parsed !== $this->form['token']) {
+            $this->form['token'] = $parsed;
+        }
+
+        if ($parsed === '') {
             $this->resetInfo();
             $this->message = '';
             $this->ok = false;
@@ -84,9 +112,9 @@ new class extends Component
     public function mount(Request $request): void
     {
         // If QR payload used URL with ?token=..., prefill and auto-lookup
-        $qToken = trim((string) $request->query('token', ''));
-        if ($qToken !== '') {
-            $this->form['token'] = $qToken;
+        $rawToken = trim((string) $request->query('token', ''));
+        if ($rawToken !== '') {
+            $this->form['token'] = $this->normalizeToken($rawToken);
             // Defer lookup to next tick to allow hydration
             $this->dispatch('focus-token');
             $this->lookup();
@@ -95,6 +123,8 @@ new class extends Component
 
     public function lookup(): void
     {
+        // Normalize in case lookup is triggered manually after raw URL was set
+        $this->form['token'] = $this->normalizeToken((string) ($this->form['token'] ?? ''));
         $this->validateOnly('form.token');
 
         /** @var OrderingToken|null $ot */

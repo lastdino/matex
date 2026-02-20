@@ -378,7 +378,7 @@ new class extends Component
                             @elseif (!empty($item->scan_token))
                                 <div class="flex items-center gap-2">
                                     <div class="qr-svg w-[40px] h-[40px]">
-                                        {!! \tbQuar\Facades\Quar::size(40)->generate($item->scan_token) !!}
+                                        {!! \tbQuar\Facades\Quar::size(40)->generate(route('procurement.receiving.scan', ['token' => $item->scan_token])) !!}
                                     </div>
                                     <div class="flex flex-col gap-1">
                                         <div class="text-[10px] text-gray-500 select-all">{{ substr($item->scan_token, 0, 8) }}…</div>

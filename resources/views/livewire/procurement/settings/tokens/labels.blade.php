@@ -20,7 +20,7 @@ new class extends Component
      * - token: encode only token
      * - url: encode app URL to scan page with token param (informational)
      */
-    public string $payload = 'token';
+    public string $payload = 'url';
 
     public function getRowsProperty()
     {
@@ -45,8 +45,8 @@ new class extends Component
     public function makeQrData(string $token): string
     {
         if ($this->payload === 'url') {
-            // Use relative route to ordering scan with token as query param for convenience
-            $url = route('procurement.ordering.scan', [], false).'?token='.urlencode($token);
+            // Use absolute route to ordering scan with token as query param
+            $url = route('procurement.ordering.scan', ['token' => $token], true);
 
             return $url;
         }

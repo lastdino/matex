@@ -65,6 +65,7 @@ new class extends Component
 ?>
 
 <div class="p-6 space-y-6">
+    <x-procflow::topmenu />
     <div class="flex items-center justify-between">
         <h1 class="text-xl font-semibold">{{ __('procflow::settings.display.title') }}</h1>
         <a href="{{ route('procurement.dashboard') }}" class="text-blue-600 hover:underline">{{ __('procflow::settings.display.back') }}</a>

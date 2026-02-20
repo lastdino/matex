@@ -29,6 +29,7 @@ class Material extends Model implements HasMedia
         'is_active',
         // monox integration
         'sync_to_monox',
+        'default_purchase_note',
     ];
 
     public function getTable()
@@ -71,7 +72,6 @@ class Material extends Model implements HasMedia
     {
         return $this->belongsTo(Supplier::class, 'preferred_supplier_id');
     }
-
 
     public function lots(): HasMany
     {

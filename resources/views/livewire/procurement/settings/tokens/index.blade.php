@@ -166,7 +166,7 @@ new class extends Component
         <flux:field>
             <flux:select wire:model.live="materialId">
                 <option value="">{{ __('procflow::settings.tokens.filters.all_materials') }}</option>
-                @foreach($materials as $m)
+                @foreach($this->materials as $m)
                     <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->sku }})</option>
                 @endforeach
             </flux:select>
@@ -188,7 +188,7 @@ new class extends Component
             <div class="col-span-2">{{ __('procflow::settings.tokens.table.expires') }}</div>
             <div class="col-span-2 text-right">{{ __('procflow::settings.tokens.table.actions') }}</div>
         </div>
-        @forelse($rows as $row)
+        @forelse($this->rows as $row)
             <div class="grid grid-cols-12 gap-2 p-3 items-center">
                 <div class="col-span-3">
                     <div class="font-mono text-sm">{{ $row->token }}</div>
@@ -219,7 +219,7 @@ new class extends Component
     </div>
 
     <div>
-        {{ $rows->links() }}
+        {{ $this->rows->links() }}
     </div>
 
     <flux:modal wire:model="showForm">
@@ -228,7 +228,7 @@ new class extends Component
             <flux:input wire:model.defer="form.token" label="{{ __('procflow::settings.tokens.modal.token') }}"/>
             <flux:select wire:model.defer="form.material_id" label="{{ __('procflow::settings.tokens.modal.material') }}">
                 <option value="">{{ __('procflow::settings.tokens.modal.select_placeholder') }}</option>
-                @foreach($materials as $m)
+                @foreach($this->materials as $m)
                     <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->sku }})</option>
                 @endforeach
             </flux:select>

@@ -110,6 +110,7 @@ new class extends Component
         'specified_quantity' => null,
         'emergency_contact' => null,
         'disposal_method' => null,
+        'default_purchase_note' => null,
         'moq' => null,
         'pack_size' => null,
     ];
@@ -238,6 +239,7 @@ new class extends Component
             'specified_quantity' => (float) $m->specified_quantity,
             'emergency_contact' => $m->emergency_contact,
             'disposal_method' => $m->disposal_method,
+            'default_purchase_note' => $m->default_purchase_note,
             'moq' => (float) $m->moq,
             'pack_size' => (float) $m->pack_size,
         ];
@@ -329,6 +331,7 @@ new class extends Component
             'materialForm.specified_quantity' => ['nullable', 'numeric', 'min:0'],
             'materialForm.emergency_contact' => ['nullable', 'string', 'max:255'],
             'materialForm.disposal_method' => ['nullable', 'string', 'max:2000'],
+            'materialForm.default_purchase_note' => ['nullable', 'string', 'max:2000'],
             'materialForm.moq' => ['nullable', 'numeric', 'min:0'],
             'materialForm.pack_size' => ['nullable', 'numeric', 'min:0'],
         ];
@@ -447,6 +450,7 @@ new class extends Component
             'specified_quantity_ratio' => null,
             'emergency_contact' => null,
             'disposal_method' => null,
+            'default_purchase_note' => null,
             'moq' => null,
             'pack_size' => null,
         ];
@@ -783,6 +787,9 @@ new class extends Component
                         <flux:input type="number" step="0.000001" min="0" wire:model="materialForm.moq" label="{{ __('procflow::materials.form.moq') }}"/>
                         <flux:input type="number" step="0.000001" min="0" wire:model="materialForm.pack_size" label="{{ __('procflow::materials.form.pack_size') }}"/>
                         <flux:input type="number" step="0.01" wire:model="materialForm.unit_price" label="{{ __('procflow::materials.form.unit_price') }}"/>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3">
+                        <flux:textarea rows="2" wire:model="materialForm.default_purchase_note" label="発注時備考（デフォルト）" placeholder="見積No.など"/>
                     </div>
                 </div>
 

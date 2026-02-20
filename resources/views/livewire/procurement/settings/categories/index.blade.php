@@ -92,6 +92,7 @@ new class extends Component
 ?>
 
 <div class="p-6 space-y-6">
+    <x-procflow::topmenu />
     <div class="flex items-center justify-between">
         <h1 class="text-xl font-semibold">{{ __('procflow::settings.categories.title', [], null) ?: '資材カテゴリの設定' }}</h1>
         <a href="{{ route('procurement.dashboard') }}" class="text-blue-600 hover:underline">{{ __('procflow::common.back', [], null) ?: '戻る' }}</a>

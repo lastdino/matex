@@ -164,11 +164,39 @@ new class extends Component
     /**
      * Automatically lookup when token is updated.
      */
+    protected function normalizeToken(string $raw): string
+    {
+        $token = trim($raw);
+        try {
+            if (preg_match('/token=([A-Za-z0-9\-]+)/', $token, $m)) {
+                return (string) ($m[1] ?? $token);
+            }
+
+            if (filter_var($token, FILTER_VALIDATE_URL)) {
+                $q = parse_url($token, PHP_URL_QUERY) ?: '';
+                if (is_string($q) && $q !== '') {
+                    parse_str($q, $qs);
+                    if (! empty($qs['token'])) {
+                        return (string) $qs['token'];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore
+        }
+
+        return $token;
+    }
+
     public function updatedFormToken(string $value): void
     {
-        $token = trim((string) $value);
+        // Accept either a raw token or a full URL containing ?token=...
+        $parsed = $this->normalizeToken($value);
+        if ($parsed !== $this->form['token']) {
+            $this->form['token'] = $parsed;
+        }
 
-        if ($token === '') {
+        if ($parsed === '') {
             $this->resetInfo();
             $this->message = '';
             $this->ok = false;
@@ -183,6 +211,8 @@ new class extends Component
 
     public function lookup(UnitConversionService $conversion): void
     {
+        // Normalize in case lookup is triggered manually after raw URL was set
+        $this->form['token'] = $this->normalizeToken((string) ($this->form['token'] ?? ''));
         $this->validateOnly('form.token');
 
         /** @var PurchaseOrderItem|null $poi */

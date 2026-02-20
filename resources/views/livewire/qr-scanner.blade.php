@@ -24,9 +24,28 @@ new class extends Component
 
     public function read(string $code): void
     {
-        $d = $code;
-        $this->value = $d;
-        $this->dispatch('qr-scanned', $d);
+        $d = trim((string) $code);
+
+        // Try to extract token from payload if it contains "token="
+        $parsed = $d;
+        try {
+            if (preg_match('/token=([A-Za-z0-9\-]+)/', $d, $m)) {
+                $parsed = (string) ($m[1] ?? $d);
+            } elseif (filter_var($d, FILTER_VALIDATE_URL)) {
+                $q = parse_url($d, PHP_URL_QUERY) ?: '';
+                if (is_string($q) && $q !== '') {
+                    parse_str($q, $qs);
+                    if (! empty($qs['token'])) {
+                        $parsed = (string) $qs['token'];
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore parse error and use raw data
+        }
+
+        $this->value = $parsed;
+        $this->dispatch('qr-scanned', $parsed);
         $this->closeModal();
     }
 };
