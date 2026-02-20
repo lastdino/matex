@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Actions\Ordering;
+namespace Lastdino\Matex\Actions\Ordering;
 
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\OrderingToken;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
-use Lastdino\ProcurementFlow\Services\ApprovalFlowRegistrar;
-use Lastdino\ProcurementFlow\Services\OptionCatalogService;
-use Lastdino\ProcurementFlow\Services\OptionSelectionRuleBuilder;
-use Lastdino\ProcurementFlow\Services\OptionSelectionService;
-use Lastdino\ProcurementFlow\Services\PurchaseOrderFactory;
-use Lastdino\ProcurementFlow\Services\PurchaseOrderOptionSyncService;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\OrderingToken;
+use Lastdino\Matex\Models\PurchaseOrder;
+use Lastdino\Matex\Services\ApprovalFlowRegistrar;
+use Lastdino\Matex\Services\OptionCatalogService;
+use Lastdino\Matex\Services\OptionSelectionRuleBuilder;
+use Lastdino\Matex\Services\OptionSelectionService;
+use Lastdino\Matex\Services\PurchaseOrderFactory;
+use Lastdino\Matex\Services\PurchaseOrderOptionSyncService;
 
 class CreateDraftPurchaseOrderFromScanAction
 {

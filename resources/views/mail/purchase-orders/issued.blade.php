@@ -1,5 +1,5 @@
 @php
-    /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrder $po */
+    /** @var \Lastdino\Matex\Models\PurchaseOrder $po */
     $supplier = $po->supplier;
     $poNo = $po->po_number ?? ('Draft-' . $po->id);
 @endphp
@@ -14,9 +14,9 @@
 <p>
     注文番号：{{ $poNo }}<br>
     発行日：{{ optional($po->issue_date)->format('Y-m-d') }}<br>
-    小計：{{ \Lastdino\ProcurementFlow\Support\Format::moneySubtotal($po->subtotal ?? 0) }}<br>
-    税額：{{ \Lastdino\ProcurementFlow\Support\Format::moneyTax($po->tax ?? 0) }}<br>
-    合計金額：{{ \Lastdino\ProcurementFlow\Support\Format::moneyTotal($po->total) }}
+    小計：{{ \Lastdino\Matex\Support\Format::moneySubtotal($po->subtotal ?? 0) }}<br>
+    税額：{{ \Lastdino\Matex\Support\Format::moneyTax($po->tax ?? 0) }}<br>
+    合計金額：{{ \Lastdino\Matex\Support\Format::moneyTotal($po->total) }}
 </p>
 
 <p>

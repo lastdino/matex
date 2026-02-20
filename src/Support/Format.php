@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Support;
+namespace Lastdino\Matex\Support;
 
 final class Format
 {

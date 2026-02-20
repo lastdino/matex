@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Jobs;
+namespace Lastdino\Matex\Jobs;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Lastdino\ProcurementFlow\Models\StockMovement;
-use Lastdino\ProcurementFlow\Services\MonoxApiService;
+use Lastdino\Matex\Models\StockMovement;
+use Lastdino\Matex\Services\MonoxApiService;
 
 class SyncStockMovementToMonox implements ShouldQueue
 {

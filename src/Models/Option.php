@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Models;
+namespace Lastdino\Matex\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Lastdino\ProcurementFlow\Support\Tables;
+use Lastdino\Matex\Support\Tables;
 
 class Option extends Model
 {

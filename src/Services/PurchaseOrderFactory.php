@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Lastdino\ProcurementFlow\Support\Settings;
+use Lastdino\Matex\Enums\PurchaseOrderStatus;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\PurchaseOrder;
+use Lastdino\Matex\Models\PurchaseOrderItem;
+use Lastdino\Matex\Support\Settings;
 
 final class PurchaseOrderFactory
 {

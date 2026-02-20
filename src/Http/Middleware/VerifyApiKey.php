@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Http\Middleware;
+namespace Lastdino\Matex\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
@@ -17,7 +17,7 @@ class VerifyApiKey
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $configuredKey = config('procurement_flow.api_key');
+        $configuredKey = config('matex.api_key');
 
         if (empty($configuredKey)) {
             return $next($request);

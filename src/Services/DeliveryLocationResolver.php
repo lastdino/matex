@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
-use Lastdino\ProcurementFlow\Support\Settings;
+use Lastdino\Matex\Support\Settings;
 
 final class DeliveryLocationResolver
 {

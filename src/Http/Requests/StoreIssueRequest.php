@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Http\Requests;
+namespace Lastdino\Matex\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 

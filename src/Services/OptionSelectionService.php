@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
 use Illuminate\Support\Facades\Validator;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
+use Lastdino\Matex\Models\PurchaseOrderItem;
 
 final class OptionSelectionService
 {

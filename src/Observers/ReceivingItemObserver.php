@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Observers;
+namespace Lastdino\Matex\Observers;
 
-use Lastdino\ProcurementFlow\Models\ReceivingItem;
-use Lastdino\ProcurementFlow\Services\AutoReceiveShipping;
+use Lastdino\Matex\Models\ReceivingItem;
+use Lastdino\Matex\Services\AutoReceiveShipping;
 
 class ReceivingItemObserver
 {

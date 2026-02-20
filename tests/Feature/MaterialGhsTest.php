@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Lastdino\ProcurementFlow\Models\Material;
+use Lastdino\Matex\Models\Material;
 
 test('ghsIconNames converts GHS mark keys to flux icon names', function () {
     $material = new Material([

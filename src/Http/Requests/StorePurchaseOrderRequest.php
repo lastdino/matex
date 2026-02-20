@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Http\Requests;
+namespace Lastdino\Matex\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 use Lastdino\ApprovalFlow\Models\ApprovalFlow;
-use Lastdino\ProcurementFlow\Models\AppSetting;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\OptionGroup;
-use Lastdino\ProcurementFlow\Services\OptionSelectionRuleBuilder;
-use Lastdino\ProcurementFlow\Support\Tables;
+use Lastdino\Matex\Models\AppSetting;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\OptionGroup;
+use Lastdino\Matex\Services\OptionSelectionRuleBuilder;
+use Lastdino\Matex\Support\Tables;
 
 class StorePurchaseOrderRequest extends FormRequest
 {

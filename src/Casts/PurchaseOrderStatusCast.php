@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Casts;
+namespace Lastdino\Matex\Casts;
 
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
-use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
+use Lastdino\Matex\Enums\PurchaseOrderStatus;
 
 /**
  * Normalizes British/American spelling for "canceled/cancelled" and maps to enum.

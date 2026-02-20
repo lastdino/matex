@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Models;
+namespace Lastdino\Matex\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Lastdino\ProcurementFlow\Support\Tables;
+use Lastdino\Matex\Support\Tables;
 
 class AppSetting extends Model
 {

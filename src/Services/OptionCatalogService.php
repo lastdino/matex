@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
 use Illuminate\Support\Collection;
-use Lastdino\ProcurementFlow\Models\Option;
-use Lastdino\ProcurementFlow\Models\OptionGroup;
+use Lastdino\Matex\Models\Option;
+use Lastdino\Matex\Models\OptionGroup;
 
 class OptionCatalogService
 {

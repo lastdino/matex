@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Enums;
+namespace Lastdino\Matex\Enums;
 
 enum PurchaseOrderStatus: string
 {

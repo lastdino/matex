@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Domain\Lot;
+namespace Lastdino\Matex\Domain\Lot;
 
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\MaterialLot;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\MaterialLot;
+use Lastdino\Matex\Models\PurchaseOrder;
 
 class LotService
 {

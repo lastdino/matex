@@ -1,18 +1,18 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "lastdino/procurement-flow",
-    "description": "ProcurementFlow base package for procurement workflows.",
+    "name": "lastdino/matex",
+    "description": "Matex base package for procurement workflows.",
     "type": "library",
     "license": "MIT",
     "autoload": {
         "psr-4": {
-            "Lastdino\\ProcurementFlow\\": "src/"
+            "Lastdino\\Matex\\": "src/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Lastdino\\ProcurementFlow\\ProcurementFlowServiceProvider"
+                "Lastdino\\Matex\\MatexServiceProvider"
             ]
         }
     },

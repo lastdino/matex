@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
-use Lastdino\ProcurementFlow\Models\Option;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItemOptionValue;
+use Lastdino\Matex\Models\Option;
+use Lastdino\Matex\Models\PurchaseOrderItem;
+use Lastdino\Matex\Models\PurchaseOrderItemOptionValue;
 
 class PurchaseOrderOptionSyncService
 {

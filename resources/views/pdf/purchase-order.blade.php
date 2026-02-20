@@ -1,8 +1,8 @@
 @php
-    /** @var \Lastdino\ProcurementFlow\Models\PurchaseOrder $po */
+    /** @var \Lastdino\Matex\Models\PurchaseOrder $po */
     $supplier = $po->supplier;
     $poNo = $po->po_number ?? ('Draft-' . $po->id);
-    $cfg = \Lastdino\ProcurementFlow\Support\Settings::pdf();
+    $cfg = \Lastdino\Matex\Support\Settings::pdf();
     $company = $cfg['company'] ?? [];
     $footnotes = $cfg['footnotes'] ?? [];
     $paymentTerms = $cfg['payment_terms'] ?? '';
@@ -175,12 +175,12 @@
                         <div class="whitespace-pre-line">{{ $name }}</div>
                     </td>
                     <td class="border border-black text-center">
-                        {{ \Lastdino\ProcurementFlow\Support\Format::qty($effectiveQty) }}
+                        {{ \Lastdino\Matex\Support\Format::qty($effectiveQty) }}
                         @if(!$isShipping && $qtyCanceled > 0)
-                            <span class="text-xs text-red-600">（キャンセル: {{ \Lastdino\ProcurementFlow\Support\Format::qty($qtyCanceled) }}）</span>
+                            <span class="text-xs text-red-600">（キャンセル: {{ \Lastdino\Matex\Support\Format::qty($qtyCanceled) }}）</span>
                         @endif
                     </td>
-                    <td class="border border-black text-center">{{ \Lastdino\ProcurementFlow\Support\Format::unitPrice($item->price_unit) }}</td>
+                    <td class="border border-black text-center">{{ \Lastdino\Matex\Support\Format::unitPrice($item->price_unit) }}</td>
                     <td class="border border-black text-center">{{ optional($item->desired_date)->format('m/d') }}</td>
                     <td class="border border-black text-center"></td>
                     <td class="border border-black whitespace-pre-wrap">{{ $item->note ?? '' }}</td>
@@ -188,15 +188,15 @@
             @endforeach
             <tr>
                 <td class="border border-black text-center " colspan="2">小計</td>
-                <td class="border border-black text-center " colspan="5">{{ \Lastdino\ProcurementFlow\Support\Format::moneySubtotal($po->subtotal) }}</td>
+                <td class="border border-black text-center " colspan="5">{{ \Lastdino\Matex\Support\Format::moneySubtotal($po->subtotal) }}</td>
             </tr>
             <tr>
                 <td class="border border-black text-center " colspan="2">消費税</td>
-                <td class="border border-black text-center " colspan="5">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTax($po->tax) }}</td>
+                <td class="border border-black text-center " colspan="5">{{ \Lastdino\Matex\Support\Format::moneyTax($po->tax) }}</td>
             </tr>
             <tr>
                 <td class="border border-black text-center font-bold" colspan="2">合計金額</td>
-                <td class="border border-black text-center font-bold" colspan="5">{{ \Lastdino\ProcurementFlow\Support\Format::moneyTotal($po->total) }}</td>
+                <td class="border border-black text-center font-bold" colspan="5">{{ \Lastdino\Matex\Support\Format::moneyTotal($po->total) }}</td>
             </tr>
             </tbody>
         </table>

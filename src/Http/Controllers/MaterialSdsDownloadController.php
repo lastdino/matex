@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Http\Controllers;
+namespace Lastdino\Matex\Http\Controllers;
 
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 use Illuminate\Http\Request;
@@ -10,7 +10,7 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Lastdino\ProcurementFlow\Models\Material;
+use Lastdino\Matex\Models\Material;
 
 class MaterialSdsDownloadController extends Controller
 {

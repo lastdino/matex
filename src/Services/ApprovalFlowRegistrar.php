@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
-use Lastdino\ProcurementFlow\Models\AppSetting;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
+use Lastdino\Matex\Models\AppSetting;
+use Lastdino\Matex\Models\PurchaseOrder;
 
 final class ApprovalFlowRegistrar
 {
@@ -17,8 +17,8 @@ final class ApprovalFlowRegistrar
             $poModel = $po->fresh();
             $authorId = (int) (auth()->id() ?? $poModel->created_by ?? 0);
             $link = null;
-            if (Route::has('procurement.purchase-orders.show')) {
-                $link = route('procurement.purchase-orders.show', ['po' => $poModel->id]);
+            if (Route::has('matex.purchase-orders.show')) {
+                $link = route('matex.purchase-orders.show', ['po' => $poModel->id]);
             } elseif (Route::has('purchase-orders.show')) {
                 $link = route('purchase-orders.show', ['purchase_order' => $poModel->id]);
             }

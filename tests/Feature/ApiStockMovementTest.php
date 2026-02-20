@@ -3,24 +3,24 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Route;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\MaterialLot;
-use Lastdino\ProcurementFlow\Models\StockMovement;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\MaterialLot;
+use Lastdino\Matex\Models\StockMovement;
 
 uses(\Tests\TestCase::class, \Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 beforeEach(function () {
     // APIルートが登録されているか確認（ServiceProvider経由で登録されているはず）
-    if (! Route::has('procurement.api.stock-in')) {
+    if (! Route::has('matex.api.stock-in')) {
         $this->markTestSkipped('API routes are not registered.');
     }
 
     // テスト用にAPIキーを設定
-    config(['procurement_flow.api_key' => 'test-api-key']);
+    config(['matex.api_key' => 'test-api-key']);
 });
 
 test('unauthorized if api key is missing', function () {
-    $response = $this->postJson(route('procurement.api.stock-in'), [
+    $response = $this->postJson(route('matex.api.stock-in'), [
         'sku' => 'SKU-ANY',
         'lot_no' => 'LOT-ANY',
         'qty' => 10,
@@ -30,7 +30,7 @@ test('unauthorized if api key is missing', function () {
 });
 
 test('unauthorized if api key is invalid', function () {
-    $response = $this->postJson(route('procurement.api.stock-in'), [
+    $response = $this->postJson(route('matex.api.stock-in'), [
         'sku' => 'SKU-ANY',
         'lot_no' => 'LOT-ANY',
         'qty' => 10,
@@ -48,7 +48,7 @@ test('can stock in via api', function () {
         'is_active' => true,
     ]);
 
-    $response = $this->postJson(route('procurement.api.stock-in'), [
+    $response = $this->postJson(route('matex.api.stock-in'), [
         'sku' => 'SKU-TEST-001',
         'lot_no' => 'LOT-2026-001',
         'qty' => 10,
@@ -93,7 +93,7 @@ test('can stock out via api', function () {
         'qty_on_hand' => 50,
     ]);
 
-    $response = $this->postJson(route('procurement.api.stock-out'), [
+    $response = $this->postJson(route('matex.api.stock-out'), [
         'sku' => 'SKU-TEST-002',
         'lot_no' => 'LOT-EXISTING',
         'qty' => 20,
@@ -121,7 +121,7 @@ test('can stock out via api', function () {
 });
 
 test('returns 404 for unknown sku', function () {
-    $response = $this->postJson(route('procurement.api.stock-in'), [
+    $response = $this->postJson(route('matex.api.stock-in'), [
         'sku' => 'NON-EXISTENT',
         'lot_no' => 'LOT-001',
         'qty' => 10,
@@ -145,7 +145,7 @@ test('returns 422 for insufficient stock in lot', function () {
         'qty_on_hand' => 5,
     ]);
 
-    $response = $this->postJson(route('procurement.api.stock-out'), [
+    $response = $this->postJson(route('matex.api.stock-out'), [
         'sku' => 'SKU-TEST-003',
         'lot_no' => 'LOT-LITTLE',
         'qty' => 10,
@@ -208,7 +208,7 @@ test('can get stock movement history via api', function () {
     ]);
 
     // Test history for material
-    $response = $this->getJson(route('procurement.api.stock-movements', ['sku' => 'SKU-HISTORY']), ['X-API-KEY' => 'test-api-key']);
+    $response = $this->getJson(route('matex.api.stock-movements', ['sku' => 'SKU-HISTORY']), ['X-API-KEY' => 'test-api-key']);
 
     $response->assertStatus(200)
         ->assertJsonCount(3, 'history')
@@ -216,7 +216,7 @@ test('can get stock movement history via api', function () {
         ->assertJsonPath('history.2.type', 'in');
 
     // Test history filtered by lot
-    $response = $this->getJson(route('procurement.api.stock-movements', ['sku' => 'SKU-HISTORY', 'lot_no' => 'LOT-1']), ['X-API-KEY' => 'test-api-key']);
+    $response = $this->getJson(route('matex.api.stock-movements', ['sku' => 'SKU-HISTORY', 'lot_no' => 'LOT-1']), ['X-API-KEY' => 'test-api-key']);
 
     $response->assertStatus(200)
         ->assertJsonCount(2, 'history')
@@ -224,6 +224,6 @@ test('can get stock movement history via api', function () {
         ->assertJsonPath('history.1.lot_no', 'LOT-1');
 
     // Test unknown lot
-    $response = $this->getJson(route('procurement.api.stock-movements', ['sku' => 'SKU-HISTORY', 'lot_no' => 'UNKNOWN']), ['X-API-KEY' => 'test-api-key']);
+    $response = $this->getJson(route('matex.api.stock-movements', ['sku' => 'SKU-HISTORY', 'lot_no' => 'UNKNOWN']), ['X-API-KEY' => 'test-api-key']);
     $response->assertStatus(404);
 });

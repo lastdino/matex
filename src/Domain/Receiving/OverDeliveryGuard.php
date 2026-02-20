@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Domain\Receiving;
+namespace Lastdino\Matex\Domain\Receiving;
 
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Lastdino\ProcurementFlow\Services\UnitConversionService;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\PurchaseOrderItem;
+use Lastdino\Matex\Services\UnitConversionService;
 
 class OverDeliveryGuard
 {

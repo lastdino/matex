@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Mail;
+namespace Lastdino\Matex\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -10,7 +10,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Blade;
 use LastDino\ChromeLaravel\Facades\Chrome;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
+use Lastdino\Matex\Models\PurchaseOrder;
 
 class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
 {
@@ -29,7 +29,7 @@ class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
         // 2) Package-level From config (address/name)
         // 3) Global mail.from (handled by Laravel when no explicit from set)
         /** @var array{address?:string|null,name?:string|null}|null $fromCfg */
-        $fromCfg = (array) (config('procurement-flow.mail.from') ?? config('procurement_flow.mail.from') ?? []);
+        $fromCfg = (array) (config('matex.mail.from') ?? config('matex.mail.from') ?? []);
         $fromAddress = (string) ($fromCfg['address'] ?? '');
         $fromName = $fromCfg['name'] ?? null;
         $useRequester = (bool) ($fromCfg['use_requester'] ?? false);
@@ -45,7 +45,7 @@ class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
             }
         }
 
-        $blade = Blade::render('procflow::pdf.purchase-order', compact('po'));
+        $blade = Blade::render('matex::pdf.purchase-order', compact('po'));
 
         $tmpPath = Chrome::pdfFromHtml($blade, [
             'printBackground' => true,
@@ -53,7 +53,7 @@ class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
 
         $mail = $this
             ->subject("【注文書】PO {$poNumber}")
-            ->view('procflow::mail.purchase-orders.issued', [
+            ->view('matex::mail.purchase-orders.issued', [
                 'po' => $po,
             ])
             ->attach($tmpPath, [

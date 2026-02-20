@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
-use Lastdino\ProcurementFlow\Support\Tables;
+use Lastdino\Matex\Support\Tables;
 
 class PoNumberGenerator
 {

@@ -1,210 +1,90 @@
-Laravel 向け Procurement Flow
+# Matex (Procurement Workflow Package)
 
-概要
+`lastdino/matex` は、Laravel 12 用の調達・在庫管理ワークフローパッケージです。
+発注管理、入荷管理、在庫移動、化学物質管理（SDS）などの機能を提供します。
 
-このパッケージは、調達（Procurement）業務のための Livewire ベース UI、ルーティング、設定、翻訳、PDF 生成や受入スキャン（QR）などのワークフローを提供する Laravel パッケージです。アプリケーションに組み込むことで、下記の機能をすぐに利用できます。
+## 主な機能
 
-- ダッシュボード / 発注一覧・詳細 / 仕入先一覧
-- 資材（Materials）一覧・詳細・払出（Issue）画面、SDS ダウンロード
-- 受入（Receiving）スキャン、発注作成用の注文スキャン（Ordering）
-- 調達関連の設定（オプション・承認フロー・税・PDF・カテゴリ・トークン／ラベル）
-- 画面、翻訳（日本語/英語）の公開・上書き
+- **発注管理 (Purchase Orders)**: 発注書の作成、PDF出力、承認フロー連携。
+- **入荷管理 (Receiving)**: 発注済商品の入荷処理、検品、在庫への自動反映。
+- **在庫管理 (Inventory)**: 現在庫の把握、在庫移動の記録、入出庫履歴。
+- **資材管理 (Materials)**: SKU管理、再発注点（最小/最大在庫）設定。
+- **化学物質管理**: SDS（安全データシート）の管理、GHSラベル表示、リスクアセスメント連携。
+- **サプライヤー管理**: 仕入先情報の管理。
+- **設定**: 消費税（期間指定可能）、通貨表示、PDFレイアウト、承認フローIDの設定。
 
-機能一覧
+## インストール
 
-- ダッシュボード、発注（一覧・詳細・PDF）、仕入先一覧
-- 資材：一覧・詳細・払出、SDS の署名付きダウンロード
-- 受入：QR スキャンで入庫登録／注文：QR スキャンでドラフト発注作成
-- 設定画面：オプション、承認フロー、税、PDF、カテゴリ、トークン、ラベル
-- ビュー／翻訳の名前空間、設定・言語ファイルの公開
+### 1. Composer でインストール
 
-動作要件
-
-- PHP: ^8.4
-- Laravel Framework: ^12.0
-- Livewire: v3
-- Tailwind CSS: v4（アプリ側でのビルドが必要）
-- 推奨: Laravel Herd によるローカル提供（例: http://procuraflow.test）
-- Composer により以下を自動インストール：
-  - lastdino/approval-flow ^0.1
-  - tuncaybahadir/quar ^1.7
-  - lastdino/chrome-laravel ^0.1
-  - spatie/laravel-medialibrary ^11.0
-
-インストール
-
-1) Composer でインストール
-
-```
-composer require lastdino/procurement-flow
+```bash
+composer require lastdino/matex
 ```
 
-Monorepo（`packages/lastdino/procurement-flow`）での開発中は、ルートの composer がパッケージをロードできるように設定してください（`path` リポジトリなど）。
+### 2. マイグレーションの実行
 
-2) サービスプロバイダ（自動検出）
+データベーステーブルを作成します。
 
-```
-Lastdino\ProcurementFlow\ProcurementFlowServiceProvider
-```
-
-3) 設定・翻訳・ビューの公開（任意）
-
-```
-php artisan vendor:publish --tag=procurement-flow-config --no-interaction
-php artisan vendor:publish --tag=procurement-flow-lang --no-interaction
-php artisan vendor:publish --tag=procurement-flow-views --no-interaction
+```bash
+php artisan migrate
 ```
 
-セットアップの注意
+### 3. フロントエンド依存パッケージのインストール
 
-- APP_URL を Herd の URL に合わせて設定してください（例: `APP_URL=http://procuraflow.test`）。
-- Vite / Tailwind v4 を利用するため、UI を変更した場合は `npm run dev` または `npm run build` を実行してください。
-- Livewire v3 を使用しています。アプリ側で Livewire のセットアップが済んでいることを前提とします。
+QRコードのスキャン機能を使用するには、`jsqr` をインストールし、ビルドする必要があります。
 
-実行・ビルド
-
-- アプリ側で必要なコマンド例：
-
-```
-# PHP 依存関係
-composer install
-
-# 開発用ビルド
-npm install
-npm run dev
-
-# 本番ビルド
+```bash
+npm install jsqr
 npm run build
 ```
 
-ルートと主要 URL
+### 4. アセットの公開（オプション）
 
-本パッケージの Web ルートは、設定されたプレフィックスとミドルウェアでグルーピングされます。既定のプレフィックスは `/procurement` です。Herd の既定 URL 例：`http://procuraflow.test/procurement`。
+設定ファイルやビューをカスタマイズしたい場合に公開します。
 
-Named routes（抜粋）:
+```bash
+# 設定ファイルの公開 (config/matex.php)
+php artisan vendor:publish --tag=matex-config
 
-- `procurement.dashboard` → `/`
-  - 例: http://procuraflow.test/procurement
-- Purchase Orders:
-  - `procurement.purchase-orders.index` → `/purchase-orders`
-    - 例: http://procuraflow.test/procurement/purchase-orders
-  - `procurement.purchase-orders.show` → `/purchase-orders/{po}`
-  - `procurement.purchase-orders.pdf` → `/purchase-orders/{po}/pdf`
-- Pending Receiving:
-  - `procurement.pending-receiving.index` → `/pending-receiving`
-- Materials:
-  - `procurement.materials.index` → `/materials`
-  - `procurement.materials.show` → `/materials/{material}`
-  - `procurement.materials.issue` → `/materials/{material}/issue`
-  - `procurement.materials.sds.download`（署名付き）→ `/materials/{material}/sds`
-- Suppliers:
-  - `procurement.suppliers.index` → `/suppliers`
-- Receiving Scan:
-  - `procurement.receiving.scan` → `/receivings/scan`
-  - `procurement.receiving.scan.info` → `/receivings/scan/info/{token}`
-  - `procurement.receiving.scan.receive` → `/receivings/scan/receive`
-- Settings:
-  - `procurement.settings.options` → `/settings/options`
-  - `procurement.settings.approval` → `/settings/approval`
-  - `procurement.settings.taxes` → `/settings/taxes`
-  - `procurement.settings.pdf` → `/settings/pdf`
-  - `procurement.settings.categories` → `/settings/categories`
-  - `procurement.settings.tokens` → `/settings/tokens`
-  - `procurement.settings.labels` → `/settings/labels`
-- Ordering Scan:
-  - `procurement.ordering.scan` → `/ordering/scan`
+# ビューの公開 (resources/views/vendor/matex)
+php artisan vendor:publish --tag=matex-views
 
-ビューと翻訳の名前空間
-
-- Views: namespace `procflow`（例: `procflow::livewire.procurement.materials.index`）
-- Translations: namespace `procflow`（例: `__('procflow::materials.table.name')`）
-
-Livewire コンポーネント（登録済み）
-
-以下はサービスプロバイダにより登録され、画面やルートで参照されます：
-
-- `procurement.dashboard`
-- `purchase-orders.index`, `purchase-orders.show`
-- `suppliers.index`
-- `procurement.materials`, `procurement.materials.issue`
-- `procurement.pending-receiving.index`
-- `procurement.receiving.scan`
-- `procurement.ordering.scan`
-- Settings:
-  - `procurement.settings.options.index`
-  - `procurement.settings.approval.index`
-  - `procurement.settings.taxes.index`
-  - `procurement.settings.pdf.index`
-  - `procurement.settings.categories.index`
-  - `procurement.settings.tokens.index`
-  - `procurement.settings.tokens.labels`
-
-使い方・設定例
-
-設定キー / ファイル
-
-- 設定キー: `procurement_flow`
-- 公開先: `config/procurement-flow.php`
-
-主なオプション（抜粋）
-
-- `route_prefix`: UI の URL プレフィックス（既定: `procurement`）
-- `middleware`: UI に適用するミドルウェア（既定: `['web', 'auth']`）
-- `enabled`: 機能の有効/無効フラグ
-- `ghs`:
-  - `disk`: GHS ピクトグラム画像の保存ディスク名（例: `public`）
-  - `directory`: ディスク直下の保存ディレクトリ（例: `ghs_labels`）
-  - `map`: GHS キーとファイル名の対応（例: `GHS01 => GHS01.bmp`）
-  - `placeholder`: 未定義／欠損時のプレースホルダ（`null` で非表示）
-
-GHS 設定例
-
-```php
-// config/procurement-flow.php（抜粋）
-return [
-    'ghs' => [
-        'disk' => 'public',
-        'directory' => 'ghs_labels',
-        'map' => [
-            'GHS01' => 'GHS01.png',
-            'GHS02' => 'GHS02.png',
-            // ...
-        ],
-        'placeholder' => 'placeholder.png',
-    ],
-];
+# 言語ファイルの公開 (lang/vendor/matex)
+php artisan vendor:publish --tag=matex-lang
 ```
 
-SDS（安全データシート）
+## 基本設定
 
-- Material モデルの Media Library コレクション `sds` に SDS ファイルを登録してください。
-- ダウンロードは署名付きかつ認証済みルート `procurement.materials.sds.download` で提供されます。
+`config/matex.php` にて以下の設定が可能です。
 
-PDF（発注書）
+- `route_prefix`: 画面URLのプレフィックス（デフォルト: `matex`）
+- `middleware`: 画面アクセスのミドルウェア（デフォルト: `['web', 'auth']`）
+- `table_prefix`: データベーステーブルのプレフィックス（デフォルト: `matex_`）
+- `api_key`: 外部連携用APIキー
+- `monox`: MonoXとの連携設定
 
-- `lastdino/chrome-laravel` を用いて PDF を生成します。Chrome / Chromium の実行環境をアプリ側で用意してください。
-- レイアウトやロゴ等はアプリ側で上書き可能です（ビュー公開・上書きを活用）。
+## 使い方
 
-QR / スキャン
+インストール後、ブラウザで `/matex`（デフォルト設定の場合）にアクセスするとダッシュボードが表示されます。
 
-- 受入（Receiving）および注文（Ordering）のスキャン用に JSON API と Livewire 画面を提供します。
-- 権限はグループミドルウェア（既定は `web` + `auth`）に従います。
+### 主なルート
 
-カスタマイズ
+- ダッシュボード: `/matex`
+- 発注一覧: `/matex/purchase-orders`
+- 入荷待ち一覧: `/matex/pending-receiving`
+- 資材管理: `/matex/materials`
+- 設定画面: `/matex/settings/options`
 
-- 画面・翻訳の公開と上書き
-  - ビュー公開先: `resources/views/vendor/procflow`
-  - ビューの参照は名前空間 `procflow::` を使用（例: `procflow::livewire.procurement.materials.index`）。
-    上書きする場合は、同一のサブパス・ファイル名で公開先に配置してください。
-- ルートプレフィックス・ミドルウェアの変更
-- GHS 画像の差し替え（ストレージ設定）
+## 依存パッケージ
 
-ローカル開発（Monorepo）
+- `laravel/framework` (^12.0)
+- `livewire/livewire` (^4.0)
+- `livewire/flux` (^2.0)
+- `lastdino/approval-flow`: 承認ワークフロー
+- `lastdino/chrome-laravel`: PDF生成
+- `spatie/laravel-medialibrary`: SDS等のファイル管理
+- `jsqr`: QRコードスキャン機能（フロントエンド）
 
-- パス: `packages/lastdino/procurement-flow`
-- プロバイダ: `Lastdino\ProcurementFlow\ProcurementFlowServiceProvider`
-- UI 変更が反映されない場合は `npm run dev` または `npm run build` を実行してください。
-
-ライセンス
+## ライセンス
 
 MIT License.

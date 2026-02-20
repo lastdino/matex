@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Observers;
+namespace Lastdino\Matex\Observers;
 
-use Lastdino\ProcurementFlow\Jobs\SyncStockMovementToMonox;
-use Lastdino\ProcurementFlow\Models\StockMovement;
+use Lastdino\Matex\Jobs\SyncStockMovementToMonox;
+use Lastdino\Matex\Models\StockMovement;
 
 class StockMovementObserver
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Models;
+namespace Lastdino\Matex\Models;
 
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -11,11 +11,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Mail;
 use Lastdino\ApprovalFlow\Traits\HasApprovalFlow;
-use Lastdino\ProcurementFlow\Casts\PurchaseOrderStatusCast;
-use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
-use Lastdino\ProcurementFlow\Mail\PurchaseOrderIssuedMail;
-use Lastdino\ProcurementFlow\Services\PoNumberGenerator;
-use Lastdino\ProcurementFlow\Support\Tables;
+use Lastdino\Matex\Casts\PurchaseOrderStatusCast;
+use Lastdino\Matex\Enums\PurchaseOrderStatus;
+use Lastdino\Matex\Mail\PurchaseOrderIssuedMail;
+use Lastdino\Matex\Services\PoNumberGenerator;
+use Lastdino\Matex\Support\Tables;
 
 class PurchaseOrder extends Model
 {

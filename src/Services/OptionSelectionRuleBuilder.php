@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
-use Lastdino\ProcurementFlow\Models\Option;
+use Lastdino\Matex\Models\Option;
 
 class OptionSelectionRuleBuilder
 {
@@ -14,7 +14,7 @@ class OptionSelectionRuleBuilder
      * Build validation rules that require an option selection for each active group.
      *
      * @param  string  $optionsKey  e.g. 'form.options' or 'poForm.items.*.options'
-     * @param  Collection<int, \Lastdino\ProcurementFlow\Models\OptionGroup>  $activeGroups
+     * @param  Collection<int, \Lastdino\Matex\Models\OptionGroup>  $activeGroups
      * @return array<string, array<int, string|\Illuminate\Validation\Rules\Exists|\Illuminate\Validation\Rule>>
      */
     public function build(string $optionsKey, Collection $activeGroups): array

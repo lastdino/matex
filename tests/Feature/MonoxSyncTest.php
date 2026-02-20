@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
-use Lastdino\ProcurementFlow\Jobs\SyncStockMovementToMonox;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\MaterialLot;
-use Lastdino\ProcurementFlow\Models\StockMovement;
+use Lastdino\Matex\Jobs\SyncStockMovementToMonox;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\MaterialLot;
+use Lastdino\Matex\Models\StockMovement;
 
 uses(\Tests\TestCase::class, \Illuminate\Foundation\Testing\RefreshDatabase::class);
 
@@ -73,8 +73,8 @@ test('sync job calls MonoxApiService', function () {
         '*/api/monox/v1/inventory/sync' => Http::response(['message' => 'success'], 200),
     ]);
 
-    config(['procurement_flow.monox.base_url' => 'https://monox.test']);
-    config(['procurement_flow.monox.api_key' => 'secret-key']);
+    config(['matex.monox.base_url' => 'https://monox.test']);
+    config(['matex.monox.api_key' => 'secret-key']);
 
     $material = Material::create([
         'sku' => 'MONOX-002',
@@ -95,7 +95,7 @@ test('sync job calls MonoxApiService', function () {
     ]);
 
     $job = new SyncStockMovementToMonox($movement);
-    $job->handle(new \Lastdino\ProcurementFlow\Services\MonoxApiService);
+    $job->handle(new \Lastdino\Matex\Services\MonoxApiService);
 
     Http::assertSent(function ($request) {
         return $request['sku'] === 'MONOX-002' &&

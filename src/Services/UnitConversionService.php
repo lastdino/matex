@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\UnitConversion;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\UnitConversion;
 
 class UnitConversionService
 {

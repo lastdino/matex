@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Domain\Stock;
+namespace Lastdino\Matex\Domain\Stock;
 
 use DateTimeInterface;
 use Illuminate\Support\Facades\Auth;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\ReceivingItem;
-use Lastdino\ProcurementFlow\Models\StockMovement;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\ReceivingItem;
+use Lastdino\Matex\Models\StockMovement;
 
 class StockMovementService
 {

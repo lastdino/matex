@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Models;
+namespace Lastdino\Matex\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Lastdino\ProcurementFlow\Support\Tables;
+use Lastdino\Matex\Support\Tables;
 
 class MaterialRiskAssessment extends Model
 {

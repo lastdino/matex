@@ -2,27 +2,27 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Http\Controllers;
+namespace Lastdino\Matex\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Blade;
 use LastDino\ChromeLaravel\Facades\Chrome;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
+use Lastdino\Matex\Models\PurchaseOrder;
 
 class PurchaseOrderPdfController extends Controller
 {
     public function __invoke(PurchaseOrder $po)
     {
         // Prevent download if status is draft
-        if ($po->status === \Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus::Draft) {
-            abort(403, __('procflow::po.errors.draft_pdf_not_allowed') ?: 'Draft purchase orders cannot be downloaded as PDF.');
+        if ($po->status === \Lastdino\Matex\Enums\PurchaseOrderStatus::Draft) {
+            abort(403, __('matex::po.errors.draft_pdf_not_allowed') ?: 'Draft purchase orders cannot be downloaded as PDF.');
         }
 
         // Load missing relations to avoid N+1
         $po = $po->loadMissing(['supplier', 'items.material']);
         $poNumber = $po->po_number ?: ('Draft-'.$po->getKey());
 
-        $html = Blade::render('procflow::pdf.purchase-order', compact('po'));
+        $html = Blade::render('matex::pdf.purchase-order', compact('po'));
 
         $tmpPath = Chrome::pdfFromHtml($html, [
             'printBackground' => true,

@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Actions\Receiving;
+namespace Lastdino\Matex\Actions\Receiving;
 
 use Illuminate\Support\Facades\DB;
-use Lastdino\ProcurementFlow\Domain\PO\PurchaseOrderCompletionService;
-use Lastdino\ProcurementFlow\Domain\Receiving\ReceivingLineService;
-use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Lastdino\ProcurementFlow\Models\Receiving;
-use Lastdino\ProcurementFlow\Services\UnitConversionService;
+use Lastdino\Matex\Domain\PO\PurchaseOrderCompletionService;
+use Lastdino\Matex\Domain\Receiving\ReceivingLineService;
+use Lastdino\Matex\Enums\PurchaseOrderStatus;
+use Lastdino\Matex\Models\PurchaseOrder;
+use Lastdino\Matex\Models\PurchaseOrderItem;
+use Lastdino\Matex\Models\Receiving;
+use Lastdino\Matex\Services\UnitConversionService;
 
 class ReceivePurchaseOrderAction
 {

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Tests\Feature;
+namespace Lastdino\Matex\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\MaterialLot;
-use Lastdino\ProcurementFlow\Models\StorageLocation;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\MaterialLot;
+use Lastdino\Matex\Models\StorageLocation;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -34,7 +34,7 @@ test('moving a lot to a new location succeeds when multiple lots of the same mat
     // However, if the current constraint is only (material_id, lot_no),
     // this test will fail during setup or during the transfer action.
 
-    Livewire::test('procflow::procurement.materials.show', ['material' => $material])
+    Livewire::test('matex::matex.materials.show', ['material' => $material])
         ->call('openTransferModal', $lot->id)
         ->set('transferForm.to_storage_location_id', $loc2->id)
         ->set('transferForm.qty', 5)

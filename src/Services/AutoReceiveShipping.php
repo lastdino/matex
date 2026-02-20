@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
 use Illuminate\Support\Facades\DB;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Lastdino\ProcurementFlow\Models\Receiving;
-use Lastdino\ProcurementFlow\Models\ReceivingItem;
+use Lastdino\Matex\Models\PurchaseOrderItem;
+use Lastdino\Matex\Models\Receiving;
+use Lastdino\Matex\Models\ReceivingItem;
 
 class AutoReceiveShipping
 {

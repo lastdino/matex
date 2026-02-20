@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Lastdino\ProcurementFlow\Models\Material;
+use Lastdino\Matex\Models\Material;
 use Livewire\Livewire;
 
 uses(\Tests\TestCase::class, RefreshDatabase::class);
 
 test('materials index livewire component can be rendered', function () {
-    Livewire::test('procflow::procurement.materials.index')
+    Livewire::test('matex::matex.materials.index')
         ->assertStatus(200);
 });
 
@@ -21,7 +21,7 @@ test('materials index component has sdsUpload property and it is used correctly 
         'current_stock' => 10,
     ]);
 
-    Livewire::test('procflow::procurement.materials.index')
+    Livewire::test('matex::matex.materials.index')
         ->call('openSdsModal', $material->id)
         ->assertSet('showSdsModal', true)
         ->assertSet('sdsMaterialId', $material->id)
@@ -37,13 +37,13 @@ test('materials index component can toggle active status', function () {
         'is_active' => true,
     ]);
 
-    Livewire::test('procflow::procurement.materials.index')
+    Livewire::test('matex::matex.materials.index')
         ->call('toggleActive', $material->id)
         ->assertDispatched('toast', type: 'success', message: 'Material deactivated');
 
     expect($material->refresh()->is_active)->toBeFalse();
 
-    Livewire::test('procflow::procurement.materials.index')
+    Livewire::test('matex::matex.materials.index')
         ->call('toggleActive', $material->id)
         ->assertDispatched('toast', type: 'success', message: 'Material activated');
 

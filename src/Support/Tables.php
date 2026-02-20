@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Support;
+namespace Lastdino\Matex\Support;
 
 final class Tables
 {
     public static function prefix(): string
     {
-        $configured = (string) (config('procurement-flow.table_prefix') ?? '');
+        $configured = (string) (config('matex.table_prefix') ?? '');
 
-        return $configured !== '' ? $configured : 'procurement_flow_';
+        return $configured !== '' ? $configured : 'matex_';
     }
 
     public static function name(string $base): string

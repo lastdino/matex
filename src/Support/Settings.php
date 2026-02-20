@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Support;
+namespace Lastdino\Matex\Support;
 
 use Carbon\Carbon;
-use Lastdino\ProcurementFlow\Models\AppSetting;
+use Lastdino\Matex\Models\AppSetting;
 
 final class Settings
 {
@@ -15,9 +15,9 @@ final class Settings
      */
     public static function itemTax(?Carbon $at = null): array
     {
-        $cfg = AppSetting::getArray('procurement.item_tax');
+        $cfg = AppSetting::getArray('matex.item_tax');
         if ($cfg === null) {
-            $cfg = (array) config('procurement-flow.item_tax', []);
+            $cfg = (array) config('matex.item_tax', []);
         }
 
         $default = (float) ($cfg['default_rate'] ?? 0.10);
@@ -56,7 +56,7 @@ final class Settings
      */
     public static function saveItemTax(array $value): void
     {
-        AppSetting::setArray('procurement.item_tax', $value);
+        AppSetting::setArray('matex.item_tax', $value);
     }
 
     /**
@@ -66,9 +66,9 @@ final class Settings
      */
     public static function shipping(): array
     {
-        $cfg = AppSetting::getArray('procurement.shipping');
+        $cfg = AppSetting::getArray('matex.shipping');
         if ($cfg === null) {
-            $cfg = (array) config('procurement-flow.shipping', []);
+            $cfg = (array) config('matex.shipping', []);
         }
 
         return [
@@ -82,7 +82,7 @@ final class Settings
      */
     public static function saveShipping(array $value): void
     {
-        AppSetting::setArray('procurement.shipping', $value);
+        AppSetting::setArray('matex.shipping', $value);
     }
 
     /**
@@ -92,10 +92,10 @@ final class Settings
      */
     public static function pdf(): array
     {
-        $cfg = AppSetting::getArray('procurement.pdf');
+        $cfg = AppSetting::getArray('matex.pdf');
         if ($cfg === null) {
             // Backward compatibility: support both keys in config
-            $cfg = (array) (config('procurement-flow.pdf') ?? config('procurement_flow.pdf') ?? []);
+            $cfg = (array) (config('matex.pdf') ?? config('matex.pdf') ?? []);
         }
 
         return $cfg;
@@ -106,7 +106,7 @@ final class Settings
      */
     public static function savePdf(array $value): void
     {
-        AppSetting::setArray('procurement.pdf', $value);
+        AppSetting::setArray('matex.pdf', $value);
     }
 
     /**
@@ -117,9 +117,9 @@ final class Settings
      */
     public static function displayDecimals(?string $key = null): array|int
     {
-        $cfg = AppSetting::getArray('procurement.display.decimals');
+        $cfg = AppSetting::getArray('matex.display.decimals');
         if ($cfg === null) {
-            $cfg = (array) (config('procurement-flow.decimals') ?? []);
+            $cfg = (array) (config('matex.decimals') ?? []);
         }
 
         if ($key !== null) {
@@ -145,7 +145,7 @@ final class Settings
         foreach ($map as $k => $v) {
             $clean[(string) $k] = (int) $v;
         }
-        AppSetting::setArray('procurement.display.decimals', $clean);
+        AppSetting::setArray('matex.display.decimals', $clean);
     }
 
     /**
@@ -156,9 +156,9 @@ final class Settings
      */
     public static function displayCurrency(): array
     {
-        $cfg = AppSetting::getArray('procurement.display.currency');
+        $cfg = AppSetting::getArray('matex.display.currency');
         if ($cfg === null) {
-            $cfg = (array) (config('procurement-flow.currency') ?? []);
+            $cfg = (array) (config('matex.currency') ?? []);
         }
         $symbol = (string) ($cfg['symbol'] ?? '¥');
         $position = (string) ($cfg['position'] ?? 'prefix');
@@ -187,7 +187,7 @@ final class Settings
             $position = 'prefix';
         }
         $space = (bool) ($cfg['space'] ?? false);
-        AppSetting::setArray('procurement.display.currency', [
+        AppSetting::setArray('matex.display.currency', [
             'symbol' => $symbol,
             'position' => $position,
             'space' => $space,

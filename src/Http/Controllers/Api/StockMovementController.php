@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Http\Controllers\Api;
+namespace Lastdino\Matex\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\MaterialLot;
-use Lastdino\ProcurementFlow\Models\StockMovement;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\MaterialLot;
+use Lastdino\Matex\Models\StockMovement;
 
 class StockMovementController extends Controller
 {

@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Lastdino\ProcurementFlow\Models\StockMovement;
+use Lastdino\Matex\Models\StockMovement;
 
 class MonoxApiService
 {
@@ -21,8 +21,8 @@ class MonoxApiService
             return;
         }
 
-        $baseUrl = config('procurement_flow.monox.base_url');
-        $apiKey = config('procurement_flow.monox.api_key');
+        $baseUrl = config('matex.monox.base_url');
+        $apiKey = config('matex.monox.api_key');
 
         if (empty($baseUrl)) {
             Log::warning('Monox API base URL is not configured.');
@@ -42,7 +42,7 @@ class MonoxApiService
                 'lot_no' => $movement->lot?->lot_no,
                 'qty' => (float) $movement->qty_base,
                 'type' => $movement->type === 'in' ? 'in' : 'out',
-                'reason' => $movement->reason ?: 'procurement-flow からの同期',
+                'reason' => $movement->reason ?: 'matex からの同期',
             ]);
 
             if ($response->failed()) {

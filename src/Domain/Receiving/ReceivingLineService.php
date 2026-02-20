@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Domain\Receiving;
+namespace Lastdino\Matex\Domain\Receiving;
 
-use Lastdino\ProcurementFlow\Domain\Lot\LotService;
-use Lastdino\ProcurementFlow\Domain\Stock\StockMovementService;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Lastdino\ProcurementFlow\Models\Receiving;
-use Lastdino\ProcurementFlow\Models\ReceivingItem;
-use Lastdino\ProcurementFlow\Models\StorageLocation;
-use Lastdino\ProcurementFlow\Services\UnitConversionService;
+use Lastdino\Matex\Domain\Lot\LotService;
+use Lastdino\Matex\Domain\Stock\StockMovementService;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\PurchaseOrder;
+use Lastdino\Matex\Models\PurchaseOrderItem;
+use Lastdino\Matex\Models\Receiving;
+use Lastdino\Matex\Models\ReceivingItem;
+use Lastdino\Matex\Models\StorageLocation;
+use Lastdino\Matex\Services\UnitConversionService;
 
 class ReceivingLineService
 {

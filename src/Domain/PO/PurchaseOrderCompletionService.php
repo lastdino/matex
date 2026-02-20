@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Domain\PO;
+namespace Lastdino\Matex\Domain\PO;
 
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Models\PurchaseOrder;
-use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
-use Lastdino\ProcurementFlow\Services\UnitConversionService;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Models\PurchaseOrder;
+use Lastdino\Matex\Models\PurchaseOrderItem;
+use Lastdino\Matex\Services\UnitConversionService;
 
 class PurchaseOrderCompletionService
 {

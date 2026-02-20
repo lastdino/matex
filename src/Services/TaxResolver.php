@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Lastdino\ProcurementFlow\Services;
+namespace Lastdino\Matex\Services;
 
 use Carbon\CarbonInterface;
-use Lastdino\ProcurementFlow\Models\Material;
-use Lastdino\ProcurementFlow\Support\Settings;
+use Lastdino\Matex\Models\Material;
+use Lastdino\Matex\Support\Settings;
 
 final class TaxResolver
 {
