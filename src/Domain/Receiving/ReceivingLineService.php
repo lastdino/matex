@@ -11,6 +11,7 @@ use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
 use Lastdino\ProcurementFlow\Models\Receiving;
 use Lastdino\ProcurementFlow\Models\ReceivingItem;
+use Lastdino\ProcurementFlow\Models\StorageLocation;
 use Lastdino\ProcurementFlow\Services\UnitConversionService;
 
 class ReceivingLineService
@@ -57,6 +58,11 @@ class ReceivingLineService
 
         // Over delivery guard in base unit
         $this->guard->assertNotExceededMaterial($poi, $material, $qtyBase, $this->conversion);
+
+        if ($line['storage_location_id']) {
+            $location = StorageLocation::findOrFail($line['storage_location_id']);
+            $this->guard->assertStorageLocationNotExceeded($location, $material, $qtyBase);
+        }
 
         $ri = ReceivingItem::create([
             'receiving_id' => $receiving->id,

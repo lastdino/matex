@@ -78,7 +78,7 @@ new class extends Component
         <flux:field>
             <flux:select wire:model.live="materialId">
                 <option value="">{{ __('procflow::settings.labels.filters.all_materials') }}</option>
-                @foreach($materials as $m)
+                @foreach($this->materials as $m)
                     <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->sku }})</option>
                 @endforeach
             </flux:select>
@@ -97,7 +97,7 @@ new class extends Component
     </div>
 
     <div class="print:grid print:grid-cols-{{ max(1, min(6, $columns)) }} grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-{{ max(1, min(6, $columns)) }} gap-4">
-        @foreach($rows as $row)
+        @foreach($this->rows as $row)
             <div class="p-4 border rounded break-inside-avoid">
                 <div class="flex items-start justify-between gap-3">
                     <div>

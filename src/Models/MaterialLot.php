@@ -12,7 +12,7 @@ use Lastdino\ProcurementFlow\Support\Tables;
 class MaterialLot extends Model
 {
     protected $fillable = [
-        'material_id', 'lot_no', 'qty_on_hand', 'unit', 'received_at', 'mfg_date', 'expiry_date', 'status', 'storage_location', 'storage_location_id', 'barcode', 'notes',
+        'material_id', 'lot_no', 'qty_on_hand', 'unit', 'received_at', 'mfg_date', 'expiry_date', 'status', 'storage_location_id', 'barcode', 'notes',
         'supplier_id', 'purchase_order_id',
     ];
 

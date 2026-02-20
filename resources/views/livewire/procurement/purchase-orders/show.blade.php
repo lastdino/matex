@@ -380,7 +380,9 @@ new class extends Component
                                     <div class="qr-svg w-[40px] h-[40px]">
                                         {!! \tbQuar\Facades\Quar::size(40)->generate($item->scan_token) !!}
                                     </div>
-                                    <div class="text-[10px] text-gray-500 select-all">{{ substr($item->scan_token, 0, 8) }}…</div>
+                                    <div class="flex flex-col gap-1">
+                                        <div class="text-[10px] text-gray-500 select-all">{{ substr($item->scan_token, 0, 8) }}…</div>
+                                    </div>
                                 </div>
                             @else
                                 <span class="text-gray-400 text-xs">{{ __('procflow::po.detail.no_token') }}</span>
@@ -393,6 +395,14 @@ new class extends Component
                                     <flux:dropdown>
                                         <flux:button size="xs" variant="ghost" icon="ellipsis-horizontal" />
                                         <flux:menu>
+                                            @if(in_array($statusVal, ['issued', 'receiving'], true) && !empty($item->scan_token))
+                                                <flux:menu.item
+                                                    icon="arrow-right-start-on-rectangle"
+                                                    href="{{ route('procurement.receiving.scan', ['token' => $item->scan_token]) }}"
+                                                >
+                                                    {{ __('procflow::receiving.buttons.go_to_receiving') }}
+                                                </flux:menu.item>
+                                            @endif
                                             @if($statusVal !== 'closed' && !$isShipping)
                                                 <flux:menu.item icon="calendar"
                                                     wire:click="openExpectedDateModal({{ (int)$item->id }})"
@@ -469,11 +479,13 @@ new class extends Component
         </flux:card>
 
         <div class="flex items-center gap-2 print:hidden">
+            @php $statusVal = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft'); @endphp
             <flux:button href="{{ route('procurement.purchase-orders.index') }}" variant="outline">{{ __('procflow::po.detail.buttons.back') }}</flux:button>
             <flux:button type="button" onclick="window.print()" variant="outline">{{ __('procflow::po.detail.buttons.print_labels') }}</flux:button>
-            <flux:button href="{{ route('procurement.purchase-orders.pdf', ['po' => $po->id]) }}" target="_blank" variant="outline">{{ __('procflow::po.detail.buttons.download_pdf') }}</flux:button>
+            @if ($statusVal !== 'draft')
+                <flux:button href="{{ route('procurement.purchase-orders.pdf', ['po' => $po->id]) }}" target="_blank" variant="outline">{{ __('procflow::po.detail.buttons.download_pdf') }}</flux:button>
+            @endif
 
-            @php $statusVal = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft'); @endphp
             @if($statusVal === 'draft')
                 <flux:button variant="danger" class="ml-auto"
                     x-on:click.prevent="if (confirm('{{ __('procflow::po.detail.confirm_cancel') }}')) { $wire.cancelPo() }"

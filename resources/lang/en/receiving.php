@@ -23,6 +23,10 @@ return [
     'lot_notice' => 'This material is lot-controlled. Lot number is required (inventory is recorded by lot).',
     'receive' => 'Receive',
 
+    'buttons' => [
+        'go_to_receiving' => 'Go to Receiving',
+    ],
+
     'messages' => [
         'token_not_found' => 'Token not found.',
         'not_receivable_status' => 'This purchase order is not receivable.',

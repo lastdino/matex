@@ -176,10 +176,9 @@ new class extends Component
                 $query->where(function ($sub) {
                     $sub->whereRaw('CAST(current_stock AS DECIMAL) < CAST(min_stock AS DECIMAL)')
                         ->orWhere(function ($s) {
-                            $s->where('is_chemical', true)
-                                ->whereNotNull('specified_quantity')
-                                ->where('specified_quantity', '>', 0)
-                                ->whereRaw('CAST(current_stock AS DECIMAL) >= CAST(specified_quantity AS DECIMAL)');
+                            $s->whereNotNull('max_stock')
+                                ->where('max_stock', '>', 0)
+                                ->whereRaw('CAST(current_stock AS DECIMAL) > CAST(max_stock AS DECIMAL)');
                         });
                 });
             })
@@ -216,7 +215,6 @@ new class extends Component
             'category_id' => $m->category_id,
             'current_stock' => (float) $m->current_stock,
             'manufacturer_name' => $m->manufacturer_name,
-            'storage_location' => $m->storage_location,
             'applicable_regulation' => $m->applicable_regulation,
             'ghs_mark' => $m->ghs_mark,
             'ghs_mark_options' => $ghsOptions,
@@ -430,7 +428,6 @@ new class extends Component
             'category_id' => null,
             'current_stock' => null,
             'manufacturer_name' => null,
-            'storage_location' => null,
             'applicable_regulation' => null,
             'ghs_mark' => null,
             'ghs_mark_options' => [],
@@ -585,9 +582,9 @@ new class extends Component
                     @php
                         $stockValue = $m->manage_by_lot ? (float) ($m->lots_sum_qty_on_hand ?? 0) : (float) ($m->current_stock ?? 0);
                         $low = !is_null($m->min_stock) && $stockValue < (float) $m->min_stock;
-                        $overLimit = $m->is_chemical && !is_null($m->specified_quantity) && $m->specified_quantity > 0 && $stockValue >= (float) $m->specified_quantity;
+                        $over = !is_null($m->max_stock) && (float) $m->max_stock > 0 && $stockValue > (float) $m->max_stock;
                     @endphp
-                    <flux:table.row :class="$low || $overLimit ? 'bg-red-50/40 dark:bg-red-950/20' : ''">
+                    <flux:table.row :class="$low || $over ? 'bg-red-50/40 dark:bg-red-950/20' : ''">
                         <flux:table.cell>
                             @php($icons = method_exists($m, 'ghsIconNames') ? $m->ghsIconNames() : [])
                             @if(!empty($icons))
@@ -629,10 +626,10 @@ new class extends Component
                             </div>
                         </flux:table.cell>
                         <flux:table.cell class="text-neutral-500">{{ $m->manufacturer_name }}</flux:table.cell>
-                        <flux:table.cell :class="$low || $overLimit ? 'text-red-600 font-medium' : ''">
+                        <flux:table.cell :class="$low || $over ? 'text-red-600 font-medium' : ''">
                             {{ $stockValue }}
-                            @if($overLimit)
-                                <flux:tooltip content="指定数量を超過または到達しています">
+                            @if($low || $over)
+                                <flux:tooltip content="{{ $low ? '最小量を下回っています' : '最大量を超過しています' }}">
                                     <flux:icon name="exclamation-triangle" class="size-4 inline text-red-600 ml-1" />
                                 </flux:tooltip>
                             @endif
@@ -784,6 +781,7 @@ new class extends Component
                     <flux:heading size="sm">{{ __('procflow::materials.sections.ordering_pricing') }}</flux:heading>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <flux:input type="number" step="0.000001" min="0" wire:model="materialForm.moq" label="{{ __('procflow::materials.form.moq') }}"/>
+                        <flux:input type="number" step="0.000001" min="0" wire:model="materialForm.pack_size" label="{{ __('procflow::materials.form.pack_size') }}"/>
                         <flux:input type="number" step="0.01" wire:model="materialForm.unit_price" label="{{ __('procflow::materials.form.unit_price') }}"/>
                     </div>
                 </div>

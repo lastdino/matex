@@ -72,6 +72,7 @@ class Material extends Model implements HasMedia
         return $this->belongsTo(Supplier::class, 'preferred_supplier_id');
     }
 
+
     public function lots(): HasMany
     {
         return $this->hasMany(MaterialLot::class, 'material_id');

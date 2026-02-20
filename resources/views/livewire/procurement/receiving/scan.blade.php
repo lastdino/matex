@@ -1,16 +1,22 @@
 <?php
 
-use Illuminate\Contracts\View\View as ViewContract;
 use Lastdino\ProcurementFlow\Actions\Receiving\ReceivePurchaseOrderAction;
 use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
 use Lastdino\ProcurementFlow\Models\Material;
 use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
 use Lastdino\ProcurementFlow\Models\StorageLocation;
 use Lastdino\ProcurementFlow\Services\UnitConversionService;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new class extends Component
 {
+    /**
+     * Token passed from URL.
+     */
+    #[Url]
+    public string $token = '';
+
     /**
      * User input form state.
      *
@@ -21,9 +27,9 @@ new class extends Component
         'qty' => null,
         'unit' => null,
         'reference_number' => null,
-        'storage_location_id' => null,
+        'storage_location_id' => '',
         // lot fields (conditionally required)
-        'lot_no' => null,
+        'lot_no' => '-',
         'mfg_date' => null,
         'expiry_date' => null,
     ];
@@ -59,6 +65,16 @@ new class extends Component
 
     public bool $ok = false;
 
+    public string $storageWarning = '';
+
+    public function mount(UnitConversionService $conversion): void
+    {
+        if (! empty($this->token)) {
+            $this->form['token'] = $this->token;
+            $this->lookup($conversion);
+        }
+    }
+
     protected function rules(): array
     {
         return [
@@ -66,8 +82,8 @@ new class extends Component
             'form.qty' => ['nullable', 'numeric', 'gt:0'],
             'form.reference_number' => ['nullable', 'string'],
             'form.storage_location_id' => ['nullable', 'integer'],
-            // Lot fields are validated conditionally in receive()
-            'form.lot_no' => ['nullable', 'string', 'max:128'],
+            // Lot fields
+            'form.lot_no' => ['required', 'string', 'max:128'],
             'form.mfg_date' => ['nullable', 'date'],
             'form.expiry_date' => ['nullable', 'date', 'after_or_equal:today'],
         ];
@@ -89,6 +105,60 @@ new class extends Component
     {
         $this->message = $text;
         $this->ok = $ok;
+    }
+
+    public function updatedFormQty(): void
+    {
+        $this->checkStorageLimit();
+    }
+
+    public function updatedFormUnit(): void
+    {
+        $this->checkStorageLimit();
+    }
+
+    public function updatedFormStorageLocationId(): void
+    {
+        $this->checkStorageLimit();
+    }
+
+    protected function checkStorageLimit(): void
+    {
+        $this->storageWarning = '';
+
+        if (! $this->form['storage_location_id'] || ! $this->form['qty'] || ! $this->info['material_id']) {
+            return;
+        }
+
+        /** @var Material|null $material */
+        $material = Material::find($this->info['material_id']);
+        if (! $material || ! $material->is_chemical || (float) $material->specified_quantity <= 0) {
+            return;
+        }
+
+        /** @var StorageLocation|null $location */
+        $location = StorageLocation::find($this->form['storage_location_id']);
+        if (! $location || $location->max_specified_quantity_ratio === null || (float) $location->max_specified_quantity_ratio <= 0) {
+            return;
+        }
+
+        try {
+            /** @var UnitConversionService $conversion */
+            $conversion = app(UnitConversionService::class);
+            $fromUnit = $this->form['unit'] ?: $material->unit_stock;
+            $factor = (float) $conversion->factor($material, $fromUnit, $material->unit_stock);
+            $qtyBase = (float) $this->form['qty'] * $factor;
+
+            $currentRatio = $location->currentSpecifiedQuantityRatio();
+            $newRatio = $qtyBase / (float) $material->specified_quantity;
+            $totalRatio = $currentRatio + $newRatio;
+
+            if ($totalRatio > (float) $location->max_specified_quantity_ratio) {
+                $this->storageWarning = "保管場所「{$location->name}」の指定数量倍率（{$location->max_specified_quantity_ratio}）を超過します。現在の合計: ".number_format($totalRatio, 2);
+            }
+        } catch (\Exception $e) {
+            // Silence conversion errors during real-time check
+        }
     }
 
     /**
@@ -210,7 +280,7 @@ new class extends Component
             'form.qty' => ['required', 'numeric', 'gt:0'],
             'form.unit' => ['nullable', 'string'],
             'form.reference_number' => ['nullable', 'string'],
-            'form.lot_no' => ['nullable', 'string', 'max:128'],
+            'form.lot_no' => ['required', 'string', 'max:128'],
             'form.mfg_date' => ['nullable', 'date'],
             'form.expiry_date' => ['nullable', 'date', 'after_or_equal:today'],
         ]);
@@ -219,9 +289,9 @@ new class extends Component
             $receiving = $action->byScan([
                 'token' => (string) $this->form['token'],
                 'qty' => (float) $this->form['qty'],
-                'unit_purchase' => $this->form['unit'] ?: null,
+                'unit_purchase' => $this->form['unit'] ?: '',
                 'reference_number' => $this->form['reference_number'] ?? null,
-                'storage_location_id' => $this->form['storage_location_id'] ?? null,
+                'storage_location_id' => $this->form['storage_location_id'] ?? '',
                 'lot_no' => $this->form['lot_no'] ?? null,
                 'mfg_date' => $this->form['mfg_date'] ?? null,
                 'expiry_date' => $this->form['expiry_date'] ?? null,
@@ -261,10 +331,10 @@ new class extends Component
         $this->form = [
             'token' => '',
             'qty' => null,
-            'unit' => null,
+            'unit' => '',
             'reference_number' => null,
-            'storage_location_id' => null,
-            'lot_no' => null,
+            'storage_location_id' => '',
+            'lot_no' => '-',
             'mfg_date' => null,
             'expiry_date' => null,
         ];
@@ -286,12 +356,16 @@ new class extends Component
     <div class="grid gap-4 md:grid-cols-2">
         <div class="rounded border p-4 space-y-4">
             <flux:heading size="sm">{{ __('procflow::receiving.token') }}</flux:heading>
-            <flux:input
-                id="token"
-                x-ref="token"
-                wire:model.live.debounce.300ms="form.token"
-                placeholder="{{ __('procflow::receiving.token_placeholder') }}"
-            />
+            <div class="flex gap-2">
+                <flux:input
+                    id="token"
+                    x-ref="token"
+                    wire:model.live.debounce.300ms="form.token"
+                    placeholder="{{ __('procflow::receiving.token_placeholder') }}"
+                    class="flex-1"
+                />
+                <livewire:procflow::qr-scanner wire:model.live="form.token" />
+            </div>
             <div class="flex gap-2">
                 <flux:button
                     variant="outline"
@@ -324,10 +398,10 @@ new class extends Component
 
             <div class="grid gap-3 md:grid-cols-2">
                 <div class="flex gap-2 items-end">
-                    <flux:input type="number" step="0.000001" min="0" wire:model.number="form.qty" label="{{ __('procflow::receiving.qty_received') }}"/>
+                    <flux:input type="number" step="0.000001" min="0" wire:model.live="form.qty" label="{{ __('procflow::receiving.qty_received') }}"/>
                     @if ($this->hasInfo && !empty($info['available_units']))
                         <div class="w-32">
-                            <flux:select wire:model="form.unit">
+                            <flux:select wire:model.live="form.unit">
                                 @foreach($info['available_units'] as $u)
                                     <flux:select.option :value="$u">{{ $u }}</flux:select.option>
                                 @endforeach
@@ -335,13 +409,17 @@ new class extends Component
                         </div>
                     @endif
                 </div>
-                <flux:select wire:model="form.storage_location_id" label="{{ __('procflow::settings.storage_locations.fields.name') }}" placeholder="場所を選択...">
+                <flux:select wire:model.live="form.storage_location_id" label="保管場所" placeholder="場所を選択...">
                     @foreach(Lastdino\ProcurementFlow\Models\StorageLocation::query()->where('is_active', true)->orderBy('name')->get() as $loc)
                         <flux:select.option :value="$loc->id">{{ $loc->name }}</flux:select.option>
                     @endforeach
                 </flux:select>
                 <flux:input wire:model="form.reference_number" label="{{ __('procflow::receiving.reference_number') }}"/>
             </div>
+
+            @if ($storageWarning)
+                <flux:callout variant="warning" class="mt-2">{{ $storageWarning }}</flux:callout>
+            @endif
 
             @if ($this->hasInfo)
                 <div class="mt-4 space-y-3">

@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Lastdino\ProcurementFlow\Models\Option;
 use Lastdino\ProcurementFlow\Models\OptionGroup;
@@ -1477,6 +1476,12 @@ new class extends Component
         <div class="w-full md:w-[64rem] max-w-full">
             <h3 class="text-lg font-semibold mb-3">{{ __('procflow::po.create.title') }}</h3>
 
+            @error('approval_flow')
+                <div class="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+                    {{ $message }}
+                </div>
+            @enderror
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div class="md:col-span-1">
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::po.create.mode.title') }}</label>
@@ -1530,6 +1535,7 @@ new class extends Component
                                                 <flux:select.option value="{{ $m->id }}">{{ $m->sku }} - {{ $m->name }}</flux:select.option>
                                             @endforeach
                                         </flux:select>
+                                        <flux:error name="poForm.items.{{ $i }}.material_id" />
                                     </td>
                                     <td class="py-2 px-3">
                                         <flux:textarea
@@ -1556,11 +1562,13 @@ new class extends Component
                                         <div class="w-28">
                                             <flux:input class="w-28" type="number" wire:model="poForm.items.{{ $i }}.qty_ordered"/>
                                         </div>
+                                        <flux:error name="poForm.items.{{ $i }}.qty_ordered" />
                                     </td>
                                     <td class="py-2 px-3">
                                         <div class="w-28">
                                             <flux:input class="w-28" type="number" wire:model.live="poForm.items.{{ $i }}.price_unit"/>
                                         </div>
+                                        <flux:error name="poForm.items.{{ $i }}.price_unit" />
                                     </td>
                                     <td class="py-2 px-3">
                                         <div class="w-28">
@@ -1650,6 +1658,12 @@ new class extends Component
         <div class="w-full md:w-[64rem] max-w-full">
             <h3 class="text-lg font-semibold mb-3">{{ __('procflow::po.adhoc.title') }}</h3>
 
+            @error('approval_flow')
+                <div class="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm">
+                    {{ $message }}
+                </div>
+            @enderror
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div>
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::po.adhoc.form.supplier') }}</label>
@@ -1708,6 +1722,7 @@ new class extends Component
                                             wire:model.live="adhocForm.items.{{ $i }}.description"
                                             class="min-w-64"
                                         />
+                                        <flux:error name="adhocForm.items.{{ $i }}.description" />
                                     </td>
                                     <td class="py-2 px-3">
                                         <div class="w-40">
@@ -1734,11 +1749,13 @@ new class extends Component
                                         <div class="w-28">
                                             <flux:input class="w-28" type="number" wire:model.live="adhocForm.items.{{ $i }}.qty_ordered"/>
                                         </div>
+                                        <flux:error name="adhocForm.items.{{ $i }}.qty_ordered" />
                                     </td>
                                     <td class="py-2 px-3">
                                         <div class="w-28">
                                             <flux:input class="w-28" type="number" wire:model.live="adhocForm.items.{{ $i }}.price_unit"/>
                                         </div>
+                                        <flux:error name="adhocForm.items.{{ $i }}.price_unit" />
                                     </td>
                                     <td class="py-2 px-3">
                                         <div class="w-28">

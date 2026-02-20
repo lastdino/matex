@@ -19,7 +19,7 @@ new class extends Component
     public ?int $transferLotId = null;
     public array $transferForm = [
         'qty' => null,
-        'to_storage_location_id' => null,
+        'to_storage_location_id' => '',
         'reason' => '',
     ];
 
@@ -363,7 +363,7 @@ new class extends Component
                             <tr class="border-t {{ $lot->isExpired() ? 'bg-red-50/40 dark:bg-red-950/20' : '' }}">
                                 <td class="py-2 px-3">{{ $lot->lot_no }}</td>
                                 <td class="py-2 px-3">{{ \Lastdino\ProcurementFlow\Support\Format::qty($lot->qty_on_hand) }} {{ $lot->unit }}</td>
-                                <td class="py-2 px-3">{{ $lot->storageLocation?->name ?? $lot->storage_location ?: '-' }}</td>
+                                <td class="py-2 px-3">{{ $lot->storageLocation?->name ?: '-' }}</td>
                                 <td class="py-2 px-3">{{ $lot->expiry_date ?? '-' }}</td>
                                 <td class="py-2 px-3">{{ $lot->status ?? '-' }}</td>
                                 <td class="py-2 px-3">

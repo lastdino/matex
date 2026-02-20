@@ -22,13 +22,13 @@ class LotService
             [
                 'material_id' => $material->id,
                 'lot_no' => (string) $line['lot_no'],
+                'storage_location_id' => $line['storage_location_id'] ?? null,
             ],
             [
                 'unit' => $material->unit_stock,
                 'received_at' => $receivedAt,
                 'mfg_date' => $line['mfg_date'] ?? null,
                 'expiry_date' => $line['expiry_date'] ?? null,
-                'storage_location_id' => $line['storage_location_id'] ?? null,
                 'status' => 'Open',
                 'purchase_order_id' => $po->id,
                 'supplier_id' => $po->supplier_id,
@@ -36,7 +36,7 @@ class LotService
         );
 
         $updates = [];
-        foreach (['mfg_date', 'expiry_date', 'storage_location_id'] as $k) {
+        foreach (['mfg_date', 'expiry_date'] as $k) {
             if (! empty($line[$k] ?? null)) {
                 $updates[$k] = $line[$k];
             }

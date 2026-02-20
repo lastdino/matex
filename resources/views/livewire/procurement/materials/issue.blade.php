@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Lastdino\ProcurementFlow\Models\Material;
@@ -158,6 +157,14 @@ new class extends Component
 
             $this->ok = true;
             $this->message = '出庫が完了しました。';
+
+            // Check if stock is below minimum
+            $material->refresh();
+            $stockValue = $material->lots()->sum('qty_on_hand');
+            if (!is_null($material->min_stock) && (float) $stockValue < (float) $material->min_stock) {
+                $this->dispatch('toast', type: 'warning', message: '在庫数が最小量を下回りました（現在: ' . (float) $stockValue . ' ' . $material->unit_stock . '）');
+            }
+
             // Refresh lots for UI
             $this->lotQty = [];
             $this->lotUnit = [];
@@ -201,6 +208,7 @@ new class extends Component
                 <thead>
                     <tr class="text-left text-neutral-500">
                         <th class="py-2 px-3">{{ __('procflow::materials.issue.table.lot_no') }}</th>
+                        <th class="py-2 px-3">場所</th>
                         <th class="py-2 px-3">{{ __('procflow::materials.issue.table.stock') }}</th>
                         <th class="py-2 px-3">{{ __('procflow::materials.issue.table.expiry') }}</th>
                         <th class="py-2 px-3">{{ __('procflow::materials.issue.table.qty') }}</th>
@@ -210,8 +218,13 @@ new class extends Component
                 @forelse($this->lots as $lot)
                     <tr class="border-t {{ $this->prefLotId === (int) $lot->id ? 'bg-blue-50/40 dark:bg-blue-950/20' : '' }}"
                         data-lot-id="{{ $lot->id }}" @if($this->prefLotId === (int) $lot->id) data-selected="true" @endif>
-                        <td class="py-2 px-3">{{ $lot->lot_no }}</td>
-                        <td class="py-2 px-3">{{ (float) $lot->qty_on_hand }} {{ $lot->unit }}</td>
+                        <td class="py-2 px-3">
+                            <div class="font-medium">{{ $lot->lot_no }}</div>
+                        </td>
+                        <td class="py-2 px-3 text-neutral-600">
+                            {{ $lot->storageLocation?->name ?? '-' }}
+                        </td>
+                        <td class="py-2 px-3 text-neutral-600">{{ (float) $lot->qty_on_hand }} {{ $lot->unit }}</td>
                         <td class="py-2 px-3">{{ $lot->expiry_date ?? '-' }}</td>
                         <td class="py-2 px-3">
                             <div class="flex gap-2 items-center">
@@ -225,7 +238,7 @@ new class extends Component
                                 @endphp
                                 @if(count($availableUnits) > 1)
                                     <div class="w-24">
-                                        <flux:select wire:model="lotUnit.{{ $lot->id }}" variant="listbox" size="sm">
+                                        <flux:select wire:model="lotUnit.{{ $lot->id }}" size="sm">
                                             @foreach($availableUnits as $u)
                                                 <flux:select.option :value="$u">{{ $u }}</flux:select.option>
                                             @endforeach

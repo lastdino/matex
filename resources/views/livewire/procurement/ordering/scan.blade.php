@@ -238,12 +238,16 @@ new class extends Component
     <div class="grid gap-4 md:grid-cols-2">
         <div class="rounded border p-4 space-y-4">
             <flux:heading size="sm">{{ __('procflow::ordering.token.title') }}</flux:heading>
-            <flux:input
-                id="token"
-                x-ref="token"
-                wire:model.live.debounce.300ms="form.token"
-                placeholder="{{ __('procflow::ordering.token.placeholder') }}"
-            />
+            <div class="flex gap-2">
+                <flux:input
+                    id="token"
+                    x-ref="token"
+                    wire:model.live.debounce.300ms="form.token"
+                    placeholder="{{ __('procflow::ordering.token.placeholder') }}"
+                    class="flex-1"
+                />
+                <livewire:procflow::qr-scanner wire:model.live="form.token" />
+            </div>
             <div class="flex gap-2">
                 <flux:button
                     variant="outline"
