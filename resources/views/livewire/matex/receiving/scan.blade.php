@@ -81,7 +81,7 @@ new class extends Component
             'form.token' => ['required', 'string'],
             'form.qty' => ['nullable', 'numeric', 'gt:0'],
             'form.reference_number' => ['nullable', 'string'],
-            'form.storage_location_id' => ['nullable', 'integer'],
+            'form.storage_location_id' => ['required', 'integer'],
             // Lot fields
             'form.lot_no' => ['required', 'string', 'max:128'],
             'form.mfg_date' => ['nullable', 'date'],
@@ -310,6 +310,7 @@ new class extends Component
             'form.qty' => ['required', 'numeric', 'gt:0'],
             'form.unit' => ['nullable', 'string'],
             'form.reference_number' => ['nullable', 'string'],
+            'form.storage_location_id' => ['required', 'integer'],
             'form.lot_no' => ['required', 'string', 'max:128'],
             'form.mfg_date' => ['nullable', 'date'],
             'form.expiry_date' => ['nullable', 'date', 'after_or_equal:today'],
@@ -439,7 +440,7 @@ new class extends Component
                         </div>
                     @endif
                 </div>
-                <flux:select wire:model.live="form.storage_location_id" label="保管場所" placeholder="場所を選択...">
+                <flux:select wire:model.live="form.storage_location_id" label="保管場所" required placeholder="場所を選択...">
                     @foreach(Lastdino\Matex\Models\StorageLocation::query()->where('is_active', true)->orderBy('name')->get() as $loc)
                         <flux:select.option :value="$loc->id">{{ $loc->name }}</flux:select.option>
                     @endforeach

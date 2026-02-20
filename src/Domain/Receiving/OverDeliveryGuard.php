@@ -7,6 +7,7 @@ namespace Lastdino\Matex\Domain\Receiving;
 use Lastdino\Matex\Models\Material;
 use Lastdino\Matex\Models\PurchaseOrderItem;
 use Lastdino\Matex\Services\UnitConversionService;
+use Lastdino\Matex\Models\StorageLocation;
 
 class OverDeliveryGuard
 {

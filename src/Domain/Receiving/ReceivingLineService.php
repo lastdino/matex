@@ -59,10 +59,10 @@ class ReceivingLineService
         // Over delivery guard in base unit
         $this->guard->assertNotExceededMaterial($poi, $material, $qtyBase, $this->conversion);
 
-        if ($line['storage_location_id']) {
-            $location = StorageLocation::findOrFail($line['storage_location_id']);
-            $this->guard->assertStorageLocationNotExceeded($location, $material, $qtyBase);
-        }
+        abort_if(is_null($line['storage_location_id']), 422, '保管場所の指定は必須です。');
+
+        $location = StorageLocation::findOrFail($line['storage_location_id']);
+        $this->guard->assertStorageLocationNotExceeded($location, $material, $qtyBase);
 
         $ri = ReceivingItem::create([
             'receiving_id' => $receiving->id,

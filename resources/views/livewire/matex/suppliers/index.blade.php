@@ -68,6 +68,7 @@ new class extends Component
         $q = (string) $this->q;
 
         return Supplier::query()
+            ->with('contacts')
             ->when($q !== '', function ($query) use ($q) {
                 $query->where(function ($sub) use ($q) {
                     $sub->where('name', 'like', "%{$q}%");
@@ -194,7 +195,17 @@ new class extends Component
         if ($this->showSupplierDetailModal) {
             $this->loadSupplierDetail();
         }
+        // If we are in the supplier form, we don't need to do anything special as the list will re-render
         $this->dispatch('toast', type: 'success', message: 'Contact saved');
+    }
+
+    public function getEditingSupplierProperty(): ?Supplier
+    {
+        if (! $this->editingSupplierId) {
+            return null;
+        }
+
+        return Supplier::query()->with('contacts')->find($this->editingSupplierId);
     }
 
     public function deleteContact(int $id): void
@@ -232,11 +243,12 @@ new class extends Component
             $s = Supplier::query()->findOrFail($this->editingSupplierId);
             $s->update($payload);
         } else {
-            Supplier::query()->create($payload);
+            $s = Supplier::query()->create($payload);
+            $this->editingSupplierId = $s->id;
         }
 
-        $this->showSupplierModal = false;
-        // refresh list by touching q (or rely on computed getter on next render)
+        // Keep the modal open to allow adding contacts if it was a new record
+        // $this->showSupplierModal = false;
         $this->dispatch('toast', type: 'success', message: 'Supplier saved');
     }
 
@@ -389,7 +401,7 @@ new class extends Component
     </div>
 
     {{-- Modal for create/edit supplier (Flux UI) --}}
-    <flux:modal wire:model.self="showSupplierModal" name="supplier-form" class="w-full md:w-[40rem]">
+    <flux:modal wire:model.self="showSupplierModal" name="supplier-form" class="w-full md:w-[50rem]">
         <div class="space-y-6">
             <flux:heading size="lg">{{ $editingSupplierId ? __('matex::suppliers.modal.edit_title') : __('matex::suppliers.modal.new_title') }}</flux:heading>
 
@@ -422,6 +434,51 @@ new class extends Component
                     <span wire:loading>{{ __('matex::suppliers.buttons.saving') }}</span>
                 </flux:button>
             </div>
+
+            @if($this->editingSupplier)
+                <flux:separator />
+
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <flux:heading size="md">{{ __('matex::suppliers.contacts.title') }}</flux:heading>
+                        <flux:button size="sm" variant="outline" wire:click="openCreateContact({{ $this->editingSupplierId }})">{{ __('matex::suppliers.contacts.add') }}</flux:button>
+                    </div>
+
+                    <flux:table>
+                        <flux:table.columns>
+                            <flux:table.column>{{ __('matex::suppliers.contacts.department') }}</flux:table.column>
+                            <flux:table.column>{{ __('matex::suppliers.contacts.name') }}</flux:table.column>
+                            <flux:table.column>{{ __('matex::suppliers.contacts.email') }}</flux:table.column>
+                            <flux:table.column align="end">{{ __('matex::suppliers.contacts.actions') }}</flux:table.column>
+                        </flux:table.columns>
+
+                        <flux:table.rows>
+                            @forelse($this->editingSupplier->contacts as $contact)
+                                <flux:table.row :key="'edit-contact-'.$contact->id">
+                                    <flux:table.cell>
+                                        {{ $contact->department ?? '-' }}
+                                        @if($contact->is_primary)
+                                            <flux:badge size="sm" color="emerald" class="ml-2">{{ __('matex::suppliers.contacts.is_primary') }}</flux:badge>
+                                        @endif
+                                    </flux:table.cell>
+                                    <flux:table.cell>{{ $contact->name }}</flux:table.cell>
+                                    <flux:table.cell>{{ $contact->email ?? '-' }}</flux:table.cell>
+                                    <flux:table.cell>
+                                        <div class="flex justify-end gap-2">
+                                            <flux:button size="xs" variant="outline" wire:click="openEditContact({{ $contact->id }})">{{ __('matex::suppliers.buttons.edit') }}</flux:button>
+                                            <flux:button size="xs" variant="danger" wire:click="deleteContact({{ $contact->id }})">{{ __('matex::suppliers.buttons.delete') }}</flux:button>
+                                        </div>
+                                    </flux:table.cell>
+                                </flux:table.row>
+                            @empty
+                                <flux:table.row>
+                                    <flux:table.cell colspan="4" class="text-center text-neutral-500 py-6">{{ __('matex::suppliers.contacts.empty') }}</flux:table.cell>
+                                </flux:table.row>
+                            @endforelse
+                        </flux:table.rows>
+                    </flux:table>
+                </div>
+            @endif
         </div>
     </flux:modal>
 
