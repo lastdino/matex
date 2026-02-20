@@ -152,14 +152,12 @@ return new class extends Migration
         Schema::create(Tables::name('options'), function (Blueprint $table): void {
             $table->id();
             $table->foreignId('group_id')->constrained(Tables::name('option_groups'));
-            $table->string('code', 100);
             $table->string('name');
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->softDeletes();
             $table->timestamps();
-            $table->unique(['group_id', 'code'], Tables::name('options').'_group_code_unique');
         });
 
         // purchase_order_items

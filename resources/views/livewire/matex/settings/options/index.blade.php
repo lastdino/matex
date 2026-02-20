@@ -33,7 +33,6 @@ new class extends Component
     public array $optionForm = [
         'id' => null,
         'group_id' => null,
-        'code' => '',
         'name' => '',
         'description' => '',
         'is_active' => true,
@@ -75,8 +74,7 @@ new class extends Component
             ->where('group_id', $this->selectedGroupId)
             ->when($this->optionSearch !== '', function (Builder $q): void {
                 $q->where(function (Builder $qq): void {
-                    $qq->where('name', 'like', "%{$this->optionSearch}%")
-                        ->orWhere('code', 'like', "%{$this->optionSearch}%");
+                    $qq->where('name', 'like', "%{$this->optionSearch}%");
                 });
             })
             ->orderBy('sort_order')
@@ -187,7 +185,6 @@ new class extends Component
         $this->optionForm = [
             'id' => null,
             'group_id' => $this->selectedGroupId,
-            'code' => '',
             'name' => '',
             'description' => '',
             'is_active' => true,
@@ -202,7 +199,6 @@ new class extends Component
         $this->optionForm = [
             'id' => (int) $o->getKey(),
             'group_id' => (int) $o->getAttribute('group_id'),
-            'code' => (string) $o->getAttribute('code'),
             'name' => (string) $o->getAttribute('name'),
             'description' => (string) ($o->getAttribute('description') ?? ''),
             'is_active' => (bool) $o->getAttribute('is_active'),
@@ -219,12 +215,6 @@ new class extends Component
 
         $validated = $this->validate([
             'optionForm.group_id' => ['required', Rule::exists((new OptionGroup)->getTable(), 'id')],
-            'optionForm.code' => [
-                'required', 'string', 'max:100',
-                Rule::unique((new Option)->getTable(), 'code')
-                    ->ignore($currentId)
-                    ->where(fn ($q) => $q->where('group_id', $gid)),
-            ],
             'optionForm.name' => ['required', 'string', 'max:255'],
             'optionForm.description' => ['nullable', 'string'],
             'optionForm.is_active' => ['boolean'],
@@ -374,7 +364,6 @@ new class extends Component
                     <table class="min-w-full text-sm">
                         <thead class="text-left text-gray-500">
                             <tr>
-                                <th class="py-2">{{ __('matex::settings.options.items.table.code') }}</th>
                                 <th class="py-2">{{ __('matex::settings.options.items.table.name') }}</th>
                                 <th class="py-2">{{ __('matex::settings.options.items.table.sort') }}</th>
                                 <th class="py-2">{{ __('matex::settings.options.items.table.status') }}</th>
@@ -384,7 +373,6 @@ new class extends Component
                         <tbody class="divide-y">
                         @foreach ($this->options as $o)
                             <tr>
-                                <td class="py-2">{{ $o->code }}</td>
                                 <td class="py-2">{{ $o->name }}</td>
                                 <td class="py-2">{{ $o->sort_order }}</td>
                                 <td class="py-2">
@@ -442,7 +430,6 @@ new class extends Component
     <flux:modal wire:model="showOptionModal">
         <flux:heading size="sm">{{ $optionForm['id'] ? __('matex::settings.options.items.modal.title_edit') : __('matex::settings.options.items.modal.title_create') }}</flux:heading>
         <div class="space-y-3 mt-3">
-            <flux:input wire:model="optionForm.code" label="{{ __('matex::settings.options.items.modal.code') }}"/>
             <flux:input wire:model="optionForm.name" label="{{ __('matex::settings.options.items.modal.name') }}"/>
             <flux:textarea wire:model="optionForm.description" label="{{ __('matex::settings.options.items.modal.description') }}"></flux:textarea>
             <flux:switch wire:model="optionForm.is_active" label="{{ __('matex::settings.options.items.modal.active') }}"/>

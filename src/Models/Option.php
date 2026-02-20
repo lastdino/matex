@@ -14,7 +14,7 @@ class Option extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'group_id', 'code', 'name', 'description', 'is_active', 'sort_order',
+        'group_id', 'name', 'description', 'is_active', 'sort_order',
     ];
 
     public function getTable()
