@@ -32,6 +32,21 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        // supplier_contacts
+        Schema::create(Tables::name('supplier_contacts'), function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('supplier_id')->constrained(Tables::name('suppliers'))->cascadeOnDelete();
+            $table->string('department')->nullable();
+            $table->string('name');
+            $table->string('email')->nullable();
+            $table->string('email_cc')->nullable();
+            $table->string('phone')->nullable();
+            $table->string('address')->nullable();
+            $table->boolean('is_primary')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
         // storage_locations
         Schema::create(Tables::name('storage_locations'), function (Blueprint $table) {
             $table->id();
@@ -67,6 +82,7 @@ return new class extends Migration
             $table->decimal('shipping_fee_per_order', 10, 2)->nullable();
             $table->string('unit_purchase_default', 32)->nullable();
             $table->foreignId('preferred_supplier_id')->nullable()->constrained(Tables::name('suppliers'));
+            $table->foreignId('preferred_supplier_contact_id')->nullable()->constrained(Tables::name('supplier_contacts'))->nullOnDelete();
             $table->boolean('is_active')->default(true);
             $table->boolean('sync_to_monox')->default(false);
             $table->string('monox_item_id')->nullable();
@@ -122,6 +138,7 @@ return new class extends Migration
             $table->id();
             $table->string('po_number')->unique()->nullable();
             $table->foreignId('supplier_id')->constrained(Tables::name('suppliers'));
+            $table->foreignId('supplier_contact_id')->nullable()->constrained(Tables::name('supplier_contacts'))->nullOnDelete();
             $table->string('status', 32)->default('draft');
             $table->timestamp('issue_date')->nullable();
             $table->timestamp('expected_date')->nullable();
@@ -334,6 +351,7 @@ return new class extends Migration
         Schema::dropIfExists(Tables::name('unit_conversions'));
         Schema::dropIfExists(Tables::name('materials'));
         Schema::dropIfExists(Tables::name('storage_locations'));
+        Schema::dropIfExists(Tables::name('supplier_contacts'));
         Schema::dropIfExists(Tables::name('suppliers'));
         Schema::dropIfExists(Tables::name('material_categories'));
     }
