@@ -143,6 +143,10 @@ return [
         'item_no_remaining_to_cancel' => 'キャンセル可能な残数量がありません。',
         'item_already_canceled' => 'この行はすでにキャンセル済みです。',
         'item_not_found' => '行が見つかりません。',
+        'errors' => [
+            'draft_pdf_not_allowed' => '下書き状態の発注書はPDFダウンロードできません。',
+            'canceled_pdf_not_allowed' => 'キャンセルされた発注書はPDFダウンロードできません。',
+        ],
         'badges' => [
             'canceled' => 'キャンセル済み',
         ],

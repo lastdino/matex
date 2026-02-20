@@ -29,6 +29,21 @@ test('draft purchase order cannot be downloaded as PDF', function () {
         ->assertStatus(403);
 });
 
+test('canceled purchase order cannot be downloaded as PDF', function () {
+    $user = User::factory()->create();
+    $supplier = Supplier::create(['name' => 'Test Supplier']);
+
+    $po = PurchaseOrder::create([
+        'supplier_id' => $supplier->id,
+        'status' => PurchaseOrderStatus::Canceled,
+        'created_by' => $user->id,
+    ]);
+
+    $this->actingAs($user)
+        ->get(route('matex.purchase-orders.pdf', $po))
+        ->assertStatus(403);
+});
+
 test('issued purchase order can be accessed (not 403)', function () {
     // Note: This might fail if Chrome/PDF generation is not set up in the test environment,
     // but at least it should not return 403 from our controller's logic.
@@ -56,6 +71,21 @@ test('PDF download button is hidden for draft purchase orders in show page', fun
     $po = PurchaseOrder::create([
         'supplier_id' => $supplier->id,
         'status' => PurchaseOrderStatus::Draft,
+        'created_by' => $user->id,
+    ]);
+
+    Livewire::actingAs($user)
+        ->test('matex::matex.purchase-orders.show', ['po' => $po])
+        ->assertDontSee(route('matex.purchase-orders.pdf', $po));
+});
+
+test('PDF download button is hidden for canceled purchase orders in show page', function () {
+    $user = User::factory()->create();
+    $supplier = Supplier::create(['name' => 'Test Supplier']);
+
+    $po = PurchaseOrder::create([
+        'supplier_id' => $supplier->id,
+        'status' => PurchaseOrderStatus::Canceled,
         'created_by' => $user->id,
     ]);
 

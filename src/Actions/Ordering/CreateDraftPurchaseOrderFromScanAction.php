@@ -47,6 +47,7 @@ class CreateDraftPurchaseOrderFromScanAction
         abort_if(! (bool) ($material->is_active ?? true), 422, 'Material is inactive.');
         $supplierId = (int) ($material->preferred_supplier_id ?? 0);
         abort_if($supplierId <= 0, 422, 'Preferred supplier is not set for this material.');
+        $supplierContactId = $material->preferred_supplier_contact_id ? (int) $material->preferred_supplier_contact_id : null;
 
         // MOQ / pack size validation (purchase unit基準とする)
         $moq = (float) ($material->getAttribute('moq') ?? 0);
@@ -72,6 +73,7 @@ class CreateDraftPurchaseOrderFromScanAction
         // Create via shared PO factory (with shipping generation enabled)
         $poInput = [
             'supplier_id' => $supplierId,
+            'supplier_contact_id' => $supplierContactId,
             'expected_date' => null,
             'delivery_location' => null,
             'items' => [

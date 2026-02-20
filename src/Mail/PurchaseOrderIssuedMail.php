@@ -21,7 +21,7 @@ class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
     public function build(): static
     {
         // Prefer already-loaded relations, avoid unnecessary DB hits
-        $po = $this->po->loadMissing(['supplier', 'items.material', 'requester']);
+        $po = $this->po->loadMissing(['supplier', 'contact', 'items.material', 'requester']);
         $poNumber = $po->po_number ?: ('Draft-'.$po->getKey());
 
         // Choose From header in order of precedence (when enabled):

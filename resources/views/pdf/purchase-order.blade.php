@@ -1,6 +1,7 @@
 @php
     /** @var \Lastdino\Matex\Models\PurchaseOrder $po */
     $supplier = $po->supplier;
+    $contact = $po->contact;
     $poNo = $po->po_number ?? ('Draft-' . $po->id);
     $cfg = \Lastdino\Matex\Support\Settings::pdf();
     $company = $cfg['company'] ?? [];
@@ -64,9 +65,21 @@
             <div class="flex flex-row mb-12">
                 <div>宛先　</div>
                 <div class="border-b-2 border-black w-full font-bold">
-                    {{ $supplier->name }}@if(!empty($supplier->contact_person_name))　{{ $supplier->contact_person_name }}@endif
+                    {{ $supplier->name }}
+                    @if($contact)
+                        <br>
+                        @if($contact->department) {{ $contact->department }}　@endif
+                        {{ $contact->name }}
+                    @elseif(!empty($supplier->contact_person_name))
+                        　{{ $supplier->contact_person_name }}
+                    @endif
                 </div>
             </div>
+            @if($contact && $contact->address)
+                <div class="mb-4 text-sm">
+                    所在地：{{ $contact->address }}
+                </div>
+            @endif
             <div class="whitespace-pre-line">毎度格別のお引き立てを賜り厚くお礼申し上げます。
                 下記内容の通り御注文申し上げます。
             </div>

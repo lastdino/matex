@@ -143,6 +143,10 @@ return [
         'item_no_remaining_to_cancel' => 'No remaining quantity to cancel.',
         'item_already_canceled' => 'This line is already fully canceled.',
         'item_not_found' => 'Line not found.',
+        'errors' => [
+            'draft_pdf_not_allowed' => 'Draft purchase orders cannot be downloaded as PDF.',
+            'canceled_pdf_not_allowed' => 'Canceled purchase orders cannot be downloaded as PDF.',
+        ],
         'badges' => [
             'canceled' => 'Canceled',
         ],

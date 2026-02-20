@@ -337,6 +337,7 @@ new class extends Component
             'materialForm.conversions.*.from_unit' => ['required', 'string', 'max:50'],
             'materialForm.conversions.*.factor' => ['required', 'numeric', 'min:0'],
             'materialForm.preferred_supplier_id' => ['nullable', 'exists:'.Tables::name('suppliers').',id'],
+            'materialForm.preferred_supplier_contact_id' => ['nullable', 'exists:'.Tables::name('supplier_contacts').',id'],
             'materialForm.separate_shipping' => ['boolean'],
             'materialForm.shipping_fee_per_order' => ['nullable', 'numeric', 'min:0'],
             'materialForm.is_chemical' => ['boolean'],

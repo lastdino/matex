@@ -13,9 +13,13 @@ class PurchaseOrderPdfController extends Controller
 {
     public function __invoke(PurchaseOrder $po)
     {
-        // Prevent download if status is draft
+        // Prevent download if status is draft or canceled
         if ($po->status === \Lastdino\Matex\Enums\PurchaseOrderStatus::Draft) {
             abort(403, __('matex::po.errors.draft_pdf_not_allowed') ?: 'Draft purchase orders cannot be downloaded as PDF.');
+        }
+
+        if ($po->status === \Lastdino\Matex\Enums\PurchaseOrderStatus::Canceled) {
+            abort(403, __('matex::po.errors.canceled_pdf_not_allowed') ?: 'Canceled purchase orders cannot be downloaded as PDF.');
         }
 
         // Load missing relations to avoid N+1
