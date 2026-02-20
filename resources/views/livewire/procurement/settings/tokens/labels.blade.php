@@ -1,3 +1,67 @@
+<?php
+
+use Illuminate\Contracts\View\View as ViewContract;
+use Lastdino\ProcurementFlow\Models\Material;
+use Lastdino\ProcurementFlow\Models\OrderingToken;
+use Livewire\Component;
+
+new class extends Component
+{
+    public string $search = '';
+
+    public ?int $materialId = null;
+
+    public int $perPage = 48;
+
+    public int $columns = 3; // for print layout
+
+    /**
+     * Label payload mode:
+     * - token: encode only token
+     * - url: encode app URL to scan page with token param (informational)
+     */
+    public string $payload = 'url';
+
+    public function getRowsProperty()
+    {
+        $q = OrderingToken::query()->with('material')->where('enabled', true);
+        if ($this->search !== '') {
+            $s = $this->search;
+            $q->where(function ($qq) use ($s) {
+                $qq->where('token', 'like', "%{$s}%")
+                    ->orWhereHas('material', function ($mq) use ($s) {
+                        $mq->where('name', 'like', "%{$s}%")
+                            ->orWhere('sku', 'like', "%{$s}%");
+                    });
+            });
+        }
+        if (! is_null($this->materialId)) {
+            $q->where('material_id', $this->materialId);
+        }
+
+        return $q->orderBy('material_id')->limit($this->perPage)->get();
+    }
+
+    public function makeQrData(string $token): string
+    {
+        if ($this->payload === 'url') {
+            // Use absolute route to ordering scan with token as query param
+            $url = route('procurement.ordering.scan', ['token' => $token], true);
+
+            return $url;
+        }
+
+        return $token; // default: encode only token
+    }
+
+    public function getMaterialsProperty()
+    {
+        return Material::query()->orderBy('name')->limit(200)->get(['id', 'name', 'sku']);
+    }
+};
+
+?>
+
 <div class="p-6 space-y-6">
     <x-procflow::topmenu />
 
@@ -14,7 +78,7 @@
         <flux:field>
             <flux:select wire:model.live="materialId">
                 <option value="">{{ __('procflow::settings.labels.filters.all_materials') }}</option>
-                @foreach($materials as $m)
+                @foreach($this->materials as $m)
                     <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->sku }})</option>
                 @endforeach
             </flux:select>
@@ -33,7 +97,7 @@
     </div>
 
     <div class="print:grid print:grid-cols-{{ max(1, min(6, $columns)) }} grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-{{ max(1, min(6, $columns)) }} gap-4">
-        @foreach($rows as $row)
+        @foreach($this->rows as $row)
             <div class="p-4 border rounded break-inside-avoid">
                 <div class="flex items-start justify-between gap-3">
                     <div>

@@ -38,6 +38,18 @@ final class Settings
     }
 
     /**
+     * Get defined tax code keys.
+     *
+     * @return string[]
+     */
+    public static function taxCodes(): array
+    {
+        $tax = self::itemTax();
+
+        return array_keys($tax['rates']);
+    }
+
+    /**
      * Persist item tax configuration as an array.
      *
      * @param  array{default_rate?:float,rates?:array<string,float>,schedule?:array<int,array<string,mixed>>}  $value

@@ -13,6 +13,11 @@ class PurchaseOrderPdfController extends Controller
 {
     public function __invoke(PurchaseOrder $po)
     {
+        // Prevent download if status is draft
+        if ($po->status === \Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus::Draft) {
+            abort(403, __('procflow::po.errors.draft_pdf_not_allowed') ?: 'Draft purchase orders cannot be downloaded as PDF.');
+        }
+
         // Load missing relations to avoid N+1
         $po = $po->loadMissing(['supplier', 'items.material']);
         $poNumber = $po->po_number ?: ('Draft-'.$po->getKey());

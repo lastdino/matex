@@ -17,5 +17,8 @@ return [
     'taxes' => '税設定',
     'display' => '表示・通貨設定',
     'categories' => '資材カテゴリ',
+    'storage_locations' => '保管場所',
     'pdf' => 'PDF設定',
+    'tokens' => '発注トークン管理',
+    'labels' => 'ラベル印刷（発注用）',
 ];

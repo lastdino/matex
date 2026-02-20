@@ -23,6 +23,10 @@ return [
     'lot_notice' => 'この資材はロット管理対象です。ロット番号の入力が必須です（在庫はロット別に記録されます）。',
     'receive' => '受入',
 
+    'buttons' => [
+        'go_to_receiving' => '入荷処理へ',
+    ],
+
     'messages' => [
         'token_not_found' => 'トークンが見つかりません。',
         'not_receivable_status' => 'この発注は入荷対象ではありません。',

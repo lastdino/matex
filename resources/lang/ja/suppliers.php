@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 return [
     'title' => 'サプライヤー',
-    'search_placeholder' => '名称またはコードで検索',
+    'search_placeholder' => '名称で検索',
     'table' => [
         'name' => '名称',
-        'code' => 'コード',
         'email' => 'メール',
         'contact_person' => '担当者',
         'phone' => '電話番号',
@@ -29,7 +28,6 @@ return [
     ],
     'form' => [
         'name' => '名称',
-        'code' => 'コード',
         'email' => 'メール',
         'email_cc' => 'メールCC（カンマ区切り）',
         'email_cc_placeholder' => 'cc1@example.com, cc2@example.com',

@@ -12,7 +12,7 @@ use Lastdino\ProcurementFlow\Support\Tables;
 class MaterialLot extends Model
 {
     protected $fillable = [
-        'material_id', 'lot_no', 'qty_on_hand', 'unit', 'received_at', 'mfg_date', 'expiry_date', 'status', 'storage_location', 'barcode', 'notes',
+        'material_id', 'lot_no', 'qty_on_hand', 'unit', 'received_at', 'mfg_date', 'expiry_date', 'status', 'storage_location_id', 'barcode', 'notes',
         'supplier_id', 'purchase_order_id',
     ];
 
@@ -28,12 +28,23 @@ class MaterialLot extends Model
             'received_at' => 'datetime',
             'mfg_date' => 'date',
             'expiry_date' => 'date',
+            'storage_location_id' => 'integer',
         ];
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expiry_date && $this->expiry_date->isPast();
     }
 
     public function material(): BelongsTo
     {
         return $this->belongsTo(Material::class, 'material_id');
+    }
+
+    public function storageLocation(): BelongsTo
+    {
+        return $this->belongsTo(StorageLocation::class, 'storage_location_id');
     }
 
     public function stockMovements(): HasMany

@@ -28,4 +28,25 @@ class UnitConversionService
 
         return (float) $conv->factor;
     }
+
+    /**
+     * Get all available units for a material, including the stock unit.
+     *
+     * @return array<int, string>
+     */
+    public function getAvailableUnits(Material $material): array
+    {
+        $units = [$material->unit_stock];
+
+        if ($material->unit_purchase_default && $material->unit_purchase_default !== $material->unit_stock) {
+            $units[] = $material->unit_purchase_default;
+        }
+
+        $conversionUnits = UnitConversion::query()
+            ->where('material_id', $material->id)
+            ->pluck('from_unit')
+            ->toArray();
+
+        return array_values(array_unique(array_merge($units, $conversionUnits)));
+    }
 }

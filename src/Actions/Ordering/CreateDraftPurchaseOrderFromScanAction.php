@@ -85,7 +85,7 @@ class CreateDraftPurchaseOrderFromScanAction
                     'tax_rate' => null,
                     'desired_date' => null,
                     'expected_date' => null,
-                    'note' => (string) ($input['note'] ?? ''),
+                    'note' => (string) ($input['note'] ?? $material->default_purchase_note ?? ''),
                     'options' => $selectedOpts,
                 ],
             ],

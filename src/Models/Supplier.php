@@ -11,7 +11,7 @@ use Lastdino\ProcurementFlow\Support\Tables;
 class Supplier extends Model
 {
     protected $fillable = [
-        'name', 'code', 'email', 'email_cc', 'phone', 'address', 'is_active',
+        'name', 'email', 'email_cc', 'phone', 'address', 'is_active',
         'contact_person_name',
         'auto_send_po',
     ];

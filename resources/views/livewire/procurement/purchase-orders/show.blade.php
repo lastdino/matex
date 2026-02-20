@@ -1,28 +1,306 @@
+<?php
+
+use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Auth;
+use Lastdino\ProcurementFlow\Enums\PurchaseOrderStatus;
+use Lastdino\ProcurementFlow\Models\PurchaseOrder;
+use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
+use Lastdino\ProcurementFlow\Services\UnitConversionService;
+use Livewire\Component;
+
+new class extends Component
+{
+    public PurchaseOrder $po;
+
+    // Modal state for editing expected date (per line)
+    public bool $showExpectedModal = false;
+
+    public ?int $editingItemId = null;
+
+    public ?string $editingExpectedDate = null; // Y-m-d
+
+    public function mount(PurchaseOrder $po): void
+    {
+        // Load all relations required for detail view and receiving history
+        $this->po = $po->load([
+            'supplier',
+            'requester',
+            'items.material',
+            'receivings.items',
+            'receivings.items.material',
+            'receivings.items.purchaseOrderItem',
+        ]);
+    }
+
+    /**
+     * Cancel a draft Purchase Order. Only allowed when current status is Draft.
+     */
+    public function cancelPo(): void
+    {
+        $po = $this->po->fresh();
+
+        if (! $po) {
+            $this->dispatch('toast', type: 'error', message: 'Purchase order not found');
+
+            return;
+        }
+
+        // Normalize status value and check
+        $statusValue = is_string($po->status) ? $po->status : ($po->status->value ?? '');
+        if ($statusValue !== PurchaseOrderStatus::Draft->value) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.cancel_not_allowed'));
+
+            return;
+        }
+
+        $po->status = PurchaseOrderStatus::Canceled;
+        $po->save();
+
+        $this->po = $po->load([
+            'supplier',
+            'requester',
+            'items.material',
+            'receivings.items',
+            'receivings.items.material',
+            'receivings.items.purchaseOrderItem',
+        ]);
+
+        $po->cancelApprovalFlowTask(
+            userId: Auth::id(),      // キャンセルを実行するユーザーのID（通常は申請者自身）
+            comment: '' // キャンセル理由（オプション）
+        );
+
+        $this->dispatch('toast', type: 'success', message: __('procflow::po.detail.canceled_toast'));
+    }
+
+    /**
+     * Cancel a single Purchase Order Item (entire remaining quantity).
+     * Rules:
+     * - Allowed only when PO status is Issued or Receiving.
+     * - Shipping lines cannot be canceled by this action (kept as-is).
+     * - If partially received, cancel the unreceived remainder only.
+     */
+    public function cancelItem(int $itemId, ?string $reason = null): void
+    {
+        /** @var PurchaseOrderItem|null $item */
+        $item = PurchaseOrderItem::query()->with(['purchaseOrder', 'material'])->find($itemId);
+        if (! $item) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_not_found'));
+
+            return;
+        }
+
+        $po = $item->purchaseOrder;
+        if (! in_array($po->status, [PurchaseOrderStatus::Issued, PurchaseOrderStatus::Receiving], true)) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_not_allowed'));
+
+            return;
+        }
+
+        // Do not cancel shipping lines via this action
+        if ($item->unit_purchase === 'shipping') {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_shipping_not_allowed'));
+
+            return;
+        }
+
+        // Already fully canceled?
+        $ordered = (float) ($item->qty_ordered ?? 0);
+        $canceled = (float) ($item->qty_canceled ?? 0);
+        if ($canceled >= $ordered - 1e-9) {
+            $this->dispatch('toast', type: 'info', message: __('procflow::po.detail.item_already_canceled'));
+
+            return;
+        }
+
+        // Compute received quantity in purchase unit
+        $material = $item->material; // may be null for ad-hoc
+        $receivedBase = (float) $item->receivingItems()->sum('qty_base');
+        if ($material) {
+            /** @var UnitConversionService $conv */
+            $conv = app(UnitConversionService::class);
+            $factor = (float) $conv->factor($material, $item->unit_purchase, $material->unit_stock);
+            $receivedPurchase = $factor > 0 ? ($receivedBase / $factor) : 0.0;
+        } else {
+            // ad-hoc: base == purchase
+            $receivedPurchase = $receivedBase;
+        }
+
+        $alreadyCanceled = $canceled;
+        $remaining = max($ordered - $receivedPurchase - $alreadyCanceled, 0.0);
+        if ($remaining <= 1e-9) {
+            $this->dispatch('toast', type: 'info', message: __('procflow::po.detail.item_no_remaining_to_cancel'));
+
+            return;
+        }
+
+        // Apply cancel of the remaining qty
+        $item->qty_canceled = $alreadyCanceled + $remaining;
+        $item->canceled_at = now();
+        if ($reason) {
+            $item->canceled_reason = $reason;
+        }
+        $item->save();
+
+        // Update PO status depending on whether any receipt exists and if any effective remaining
+        $po->refresh();
+        $po->loadMissing(['items', 'receivings.items']);
+
+        // Determine if any receipt exists for this PO at all
+        $hasAnyReceipt = $po->receivings->flatMap->items->isNotEmpty();
+
+        // Compute effective remaining quantity across items
+        $effectiveRemaining = 0.0;
+        foreach ($po->items as $lit) {
+            $ordered = (float) ($lit->qty_ordered ?? 0);
+            $canceledQty = (float) ($lit->qty_canceled ?? 0);
+            $effectiveRemaining += max($ordered - $canceledQty, 0.0);
+        }
+
+        if ($effectiveRemaining <= 1e-9) {
+            // No quantities left to receive
+            $po->status = $hasAnyReceipt ? PurchaseOrderStatus::Closed : PurchaseOrderStatus::Canceled;
+            $po->save();
+        }
+
+        // Reload page data
+        $this->po = $po->load([
+            'supplier',
+            'requester',
+            'items.material',
+            'receivings.items',
+            'receivings.items.material',
+            'receivings.items.purchaseOrderItem',
+        ]);
+
+        $this->dispatch('toast', type: 'success', message: __('procflow::po.detail.item_canceled_toast'));
+    }
+
+    /**
+     * Open modal to edit expected date for a specific item.
+     */
+    public function openExpectedDateModal(int $itemId): void
+    {
+        $po = $this->po->fresh(['items']);
+        if (! $po) {
+            return;
+        }
+
+        $statusValue = is_string($po->status) ? $po->status : ($po->status->value ?? '');
+        if ($statusValue === PurchaseOrderStatus::Closed->value) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.cancel_not_allowed'));
+
+            return;
+        }
+
+        /** @var PurchaseOrderItem|null $item */
+        $item = $po->items->firstWhere('id', $itemId);
+        if (! $item) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_not_found'));
+
+            return;
+        }
+
+        // Do not allow for shipping lines
+        if ($item->unit_purchase === 'shipping') {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_shipping_not_allowed'));
+
+            return;
+        }
+
+        $this->editingItemId = $item->id;
+        $this->editingExpectedDate = $item->expected_date?->format('Y-m-d');
+        $this->showExpectedModal = true;
+    }
+
+    /**
+     * Persist expected date for the currently editing item.
+     */
+    public function saveExpectedDate(): void
+    {
+        if (! $this->editingItemId) {
+            return;
+        }
+
+        $this->validate([
+            'editingExpectedDate' => ['nullable', 'date'],
+        ]);
+
+        $po = $this->po->fresh(['items']);
+        if (! $po) {
+            return;
+        }
+
+        $statusValue = is_string($po->status) ? $po->status : ($po->status->value ?? '');
+        if ($statusValue === PurchaseOrderStatus::Closed->value) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.cancel_not_allowed'));
+
+            return;
+        }
+
+        /** @var PurchaseOrderItem|null $item */
+        $item = $po->items->firstWhere('id', $this->editingItemId);
+        if (! $item) {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_not_found'));
+
+            return;
+        }
+
+        if ($item->unit_purchase === 'shipping') {
+            $this->dispatch('toast', type: 'error', message: __('procflow::po.detail.item_cancel_shipping_not_allowed'));
+
+            return;
+        }
+
+        $item->expected_date = $this->editingExpectedDate ? \Carbon\Carbon::parse($this->editingExpectedDate) : null;
+        $item->save();
+
+        // Reload for UI
+        $this->po->refresh();
+        $this->po->load([
+            'supplier',
+            'requester',
+            'items.material',
+            'receivings.items',
+            'receivings.items.material',
+            'receivings.items.purchaseOrderItem',
+        ]);
+
+        $this->showExpectedModal = false;
+        $this->editingItemId = null;
+        $this->editingExpectedDate = null;
+
+        $this->dispatch('toast', type: 'success', message: __('procflow::po.labels.saved'));
+    }
+};
+
+?>
+
 <div class="p-6 space-y-4">
     <x-procflow::topmenu />
     <div class="flex items-center justify-between">
-        <h1 class="text-xl font-semibold">{{ __('procflow::po.detail.title') }}</h1>
-        <a href="{{ route('procurement.purchase-orders.index') }}" class="text-blue-600 hover:underline">{{ __('procflow::po.detail.back_to_list') }}</a>
+        <flux:heading size="lg">{{ __('procflow::po.detail.title') }}</flux:heading>
+        <flux:link href="{{ route('procurement.purchase-orders.index') }}" icon="arrow-left">{{ __('procflow::po.detail.back_to_list') }}</flux:link>
     </div>
 
     <div class="grid gap-4">
-        <div class="rounded border p-4 bg-white dark:bg-neutral-900">
-            <div class="grid sm:grid-cols-2 gap-2">
-                <div>
-                    <div class="text-sm text-gray-500">{{ __('procflow::po.detail.fields.po_number') }}</div>
+        <flux:card>
+            <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
+                <flux:field>
+                    <flux:label>{{ __('procflow::po.detail.fields.po_number') }}</flux:label>
                     <div class="font-medium">{{ $po->po_number ?? '—' }}</div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-500">{{ __('procflow::po.detail.fields.supplier') }}</div>
+                </flux:field>
+                <flux:field>
+                    <flux:label>{{ __('procflow::po.detail.fields.supplier') }}</flux:label>
                     <div class="font-medium">{{ $po->supplier->name ?? '—' }}</div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-500">{{ __('procflow::po.detail.fields.requester') }}</div>
+                </flux:field>
+                <flux:field>
+                    <flux:label>{{ __('procflow::po.detail.fields.requester') }}</flux:label>
                     <div class="font-medium">{{ $po->requester->name ?? '—' }}</div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-500">{{ __('procflow::po.detail.fields.status') }}</div>
-                    <div class="font-medium">
+                </flux:field>
+                <flux:field>
+                    <flux:label>{{ __('procflow::po.detail.fields.status') }}</flux:label>
+                    <div>
                         @php
                             $statusVal = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft');
                             $badgeColor = match ($statusVal) {
@@ -35,173 +313,179 @@
                         @endphp
                         <flux:badge color="{{ $badgeColor }}" size="sm">{{ __('procflow::po.status.' . $statusVal) }}</flux:badge>
                     </div>
-                </div>
-                <div>
-                    <div class="text-sm text-gray-500">{{ __('procflow::po.detail.fields.issue_date') }}</div>
+                </flux:field>
+                <flux:field>
+                    <flux:label>{{ __('procflow::po.detail.fields.issue_date') }}</flux:label>
                     <div class="font-medium">{{ optional($po->issue_date)->format('Y-m-d H:i') ?? '—' }}</div>
-                </div>
+                </flux:field>
             </div>
-        </div>
+        </flux:card>
 
-        <div class="rounded border p-4 bg-white dark:bg-neutral-900">
-            <h2 class="font-semibold mb-2">{{ __('procflow::po.detail.items') }}</h2>
+        <flux:card>
+            <flux:heading size="md" class="mb-4">{{ __('procflow::po.detail.items') }}</flux:heading>
             @if ($po->items->isEmpty())
                 <div class="text-gray-500">{{ __('procflow::po.detail.no_items') }}.</div>
             @else
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="text-left text-gray-600">
-                            <tr>
-                                <th class="py-2 px-3">{{ __('procflow::po.detail.table.sku') }}</th>
-                                <th class="py-2 px-3">{{ __('procflow::po.detail.table.name_desc') }}</th>
-                                <th class="py-2 px-3">{{ __('procflow::po.detail.table.qty') }}</th>
-                                <th class="py-2 px-3">{{ __('procflow::po.detail.table.unit') }}</th>
-                                <th class="py-2 px-3">{{ __('procflow::po.detail.table.unit_price') }}</th>
-                                <th class="py-2 px-3">{{ __('procflow::po.detail.table.line_total') }}</th>
-                                <th class="py-2 px-3">{{ __('procflow::po.detail.table.desired_date') }}</th>
-                                <th class="py-2 px-3">{{ __('procflow::po.detail.table.expected_date') }}</th>
-                                <th class="py-2 pr-4">{{ __('procflow::po.detail.table.qr') }}</th>
-                                <th class="py-2 px-3 text-right print:hidden">{{ __('procflow::po.detail.table.actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($po->items as $item)
-                                @php
-                                    $qtyOrdered = (float) ($item->qty_ordered ?? 0);
-                                    $qtyCanceled = (float) ($item->qty_canceled ?? 0);
-                                    $effectiveQty = max($qtyOrdered - $qtyCanceled, 0);
-                                    $isCanceledLine = $qtyCanceled >= $qtyOrdered - 1e-9;
-                                    $isShipping = ($item->unit_purchase ?? '') === 'shipping';
-                                    $statusVal = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft');
-                                    $canCancel = in_array($statusVal, ['issued','receiving'], true) && !$isShipping && !$isCanceledLine && $effectiveQty > 0;
-                                @endphp
-                                <tr class="border-t align-top {{ $isCanceledLine ? 'line-through text-neutral-500' : '' }}">
-                                    <td class="py-2 px-3">{{ $item->material->sku ?? '-' }}</td>
-                                    <td class="py-2 px-3">
-                                        <div class="flex items-center gap-2">
-                                            <span>{{ $item->material->name ?? ($item->description ?? '-') }}</span>
-                                            @if($qtyCanceled > 0)
-                                                <flux:badge color="red" size="xs">{{ __('procflow::po.detail.badges.canceled') }}</flux:badge>
-                                            @endif
-                                        </div>
-                                    </td>
-                                    <td class="py-2 px-3">
-                                        {{ \Lastdino\ProcurementFlow\Support\Format::qty($effectiveQty) }}
-                                        @if($qtyCanceled > 0)
-                                            <span class="text-xs text-neutral-500">({{ __('procflow::po.detail.labels.canceled_qty') }}: {{ \Lastdino\ProcurementFlow\Support\Format::qty($qtyCanceled) }})</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-2 px-3">{{ $item->unit_purchase ?? '' }}</td>
-                                    <td class="py-2 px-3">{{ \Lastdino\ProcurementFlow\Support\Format::moneyUnitPrice($item->price_unit ?? 0) }}</td>
-                                    <td class="py-2 px-3">{{ \Lastdino\ProcurementFlow\Support\Format::moneyLineTotal(($item->price_unit ?? 0) * $effectiveQty) }}</td>
-                                    <td class="py-2 px-3">{{ optional($item->desired_date)->format('Y-m-d') ?? '-' }}</td>
-                                    <td class="py-2 px-3">{{ optional($item->expected_date)->format('Y-m-d') ?? '-' }}</td>
-                                    <td class="py-2 pr-4">
-                                        @if ($item->unit_purchase === 'shipping')
-                                            <span class="text-gray-400">—</span>
-                                        @elseif (!empty($item->scan_token))
-                                            <div class="flex items-center gap-2">
-                                                <div class="qr-svg w-[50px] h-[50px]">
-                                                    {!! \tbQuar\Facades\Quar::size(50)->generate($item->scan_token) !!}
-                                                </div>
-                                                <div class="text-xs text-gray-500 select-all">{{ substr($item->scan_token, 0, 8) }}…</div>
-                                            </div>
-                                        @else
-                                            <span class="text-gray-400">{{ __('procflow::po.detail.no_token') }}</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-2 px-3 text-right print:hidden">
-                                        @php $statusVal = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft'); @endphp
-                                        @if(($statusVal !== 'closed' && !$isShipping) || $canCancel)
-                                            <flux:dropdown>
-                                                <flux:button size="xs" icon:trailing="chevron-down">{{ __('procflow::po.detail.table.actions') ?: 'Actions' }}</flux:button>
-                                                <flux:menu>
-                                                    @if($statusVal !== 'closed' && !$isShipping)
-                                                        <flux:menu.item icon="calendar"
-                                                            wire:click="openExpectedDateModal({{ (int)$item->id }})"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="openExpectedDateModal({{ (int)$item->id }})"
-                                                        >{{ __('procflow::po.common.expected_date') }}</flux:menu.item>
-                                                    @endif
-                                                    @if($canCancel)
-                                                        <flux:menu.item icon="x-circle" variant="danger"
-                                                            x-on:click.prevent="if (confirm('{{ __('procflow::po.detail.confirm_cancel_item') }}')) { $wire.cancelItem({{ (int)$item->id }}) }"
-                                                            wire:loading.attr="disabled"
-                                                            wire:target="cancelItem({{ (int)$item->id }})"
-                                                        >
-                                                            <span wire:loading.remove wire:target="cancelItem({{ (int)$item->id }})">{{ __('procflow::po.buttons.cancel_line') }}</span>
-                                                            <span wire:loading wire:target="cancelItem({{ (int)$item->id }})">{{ __('procflow::po.buttons.canceling_line') }}</span>
-                                                        </flux:menu.item>
-                                                    @endif
-                                                </flux:menu>
-                                            </flux:dropdown>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            @endif
-        </div>
+        <flux:table>
+            <flux:table.columns>
+                <flux:table.column>{{ __('procflow::po.detail.table.sku') }}</flux:table.column>
+                <flux:table.column>{{ __('procflow::po.detail.table.name_desc') }}</flux:table.column>
+                <flux:table.column>{{ __('procflow::po.detail.table.qty') }}</flux:table.column>
+                <flux:table.column>{{ __('procflow::po.detail.table.unit') }}</flux:table.column>
+                <flux:table.column>{{ __('procflow::po.detail.table.unit_price') }}</flux:table.column>
+                <flux:table.column>{{ __('procflow::po.detail.table.line_total') }}</flux:table.column>
+                <flux:table.column>{{ __('procflow::po.detail.table.desired_date') }}</flux:table.column>
+                <flux:table.column>{{ __('procflow::po.detail.table.expected_date') }}</flux:table.column>
+                <flux:table.column>{{ __('procflow::po.detail.table.qr') }}</flux:table.column>
+                <flux:table.column align="end" class="print:hidden">{{ __('procflow::po.detail.table.actions') }}</flux:table.column>
+            </flux:table.columns>
 
-        <div class="rounded border p-4 bg-white dark:bg-neutral-900 print:hidden">
-            <h4 class="text-md font-semibold mb-2">{{ __('procflow::po.detail.receivings.title') }}</h4>
-            <div class="overflow-x-auto">
-                <table class="min-w-full text-sm">
-                    <thead>
-                        <tr class="text-left text-neutral-500">
-                            <th class="py-2 px-3">{{ __('procflow::po.detail.receivings.received_at') }}</th>
-                            <th class="py-2 px-3">{{ __('procflow::po.detail.receivings.reference') }}</th>
-                            <th class="py-2 px-3">{{ __('procflow::po.detail.receivings.items') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse(($po->receivings ?? []) as $rcv)
-                            <tr class="border-t align-top">
-                                <td class="py-2 px-3 whitespace-nowrap">{{ optional($rcv->received_at)->format('Y-m-d H:i') ?? '' }}</td>
-                                <td class="py-2 px-3 whitespace-nowrap">{{ $rcv->reference_number ?? '-' }}</td>
-                                <td class="py-2 px-3">
-                                    @php $items = $rcv->items ?? collect(); @endphp
-                                    @if($items->isEmpty())
-                                        <span class="text-neutral-500">{{ __('procflow::po.detail.receivings.empty') }}</span>
-                                    @else
-                                        <ul class="space-y-1">
-                                            @foreach($items as $rit)
-                                                @php
-                                                    $sku = $rit->material->sku ?? '';
-                                                    $name = $rit->material->name ?? ($rit->purchaseOrderItem->description ?? '');
-                                                    $qty = (float) ($rit->qty_received ?? 0);
-                                                    $unit = $rit->unit_purchase ?? '';
-                                                @endphp
-                                                <li class="flex items-center gap-2">
-                                                    <span class="text-neutral-500">{{ $sku }}</span>
-                                                    <span>{{ $name }}</span>
-                                                    <span class="ml-auto tabular-nums">{{ \Lastdino\ProcurementFlow\Support\Format::qty($qty) }} {{ $unit }}</span>
-                                                </li>
-                                            @endforeach
-                                        </ul>
-                                    @endif
-                                </td>
-                            </tr>
-                        @empty
-                            <tr><td colspan="3" class="py-4 text-center text-neutral-500">{{ __('procflow::po.detail.receivings.empty') }}</td></tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+            <flux:table.rows>
+                @foreach ($po->items as $item)
+                    @php
+                        $qtyOrdered = (float) ($item->qty_ordered ?? 0);
+                        $qtyCanceled = (float) ($item->qty_canceled ?? 0);
+                        $effectiveQty = max($qtyOrdered - $qtyCanceled, 0);
+                        $isCanceledLine = $qtyCanceled >= $qtyOrdered - 1e-9;
+                        $isShipping = ($item->unit_purchase ?? '') === 'shipping';
+                        $statusVal = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft');
+                        $canCancel = in_array($statusVal, ['issued','receiving'], true) && !$isShipping && !$isCanceledLine && $effectiveQty > 0;
+                    @endphp
+                    <flux:table.row :class="$isCanceledLine ? 'line-through text-neutral-500' : ''">
+                        <flux:table.cell>{{ $item->material->sku ?? '-' }}</flux:table.cell>
+                        <flux:table.cell>
+                            <div class="flex items-center gap-2">
+                                <span>{{ $item->material->name ?? ($item->description ?? '-') }}</span>
+                                @if($qtyCanceled > 0)
+                                    <flux:badge color="red" size="xs">{{ __('procflow::po.detail.badges.canceled') }}</flux:badge>
+                                @endif
+                            </div>
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            {{ \Lastdino\ProcurementFlow\Support\Format::qty($effectiveQty) }}
+                            @if($qtyCanceled > 0)
+                                <div class="text-[10px] text-neutral-500">({{ __('procflow::po.detail.labels.canceled_qty') }}: {{ \Lastdino\ProcurementFlow\Support\Format::qty($qtyCanceled) }})</div>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>{{ $item->unit_purchase ?? '' }}</flux:table.cell>
+                        <flux:table.cell class="tabular-nums">{{ \Lastdino\ProcurementFlow\Support\Format::moneyUnitPrice($item->price_unit ?? 0) }}</flux:table.cell>
+                        <flux:table.cell class="tabular-nums">{{ \Lastdino\ProcurementFlow\Support\Format::moneyLineTotal(($item->price_unit ?? 0) * $effectiveQty) }}</flux:table.cell>
+                        <flux:table.cell>{{ optional($item->desired_date)->format('Y-m-d') ?? '-' }}</flux:table.cell>
+                        <flux:table.cell>{{ optional($item->expected_date)->format('Y-m-d') ?? '-' }}</flux:table.cell>
+                        <flux:table.cell>
+                            @if ($item->unit_purchase === 'shipping')
+                                <span class="text-gray-400">—</span>
+                            @elseif (!empty($item->scan_token))
+                                <div class="flex items-center gap-2">
+                                    <div class="qr-svg w-[40px] h-[40px]">
+                                        {!! \tbQuar\Facades\Quar::size(40)->generate(route('procurement.receiving.scan', ['token' => $item->scan_token])) !!}
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <div class="text-[10px] text-gray-500 select-all">{{ substr($item->scan_token, 0, 8) }}…</div>
+                                    </div>
+                                </div>
+                            @else
+                                <span class="text-gray-400 text-xs">{{ __('procflow::po.detail.no_token') }}</span>
+                            @endif
+                        </flux:table.cell>
+                        <flux:table.cell>
+                            <div class="flex justify-end print:hidden">
+                                @php $statusVal = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft'); @endphp
+                                @if(($statusVal !== 'closed' && !$isShipping) || $canCancel)
+                                    <flux:dropdown>
+                                        <flux:button size="xs" variant="ghost" icon="ellipsis-horizontal" />
+                                        <flux:menu>
+                                            @if(in_array($statusVal, ['issued', 'receiving'], true) && !empty($item->scan_token))
+                                                <flux:menu.item
+                                                    icon="arrow-right-start-on-rectangle"
+                                                    href="{{ route('procurement.receiving.scan', ['token' => $item->scan_token]) }}"
+                                                >
+                                                    {{ __('procflow::receiving.buttons.go_to_receiving') }}
+                                                </flux:menu.item>
+                                            @endif
+                                            @if($statusVal !== 'closed' && !$isShipping)
+                                                <flux:menu.item icon="calendar"
+                                                    wire:click="openExpectedDateModal({{ (int)$item->id }})"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="openExpectedDateModal({{ (int)$item->id }})"
+                                                >{{ __('procflow::po.common.expected_date') }}</flux:menu.item>
+                                            @endif
+                                            @if($canCancel)
+                                                <flux:menu.item icon="x-circle" variant="danger"
+                                                    x-on:click.prevent="if (confirm('{{ __('procflow::po.detail.confirm_cancel_item') }}')) { $wire.cancelItem({{ (int)$item->id }}) }"
+                                                    wire:loading.attr="disabled"
+                                                    wire:target="cancelItem({{ (int)$item->id }})"
+                                                >
+                                                    <span wire:loading.remove wire:target="cancelItem({{ (int)$item->id }})">{{ __('procflow::po.buttons.cancel_line') }}</span>
+                                                    <span wire:loading wire:target="cancelItem({{ (int)$item->id }})">{{ __('procflow::po.buttons.canceling_line') }}</span>
+                                                </flux:menu.item>
+                                            @endif
+                                        </flux:menu>
+                                    </flux:dropdown>
+                                @endif
+                            </div>
+                        </flux:table.cell>
+                    </flux:table.row>
+                @endforeach
+            </flux:table.rows>
+        </flux:table>
+            @endif
+        </flux:card>
+
+        <flux:card class="print:hidden">
+            <flux:heading size="md" class="mb-4">{{ __('procflow::po.detail.receivings.title') }}</flux:heading>
+            <flux:table>
+                <flux:table.columns>
+                    <flux:table.column>{{ __('procflow::po.detail.receivings.received_at') }}</flux:table.column>
+                    <flux:table.column>{{ __('procflow::po.detail.receivings.reference') }}</flux:table.column>
+                    <flux:table.column>{{ __('procflow::po.detail.receivings.items') }}</flux:table.column>
+                </flux:table.columns>
+
+                <flux:table.rows>
+                    @forelse(($po->receivings ?? []) as $rcv)
+                        <flux:table.row>
+                            <flux:table.cell class="whitespace-nowrap">{{ optional($rcv->received_at)->format('Y-m-d H:i') ?? '' }}</flux:table.cell>
+                            <flux:table.cell class="whitespace-nowrap">{{ $rcv->reference_number ?? '-' }}</flux:table.cell>
+                            <flux:table.cell>
+                                @php $items = $rcv->items ?? collect(); @endphp
+                                @if($items->isEmpty())
+                                    <span class="text-neutral-500">{{ __('procflow::po.detail.receivings.empty') }}</span>
+                                @else
+                                    <ul class="space-y-1 text-xs">
+                                        @foreach($items as $rit)
+                                            @php
+                                                $sku = $rit->material->sku ?? '';
+                                                $name = $rit->material->name ?? ($rit->purchaseOrderItem->description ?? '');
+                                                $qty = (float) ($rit->qty_received ?? 0);
+                                                $unit = $rit->unit_purchase ?? '';
+                                            @endphp
+                                            <li class="flex items-center gap-2">
+                                                <span class="text-neutral-500">{{ $sku }}</span>
+                                                <span class="font-medium">{{ $name }}</span>
+                                                <span class="ml-auto tabular-nums">{{ \Lastdino\ProcurementFlow\Support\Format::qty($qty) }} {{ $unit }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @endif
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @empty
+                        <flux:table.row>
+                            <flux:table.cell colspan="3" class="text-center text-neutral-500 py-6">{{ __('procflow::po.detail.receivings.empty') }}</flux:cell>
+                        </flux:table.row>
+                    @endforelse
+                </flux:table.rows>
+            </flux:table>
+        </flux:card>
 
         <div class="flex items-center gap-2 print:hidden">
-            <a href="{{ route('procurement.purchase-orders.index') }}" class="px-3 py-1.5 border rounded">{{ __('procflow::po.detail.buttons.back') }}</a>
-            <button type="button" onclick="window.print()" class="px-3 py-1.5 border rounded">{{ __('procflow::po.detail.buttons.print_labels') }}</button>
-            <a
-                href="{{ route('procurement.purchase-orders.pdf', ['po' => $po->id]) }}"
-                class="px-3 py-1.5 border rounded"
-                target="_blank"
-                rel="noopener"
-            >{{ __('procflow::po.detail.buttons.download_pdf') }}</a>
             @php $statusVal = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft'); @endphp
+            <flux:button href="{{ route('procurement.purchase-orders.index') }}" variant="outline">{{ __('procflow::po.detail.buttons.back') }}</flux:button>
+            <flux:button type="button" onclick="window.print()" variant="outline">{{ __('procflow::po.detail.buttons.print_labels') }}</flux:button>
+            @if ($statusVal !== 'draft')
+                <flux:button href="{{ route('procurement.purchase-orders.pdf', ['po' => $po->id]) }}" target="_blank" variant="outline">{{ __('procflow::po.detail.buttons.download_pdf') }}</flux:button>
+            @endif
+
             @if($statusVal === 'draft')
                 <flux:button variant="danger" class="ml-auto"
                     x-on:click.prevent="if (confirm('{{ __('procflow::po.detail.confirm_cancel') }}')) { $wire.cancelPo() }"
@@ -216,27 +500,20 @@
     </div>
 
     {{-- Expected Date Edit Modal --}}
-    <flux:modal wire:model="showExpectedModal" name="expected-date">
-        <div class="w-full max-w-md">
-            <h3 class="text-lg font-semibold mb-3">{{ __('procflow::po.common.expected_date') }}</h3>
-            <div class="space-y-3">
-                <label class="block text-sm text-neutral-600 mb-1">{{ __('procflow::po.common.expected_date') }}</label>
-                <input type="date"
-                       class="w-full border rounded p-2 bg-white dark:bg-neutral-900"
-                       wire:model.live="editingExpectedDate">
-                @error('editingExpectedDate')
-                    <div class="text-red-600 text-xs">{{ $message }}</div>
-                @enderror
+    <flux:modal wire:model="showExpectedModal" name="expected-date" class="w-full md:w-[30rem]">
+        <div class="space-y-6">
+            <div>
+                <flux:heading size="lg">{{ __('procflow::po.common.expected_date') }}</flux:heading>
+                <flux:subheading>{{ __('procflow::po.detail.expected_date_modal_sub') ?: '入荷予定日を更新してください。' }}</flux:subheading>
             </div>
 
-            <div class="mt-5 flex items-center justify-end gap-2">
-                <flux:button variant="outline" x-on:click="$flux.modal('expected-date').close()">{{ __('procflow::po.buttons.cancel') }}</flux:button>
-                <flux:button variant="primary"
-                             wire:click="saveExpectedDate"
-                             wire:loading.attr="disabled"
-                             wire:target="saveExpectedDate">
-                    <span wire:loading.remove>{{ __('procflow::po.buttons.save') }}</span>
-                    <span wire:loading>{{ __('procflow::po.buttons.saving') }}</span>
+            <flux:input type="date" wire:model.live="editingExpectedDate" label="{{ __('procflow::po.detail.table.expected_date') }}" />
+
+            <div class="flex justify-end gap-2">
+                <flux:button variant="ghost" x-on:click="$flux.modal('expected-date').close()">{{ __('procflow::po.buttons.cancel') }}</flux:button>
+                <flux:button variant="primary" wire:click="saveExpectedDate" wire:loading.attr="disabled" wire:target="saveExpectedDate">
+                    <span wire:loading.remove wire:target="saveExpectedDate">{{ __('procflow::po.buttons.save') }}</span>
+                    <span wire:loading wire:target="saveExpectedDate">{{ __('procflow::po.buttons.saving') }}</span>
                 </flux:button>
             </div>
         </div>

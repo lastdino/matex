@@ -11,7 +11,7 @@ use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 class LotService
 {
     /**
-     * @param  array{lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null}  $line
+     * @param  array{lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null, storage_location_id?:int|null}  $line
      */
     public function ensureAndIncrement(PurchaseOrder $po, Material $material, array $line, float $qtyBase, \DateTimeInterface|string $receivedAt): MaterialLot
     {
@@ -22,6 +22,7 @@ class LotService
             [
                 'material_id' => $material->id,
                 'lot_no' => (string) $line['lot_no'],
+                'storage_location_id' => $line['storage_location_id'] ?? null,
             ],
             [
                 'unit' => $material->unit_stock,

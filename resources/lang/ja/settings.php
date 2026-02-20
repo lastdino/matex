@@ -153,7 +153,6 @@ return [
         'new' => 'カテゴリを追加',
         'fields' => [
             'name' => '名称',
-            'code' => 'コード',
         ],
         'empty' => 'カテゴリがありません',
         'edit_title' => 'カテゴリを編集',
@@ -248,6 +247,30 @@ return [
         ],
         'buttons' => [
             'print' => '印刷 / PDF出力',
+        ],
+    ],
+    'storage_locations' => [
+        'title' => '保管場所の設定',
+        'new' => '場所を追加',
+        'edit_title' => '保管場所を編集',
+        'create_title' => '保管場所を作成',
+        'empty' => '保管場所がありません',
+        'fields' => [
+            'name' => '名称',
+            'fire_service_law_category' => '消防法種別',
+            'max_specified_quantity_ratio' => '最大指定数量倍率',
+            'current_ratio' => '現在庫倍率',
+            'description' => '説明',
+            'is_active' => '有効',
+        ],
+        'alerts' => [
+            'over_limit' => '指定数量の上限を超えています！',
+            'near_limit' => '指定数量の上限に近づいています',
+        ],
+        'flash' => [
+            'created' => '保管場所を作成しました。',
+            'updated' => '保管場所を更新しました。',
+            'deleted' => '保管場所を削除しました。',
         ],
     ],
 ];

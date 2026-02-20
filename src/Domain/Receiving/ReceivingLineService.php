@@ -11,6 +11,7 @@ use Lastdino\ProcurementFlow\Models\PurchaseOrder;
 use Lastdino\ProcurementFlow\Models\PurchaseOrderItem;
 use Lastdino\ProcurementFlow\Models\Receiving;
 use Lastdino\ProcurementFlow\Models\ReceivingItem;
+use Lastdino\ProcurementFlow\Models\StorageLocation;
 use Lastdino\ProcurementFlow\Services\UnitConversionService;
 
 class ReceivingLineService
@@ -23,7 +24,7 @@ class ReceivingLineService
     ) {}
 
     /**
-     * @param  array{qty:float|int, unit_purchase?:string|null, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null}  $line
+     * @param  array{qty:float|int, unit_purchase?:string|null, lot_no?:string|null, mfg_date?:string|null, expiry_date?:string|null, storage_location_id?:int|null}  $line
      */
     public function handle(PurchaseOrder $po, Receiving $receiving, PurchaseOrderItem $poi, array $line): void
     {
@@ -58,6 +59,11 @@ class ReceivingLineService
         // Over delivery guard in base unit
         $this->guard->assertNotExceededMaterial($poi, $material, $qtyBase, $this->conversion);
 
+        if ($line['storage_location_id']) {
+            $location = StorageLocation::findOrFail($line['storage_location_id']);
+            $this->guard->assertStorageLocationNotExceeded($location, $material, $qtyBase);
+        }
+
         $ri = ReceivingItem::create([
             'receiving_id' => $receiving->id,
             'purchase_order_item_id' => $poi->id,
@@ -68,24 +74,21 @@ class ReceivingLineService
         ]);
 
         // Lot / stock movement
-        if ((bool) ($material->manage_by_lot ?? false)) {
-            // require lot no and upsert + increment
-            $lot = $this->lot->ensureAndIncrement(
-                $po,
-                $material,
-                [
-                    'lot_no' => $line['lot_no'] ?? null,
-                    'mfg_date' => $line['mfg_date'] ?? null,
-                    'expiry_date' => $line['expiry_date'] ?? null,
-                ],
-                $qtyBase,
-                $receiving->received_at
-            );
+        // require lot no and upsert + increment
+        $lot = $this->lot->ensureAndIncrement(
+            $po,
+            $material,
+            [
+                'lot_no' => $line['lot_no'] ?? null,
+                'mfg_date' => $line['mfg_date'] ?? null,
+                'expiry_date' => $line['expiry_date'] ?? null,
+                'storage_location_id' => $line['storage_location_id'] ?? null,
+            ],
+            $qtyBase,
+            $receiving->received_at
+        );
 
-            $this->movement->in($material, $ri, $qtyBase, $receiving->received_at, $lot->id);
-        } else {
-            $this->movement->in($material, $ri, $qtyBase, $receiving->received_at, null);
-        }
+        $this->movement->in($material, $ri, $qtyBase, $receiving->received_at, $lot->id);
 
         // Optional current_stock increment
         if (! is_null($material->current_stock)) {

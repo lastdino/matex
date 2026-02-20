@@ -26,4 +26,23 @@ class OverDeliveryGuard
         $remaining = $orderedBase - $receivedBase;
         abort_if($qtyBase > max($remaining, 0.0), 422, 'Quantity exceeds remaining amount. Over-delivery must be returned.');
     }
+
+    public function assertStorageLocationNotExceeded(StorageLocation $location, Material $material, float $qtyBase): void
+    {
+        if (! $material->is_chemical || (float) $material->specified_quantity <= 0) {
+            return;
+        }
+
+        if ($location->max_specified_quantity_ratio === null || (float) $location->max_specified_quantity_ratio <= 0) {
+            return;
+        }
+
+        $currentRatio = $location->currentSpecifiedQuantityRatio();
+        $newRatio = $qtyBase / (float) $material->specified_quantity;
+        $totalRatio = $currentRatio + $newRatio;
+
+        if ($totalRatio > (float) $location->max_specified_quantity_ratio) {
+            abort(422, "保管場所「{$location->name}」の指定数量倍率（{$location->max_specified_quantity_ratio}）を超過します。現在の合計: " . number_format($totalRatio, 2));
+        }
+    }
 }
