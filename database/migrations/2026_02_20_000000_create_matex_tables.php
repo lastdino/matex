@@ -15,7 +15,6 @@ return new class extends Migration
         Schema::create(Tables::name('material_categories'), function (Blueprint $table): void {
             $table->id();
             $table->string('name');
-            $table->string('code')->nullable();
             $table->timestamps();
         });
 
@@ -23,13 +22,24 @@ return new class extends Migration
         Schema::create(Tables::name('suppliers'), function (Blueprint $table): void {
             $table->id();
             $table->string('name');
-            $table->string('code')->nullable();
             $table->string('email')->nullable();
             $table->string('email_cc')->nullable();
             $table->boolean('auto_send_po')->default(false);
             $table->string('phone')->nullable();
             $table->string('address')->nullable();
             $table->string('contact_person_name')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->timestamps();
+        });
+
+        // storage_locations
+        Schema::create(Tables::name('storage_locations'), function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('code')->nullable();
+            $table->string('fire_service_law_category')->nullable();
+            $table->decimal('max_specified_quantity_ratio', 10, 2)->nullable();
+            $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
@@ -41,13 +51,12 @@ return new class extends Migration
             $table->string('name');
             $table->string('tax_code', 32)->nullable();
             $table->string('unit_stock', 32);
-            $table->decimal('safety_stock', 18, 6)->default(0);
+            $table->decimal('min_stock', 18, 6)->nullable();
+            $table->decimal('max_stock', 18, 6)->nullable();
             $table->foreignId('category_id')->nullable()->constrained(Tables::name('material_categories'));
             $table->decimal('current_stock', 18, 6)->nullable();
-            $table->boolean('manage_by_lot')->default(false);
             // additional attributes
             $table->string('manufacturer_name')->nullable();
-            $table->string('storage_location')->nullable();
             $table->string('applicable_regulation')->nullable();
             $table->string('ghs_mark')->nullable();
             $table->string('protective_equipment')->nullable();
@@ -58,6 +67,17 @@ return new class extends Migration
             $table->decimal('shipping_fee_per_order', 10, 2)->nullable();
             $table->string('unit_purchase_default', 32)->nullable();
             $table->foreignId('preferred_supplier_id')->nullable()->constrained(Tables::name('suppliers'));
+            $table->boolean('is_active')->default(true);
+            $table->boolean('sync_to_monox')->default(false);
+            $table->string('monox_item_id')->nullable();
+            $table->text('default_purchase_note')->nullable();
+            $table->boolean('is_chemical')->default(false);
+            $table->string('cas_no')->nullable();
+            $table->string('physical_state')->nullable();
+            $table->text('ghs_hazard_details')->nullable();
+            $table->decimal('specified_quantity', 18, 6)->nullable();
+            $table->string('emergency_contact')->nullable();
+            $table->text('disposal_method')->nullable();
             $table->timestamps();
         });
 
@@ -70,6 +90,31 @@ return new class extends Migration
             $table->decimal('factor', 18, 6);
             $table->timestamps();
             $table->unique(['material_id', 'from_unit', 'to_unit'], 'pf_unit_conv_unique');
+        });
+
+        // material_risk_assessments
+        Schema::create(Tables::name('material_risk_assessments'), function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('material_id')->constrained(Tables::name('materials'))->cascadeOnDelete();
+            $table->date('assessment_date');
+            $table->string('risk_level')->nullable();
+            $table->text('assessment_results')->nullable();
+            $table->text('countermeasures')->nullable();
+            $table->date('next_assessment_date')->nullable();
+            $table->string('assessor_name')->nullable();
+            $table->timestamps();
+        });
+
+        // material_inspections
+        Schema::create(Tables::name('material_inspections'), function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('material_id')->constrained(Tables::name('materials'))->cascadeOnDelete();
+            $table->date('inspection_date');
+            $table->string('inspector_name')->nullable();
+            $table->boolean('container_status')->default(true);
+            $table->boolean('label_status')->default(true);
+            $table->text('details')->nullable();
+            $table->timestamps();
         });
 
         // purchase_orders
@@ -124,16 +169,27 @@ return new class extends Migration
             $table->foreignId('material_id')->nullable()->constrained(Tables::name('materials'));
             $table->uuid('scan_token')->nullable()->unique();
             $table->text('description')->nullable();
+            $table->string('manufacturer')->nullable();
+            $table->unsignedBigInteger('shipping_for_item_id')->nullable();
             $table->string('unit_purchase', 32);
             $table->decimal('qty_ordered', 18, 6);
+            $table->decimal('qty_canceled', 18, 6)->default(0);
             $table->decimal('price_unit', 18, 6);
             $table->decimal('tax_rate', 6, 4)->default(0);
             $table->decimal('line_total', 18, 2)->default(0);
             $table->date('desired_date')->nullable();
             $table->date('expected_date')->nullable();
+            $table->timestamp('canceled_at')->nullable();
+            $table->text('canceled_reason')->nullable();
             $table->text('note')->nullable();
             $table->timestamps();
+
             $table->index(['purchase_order_id']);
+            $table->foreign('shipping_for_item_id', 'pf_poi_ship_for_fk')
+                ->references('id')
+                ->on(Tables::name('purchase_order_items'))
+                ->nullOnDelete()
+                ->cascadeOnUpdate();
         });
 
         // receivings
@@ -165,22 +221,22 @@ return new class extends Migration
             $table->id();
             $table->foreignId('material_id')->constrained(Tables::name('materials'))->cascadeOnDelete();
             $table->string('lot_no');
+            $table->foreignId('storage_location_id')->nullable()->constrained(Tables::name('storage_locations'))->nullOnDelete();
             $table->decimal('qty_on_hand', 24, 6)->default(0);
             $table->string('unit', 32)->nullable();
             $table->dateTime('received_at')->nullable();
             $table->date('mfg_date')->nullable();
             $table->date('expiry_date')->nullable();
             $table->string('status', 32)->nullable();
-            $table->string('storage_location')->nullable();
             $table->string('barcode')->nullable();
             $table->text('notes')->nullable();
             $table->foreignId('supplier_id')->nullable()->constrained(Tables::name('suppliers'))->nullOnDelete();
             $table->foreignId('purchase_order_id')->nullable()->constrained(Tables::name('purchase_orders'))->nullOnDelete();
             $table->timestamps();
-            $table->unique(['material_id', 'lot_no']);
+            $table->unique(['material_id', 'lot_no', 'storage_location_id'], Tables::name('material_lots').'_mat_lot_loc_unique');
         });
 
-        // stock movements (replaces stock_ins)
+        // stock movements
         Schema::create(Tables::name('stock_movements'), function (Blueprint $table): void {
             $table->id();
             $table->foreignId('material_id')->constrained(Tables::name('materials'))->cascadeOnDelete();
@@ -192,6 +248,7 @@ return new class extends Migration
             $table->string('unit', 32)->nullable();
             $table->dateTime('occurred_at');
             $table->string('reason')->nullable();
+            $table->boolean('is_external_sync')->default(false);
             $table->string('causer_type')->nullable();
             $table->unsignedBigInteger('causer_id')->nullable();
             $table->timestamps();
@@ -274,8 +331,11 @@ return new class extends Migration
         Schema::dropIfExists(Tables::name('options'));
         Schema::dropIfExists(Tables::name('option_groups'));
         Schema::dropIfExists(Tables::name('purchase_orders'));
+        Schema::dropIfExists(Tables::name('material_inspections'));
+        Schema::dropIfExists(Tables::name('material_risk_assessments'));
         Schema::dropIfExists(Tables::name('unit_conversions'));
         Schema::dropIfExists(Tables::name('materials'));
+        Schema::dropIfExists(Tables::name('storage_locations'));
         Schema::dropIfExists(Tables::name('suppliers'));
         Schema::dropIfExists(Tables::name('material_categories'));
     }
