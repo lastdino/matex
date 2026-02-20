@@ -81,5 +81,14 @@ class ProcurementFlowServiceProvider extends ServiceProvider
             namespace: 'procflow',
             viewPath: __DIR__.'/../resources/views/livewire',
         );
+
+        // もし公開されたビューがあれば、そちらを優先するようにLivewireコンポーネントを再登録
+        $publishedPath = resource_path('views/vendor/procflow/livewire');
+        if (is_dir($publishedPath)) {
+            $files = array_diff(scandir($publishedPath), ['.', '..']);
+            if (count($files) > 0) {
+                Livewire::addNamespace('procflow', $publishedPath);
+            }
+        }
     }
 }
