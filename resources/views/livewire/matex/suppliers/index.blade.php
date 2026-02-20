@@ -1,6 +1,7 @@
 <?php
 
 use Lastdino\Matex\Models\Supplier;
+use Lastdino\Matex\Models\SupplierContact;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -27,6 +28,24 @@ new class extends Component
         'contact_person_name' => null,
         'is_active' => true,
         'auto_send_po' => false,
+    ];
+
+    // Contact management
+    public bool $showContactModal = false;
+
+    public ?int $editingContactId = null;
+
+    /** @var array{supplier_id:?int,department:?string,name:?string,email:?string,email_cc:?string,phone:?string,address:?string,is_active:bool,is_primary:bool} */
+    public array $contactForm = [
+        'supplier_id' => null,
+        'department' => null,
+        'name' => null,
+        'email' => null,
+        'email_cc' => null,
+        'phone' => null,
+        'address' => null,
+        'is_active' => true,
+        'is_primary' => false,
     ];
 
     // Detail modal state
@@ -103,6 +122,90 @@ new class extends Component
     {
         $this->showDeleteConfirm = false;
         $this->deletingSupplierId = null;
+    }
+
+    public function openCreateContact(int $supplierId): void
+    {
+        $this->resetContactForm();
+        $this->contactForm['supplier_id'] = $supplierId;
+        $this->editingContactId = null;
+        $this->showContactModal = true;
+    }
+
+    public function openEditContact(int $id): void
+    {
+        /** @var SupplierContact $c */
+        $c = SupplierContact::query()->findOrFail($id);
+        $this->editingContactId = $c->id;
+        $this->contactForm = [
+            'supplier_id' => $c->supplier_id,
+            'department' => $c->department,
+            'name' => $c->name,
+            'email' => $c->email,
+            'email_cc' => $c->email_cc,
+            'phone' => $c->phone,
+            'address' => $c->address,
+            'is_active' => (bool) $c->is_active,
+            'is_primary' => (bool) $c->is_primary,
+        ];
+        $this->showContactModal = true;
+    }
+
+    public function closeContactModal(): void
+    {
+        $this->showContactModal = false;
+    }
+
+    protected function contactRules(): array
+    {
+        return [
+            'contactForm.supplier_id' => ['required', 'integer'],
+            'contactForm.department' => ['nullable', 'string', 'max:255'],
+            'contactForm.name' => ['required', 'string', 'max:255'],
+            'contactForm.email' => ['nullable', 'email', 'max:255'],
+            'contactForm.email_cc' => ['nullable', 'string', 'max:1000'],
+            'contactForm.phone' => ['nullable', 'string', 'max:255'],
+            'contactForm.address' => ['nullable', 'string'],
+            'contactForm.is_active' => ['boolean'],
+            'contactForm.is_primary' => ['boolean'],
+        ];
+    }
+
+    public function saveContact(): void
+    {
+        $data = $this->validate($this->contactRules());
+        $payload = $data['contactForm'];
+
+        if ($payload['is_primary']) {
+            SupplierContact::query()
+                ->where('supplier_id', $payload['supplier_id'])
+                ->update(['is_primary' => false]);
+        }
+
+        if ($this->editingContactId) {
+            /** @var SupplierContact $c */
+            $c = SupplierContact::query()->findOrFail($this->editingContactId);
+            $c->update($payload);
+        } else {
+            SupplierContact::query()->create($payload);
+        }
+
+        $this->showContactModal = false;
+        if ($this->showSupplierDetailModal) {
+            $this->loadSupplierDetail();
+        }
+        $this->dispatch('toast', type: 'success', message: 'Contact saved');
+    }
+
+    public function deleteContact(int $id): void
+    {
+        /** @var SupplierContact $c */
+        $c = SupplierContact::query()->findOrFail($id);
+        $c->delete();
+        if ($this->showSupplierDetailModal) {
+            $this->loadSupplierDetail();
+        }
+        $this->dispatch('toast', type: 'success', message: 'Contact deleted');
     }
 
     protected function supplierRules(): array
@@ -185,9 +288,24 @@ new class extends Component
         /** @var Supplier $model */
         $model = Supplier::query()->with(['purchaseOrders' => function ($q) {
             $q->latest('id');
-        }])->findOrFail($this->selectedSupplierId);
+        }, 'contacts'])->findOrFail($this->selectedSupplierId);
 
         $this->supplierDetail = $model->toArray();
+    }
+
+    protected function resetContactForm(): void
+    {
+        $this->contactForm = [
+            'supplier_id' => null,
+            'department' => null,
+            'name' => null,
+            'email' => null,
+            'email_cc' => null,
+            'phone' => null,
+            'address' => null,
+            'is_active' => true,
+            'is_primary' => false,
+        ];
     }
 
     protected function resetSupplierForm(): void
@@ -353,6 +471,48 @@ new class extends Component
                 </flux:card>
 
                 <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <flux:heading size="md">{{ __('matex::suppliers.contacts.title') }}</flux:heading>
+                        <flux:button size="sm" variant="outline" wire:click="openCreateContact({{ $supplierDetail['id'] }})">{{ __('matex::suppliers.contacts.add') }}</flux:button>
+                    </div>
+                    <flux:table>
+                        <flux:table.columns>
+                            <flux:table.column>{{ __('matex::suppliers.contacts.department') }}</flux:table.column>
+                            <flux:table.column>{{ __('matex::suppliers.contacts.name') }}</flux:table.column>
+                            <flux:table.column>{{ __('matex::suppliers.contacts.email') }}</flux:table.column>
+                            <flux:table.column>{{ __('matex::suppliers.contacts.phone') }}</flux:table.column>
+                            <flux:table.column align="end">{{ __('matex::suppliers.contacts.actions') }}</flux:table.column>
+                        </flux:table.columns>
+
+                        <flux:table.rows>
+                            @forelse(($supplierDetail['contacts'] ?? []) as $contact)
+                                <flux:table.row :key="'contact-'.$contact['id']">
+                                    <flux:table.cell>
+                                        {{ $contact['department'] ?? '-' }}
+                                        @if($contact['is_primary'])
+                                            <flux:badge size="sm" color="emerald" class="ml-2">{{ __('matex::suppliers.contacts.is_primary') }}</flux:badge>
+                                        @endif
+                                    </flux:table.cell>
+                                    <flux:table.cell>{{ $contact['name'] }}</flux:table.cell>
+                                    <flux:table.cell>{{ $contact['email'] ?? '-' }}</flux:table.cell>
+                                    <flux:table.cell>{{ $contact['phone'] ?? '-' }}</flux:table.cell>
+                                    <flux:table.cell>
+                                        <div class="flex justify-end gap-2">
+                                            <flux:button size="xs" variant="outline" wire:click="openEditContact({{ $contact['id'] }})">{{ __('matex::suppliers.buttons.edit') }}</flux:button>
+                                            <flux:button size="xs" variant="danger" wire:click="deleteContact({{ $contact['id'] }})">{{ __('matex::suppliers.buttons.delete') }}</flux:button>
+                                        </div>
+                                    </flux:table.cell>
+                                </flux:table.row>
+                            @empty
+                                <flux:table.row>
+                                    <flux:table.cell colspan="5" class="text-center text-neutral-500 py-6">{{ __('matex::suppliers.contacts.empty') }}</flux:table.cell>
+                                </flux:table.row>
+                            @endforelse
+                        </flux:table.rows>
+                    </flux:table>
+                </div>
+
+                <div class="space-y-4">
                     <flux:heading size="md">{{ __('matex::suppliers.detail.purchase_orders') }}</flux:heading>
                     <flux:table>
                         <flux:table.columns>
@@ -411,6 +571,42 @@ new class extends Component
                 <flux:button variant="danger" wire:click="deleteSupplier" wire:loading.attr="disabled">
                     <span wire:loading.remove>{{ __('matex::suppliers.delete.confirm_button') }}</span>
                     <span wire:loading>{{ __('matex::suppliers.delete.deleting') }}</span>
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    {{-- Contact Form Modal --}}
+    <flux:modal wire:model.self="showContactModal" name="contact-form" class="w-full md:w-[40rem]">
+        <div class="space-y-6">
+            <flux:heading size="lg">{{ $editingContactId ? __('matex::suppliers.buttons.edit') : __('matex::suppliers.contacts.add') }}</flux:heading>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <flux:input wire:model.live="contactForm.department" label="{{ __('matex::suppliers.contacts.department') }}" />
+                    <flux:input wire:model.live="contactForm.name" label="{{ __('matex::suppliers.contacts.name') }}" />
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <flux:input type="email" wire:model.live="contactForm.email" label="{{ __('matex::suppliers.contacts.email') }}" />
+                    <flux:input wire:model.live="contactForm.phone" label="{{ __('matex::suppliers.contacts.phone') }}" />
+                </div>
+
+                <flux:input wire:model.live="contactForm.email_cc" label="{{ __('matex::suppliers.form.email_cc') }}" placeholder="{{ __('matex::suppliers.form.email_cc_placeholder') }}" />
+
+                <flux:textarea wire:model.live="contactForm.address" label="{{ __('matex::suppliers.contacts.address') }}" rows="3" />
+
+                <div class="flex flex-col gap-2">
+                    <flux:checkbox wire:model.live="contactForm.is_active" label="{{ __('matex::suppliers.form.active') }}" />
+                    <flux:checkbox wire:model.live="contactForm.is_primary" label="{{ __('matex::suppliers.contacts.is_primary') }}" />
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-2">
+                <flux:button variant="ghost" x-on:click="$flux.modal('contact-form').close()">{{ __('matex::suppliers.buttons.cancel') }}</flux:button>
+                <flux:button variant="primary" wire:click="saveContact" wire:loading.attr="disabled">
+                    <span wire:loading.remove>{{ __('matex::suppliers.buttons.save') }}</span>
+                    <span wire:loading>{{ __('matex::suppliers.buttons.saving') }}</span>
                 </flux:button>
             </div>
         </div>

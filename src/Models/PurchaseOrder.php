@@ -22,7 +22,7 @@ class PurchaseOrder extends Model
     use HasApprovalFlow;
 
     protected $fillable = [
-        'po_number', 'supplier_id', 'status', 'issue_date', 'expected_date', 'subtotal', 'tax', 'total',
+        'po_number', 'supplier_id', 'supplier_contact_id', 'status', 'issue_date', 'expected_date', 'subtotal', 'tax', 'total',
         'shipping_total', 'shipping_tax_total',
         'invoice_number', 'delivery_note_number', 'notes', 'created_by',
         // 発注ごとの納品先
@@ -55,6 +55,11 @@ class PurchaseOrder extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function contact(): BelongsTo
+    {
+        return $this->belongsTo(SupplierContact::class, 'supplier_contact_id');
     }
 
     public function requester(): BelongsTo
@@ -93,19 +98,27 @@ class PurchaseOrder extends Model
         // 自動送信可否はサプライヤーの設定で決定する
         /** @var Supplier|null $supplier */
         $supplier = $this->supplier;
+        /** @var SupplierContact|null $contact */
+        $contact = $this->contact;
+
         $shouldAutoSend = (bool) ($supplier?->getAttribute('auto_send_po') ?? false);
         if ($shouldAutoSend) {
-            $to = $supplier?->email;
-            if (! empty($to)) {
-                $mailable = new PurchaseOrderIssuedMail($this->fresh(['supplier', 'items']));
+            // 担当者が指定されていればそのメール、いなければサプライヤーのメール
+            $to = $contact?->email ?: $supplier?->email;
 
-                // CCはカンマ区切りを配列に正規化
+            if (! empty($to)) {
+                $mailable = new PurchaseOrderIssuedMail($this->fresh(['supplier', 'contact', 'items']));
+
+                // CCは担当者のCCとサプライヤーのCCをマージ
                 $ccs = [];
-                if (! empty($supplier?->email_cc)) {
+                $rawCcs = array_filter([$supplier?->email_cc, $contact?->email_cc]);
+
+                if (! empty($rawCcs)) {
+                    $combinedCc = implode(',', $rawCcs);
                     $ccs = array_values(array_filter(array_map(function ($v) {
                         return trim((string) $v);
-                    }, explode(',', (string) $supplier->email_cc)), function ($v) {
-                        return $v !== '';
+                    }, explode(',', $combinedCc)), function ($v) {
+                        return $v !== '' && filter_var($v, FILTER_VALIDATE_EMAIL);
                     }));
                 }
 

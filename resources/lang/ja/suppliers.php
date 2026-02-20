@@ -13,6 +13,18 @@ return [
         'actions' => '操作',
         'empty' => 'サプライヤーがありません',
     ],
+    'contacts' => [
+        'title' => '担当者・拠点',
+        'department' => '部署・拠点',
+        'name' => '担当者名',
+        'email' => 'メール',
+        'phone' => '電話番号',
+        'address' => '所在地',
+        'is_primary' => 'メイン',
+        'actions' => '操作',
+        'add' => '担当者を追加',
+        'empty' => '担当者が登録されていません',
+    ],
     'buttons' => [
         'new_supplier' => '新規サプライヤー',
         'edit' => '編集',
@@ -38,6 +50,8 @@ return [
         'active_no' => 'いいえ',
         'auto_send_po' => '自動でPOを送信する',
         'address' => '住所',
+        'preferred_supplier_contact' => '優先担当者',
+        'choose_contact' => '担当者を選択',
     ],
     'detail' => [
         'title' => 'サプライヤー詳細',

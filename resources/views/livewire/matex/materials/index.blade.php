@@ -67,6 +67,7 @@ new class extends Component
      *   conversion_factor_purchase_to_stock:?string|float|int|null,
      *   conversions:array<int, array{from_unit:string, factor:float|int|string}>,
      *   preferred_supplier_id:?int|null,
+     *   preferred_supplier_contact_id:?int|null,
      *   tax_code:?string|null,
      *   moq:?string|float|int|null,
      *   pack_size:?string|float|int|null,
@@ -101,6 +102,7 @@ new class extends Component
         'conversion_factor_purchase_to_stock' => null,
         'conversions' => [],
         'preferred_supplier_id' => null,
+        'preferred_supplier_contact_id' => null,
         'separate_shipping' => false,
         'shipping_fee_per_order' => null,
         'is_chemical' => false,
@@ -122,7 +124,19 @@ new class extends Component
 
     public function getSuppliersProperty()
     {
-        return \Lastdino\Matex\Models\Supplier::query()->orderBy('name')->get();
+        return \Lastdino\Matex\Models\Supplier::query()->with('contacts')->orderBy('name')->get();
+    }
+
+    public function getPreferredSupplierContactsProperty()
+    {
+        if (! $this->materialForm['preferred_supplier_id']) {
+            return [];
+        }
+
+        return \Lastdino\Matex\Models\SupplierContact::query()
+            ->where('supplier_id', $this->materialForm['preferred_supplier_id'])
+            ->orderBy('name')
+            ->get();
     }
 
     // Ordering Token issuance modal state
@@ -229,6 +243,7 @@ new class extends Component
                 ->map(fn ($c) => ['from_unit' => $c->from_unit, 'factor' => (float) $c->factor])
                 ->toArray(),
             'preferred_supplier_id' => $m->preferred_supplier_id,
+            'preferred_supplier_contact_id' => $m->preferred_supplier_contact_id,
             'separate_shipping' => (bool) $m->separate_shipping,
             'shipping_fee_per_order' => (float) $m->shipping_fee_per_order,
             'manage_by_lot' => (bool) $m->manage_by_lot,
@@ -766,15 +781,26 @@ new class extends Component
                             <flux:error name="materialForm.tax_code" />
                         </flux:field>
 
-                        <flux:field class="md:col-span-2">
+                        <flux:field class="md:col-span-1">
                             <flux:label>{{ __('matex::materials.form.preferred_supplier') }}</flux:label>
-                            <flux:select wire:model="materialForm.preferred_supplier_id">
+                            <flux:select wire:model.live="materialForm.preferred_supplier_id">
                                 <option value="">-</option>
                                 @foreach($this->suppliers as $s)
                                     <option value="{{ $s->id }}">{{ $s->name }}</option>
                                 @endforeach
                             </flux:select>
                             <flux:error name="materialForm.preferred_supplier_id" />
+                        </flux:field>
+
+                        <flux:field class="md:col-span-1">
+                            <flux:label>{{ __('matex::suppliers.form.preferred_supplier_contact') }}</flux:label>
+                            <flux:select wire:model="materialForm.preferred_supplier_contact_id" :disabled="!$materialForm['preferred_supplier_id']">
+                                <option value="">-</option>
+                                @foreach($this->preferredSupplierContacts as $c)
+                                    <option value="{{ $c->id }}">{{ $c->department ? '['.$c->department.'] ' : '' }}{{ $c->name }}</option>
+                                @endforeach
+                            </flux:select>
+                            <flux:error name="materialForm.preferred_supplier_contact_id" />
                         </flux:field>
                     </div>
                 </div>

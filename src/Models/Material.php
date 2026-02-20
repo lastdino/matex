@@ -17,6 +17,7 @@ class Material extends Model implements HasMedia
 
     protected $fillable = [
         'sku', 'name', 'tax_code', 'unit_stock', 'unit_purchase_default', 'min_stock', 'max_stock', 'category_id', 'current_stock', 'preferred_supplier_id',
+        'preferred_supplier_contact_id',
         'manufacturer_name', 'applicable_regulation', 'ghs_mark', 'protective_equipment', 'unit_price',
         // 発注制約
         'moq', 'pack_size',
@@ -71,6 +72,11 @@ class Material extends Model implements HasMedia
     public function preferredSupplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class, 'preferred_supplier_id');
+    }
+
+    public function preferredSupplierContact(): BelongsTo
+    {
+        return $this->belongsTo(SupplierContact::class, 'preferred_supplier_contact_id');
     }
 
     public function lots(): HasMany
