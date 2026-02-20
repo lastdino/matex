@@ -7,7 +7,8 @@
                 <flux:navbar>
                     <flux:navbar.item href="{{ route('matex.dashboard') }}">{{ __('matex::menu.dashboard') }}</flux:navbar.item>
                     <flux:navbar.item href="{{ route('matex.purchase-orders.index') }}">{{ __('matex::menu.purchase_orders') }}</flux:navbar.item>
-                    <flux:navbar.item href="{{ route('matex.receiving.scan') }}">{{ __('matex::menu.receiving') }}</flux:navbar.item>
+                    <flux:navbar.item href="{{ route('matex.receiving') }}">{{ __('matex::menu.receiving') }}</flux:navbar.item>
+                    <flux:navbar.item href="{{ route('matex.issue.scan') }}">{{ __('matex::menu.issue') }}</flux:navbar.item>
                     <flux:navbar.item href="{{ route('matex.ordering.scan') }}">{{ __('matex::menu.quick_ordering') }}</flux:navbar.item>
                     <flux:navbar.item href="{{ route('matex.pending-receiving.index') }}">{{ __('matex::menu.pending_receiving') }}</flux:navbar.item>
                     <flux:navbar.item href="{{ route('matex.materials.index') }}">{{ __('matex::menu.materials') }}</flux:navbar.item>
@@ -25,7 +26,6 @@
                             <flux:menu.item href="{{ route('matex.settings.pdf') }}">{{ __('matex::menu.pdf') }}</flux:menu.item>
                             <flux:menu.separator />
                             <flux:menu.item href="{{ route('matex.settings.tokens') }}">{{ __('matex::menu.tokens') }}</flux:menu.item>
-                            <flux:menu.item href="{{ route('matex.settings.labels') }}">{{ __('matex::menu.labels') }}</flux:menu.item>
                             <flux:menu.separator />
                         </flux:menu>
                     </flux:dropdown>

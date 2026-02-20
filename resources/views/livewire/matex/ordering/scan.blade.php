@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Contracts\View\View as ViewContract;
 use Illuminate\Http\Request;
 use Lastdino\Matex\Actions\Ordering\CreateDraftPurchaseOrderFromScanAction;
 use Lastdino\Matex\Models\OrderingToken;
@@ -27,6 +26,7 @@ new class extends Component
         'material_name' => '',
         'material_sku' => '',
         'preferred_supplier' => null,
+        'preferred_supplier_contact' => null,
         'unit_purchase' => null,
         'moq' => null,
         'pack_size' => null,
@@ -46,6 +46,14 @@ new class extends Component
     public string $message = '';
 
     public bool $ok = false;
+
+    public function resetScan(): void
+    {
+        $this->resetAfterOrder();
+        $this->message = '';
+        $this->ok = false;
+        $this->dispatch('focus-token');
+    }
 
     protected function rules(): array
     {
@@ -128,7 +136,10 @@ new class extends Component
         $this->validateOnly('form.token');
 
         /** @var OrderingToken|null $ot */
-        $ot = OrderingToken::query()->where('token', (string) $this->form['token'])->with('material.preferredSupplier')->first();
+        $ot = OrderingToken::query()
+            ->where('token', (string) $this->form['token'])
+            ->with(['material.preferredSupplier', 'material.preferredSupplierContact'])
+            ->first();
         if (! $ot || ! $ot->enabled || ($ot->expires_at && now()->greaterThan($ot->expires_at))) {
             $this->resetInfo();
             $this->setMessage(__('matex::ordering.messages.invalid_or_expired_token'), false);
@@ -155,6 +166,7 @@ new class extends Component
             'material_name' => (string) ($mat->name ?? ''),
             'material_sku' => (string) ($mat->sku ?? ''),
             'preferred_supplier' => $mat->preferredSupplier?->name,
+            'preferred_supplier_contact' => $mat->preferredSupplierContact?->name,
             'unit_purchase' => $ot->unit_purchase ?? $mat->unit_purchase_default,
             'moq' => $mat->moq,
             'pack_size' => $mat->pack_size,
@@ -223,6 +235,7 @@ new class extends Component
             'material_name' => '',
             'material_sku' => '',
             'preferred_supplier' => null,
+            'preferred_supplier_contact' => null,
             'unit_purchase' => null,
             'moq' => null,
             'pack_size' => null,
@@ -258,70 +271,138 @@ new class extends Component
 
 ?>
 
-<div class="p-6 space-y-4" x-data @focus-token.window="$refs.token?.focus(); $refs.token?.select()">
-    <x-matex::topmenu />
-    <div class="flex items-center justify-between">
-        <h1 class="text-xl font-semibold">{{ __('matex::ordering.title') }}</h1>
-        <a href="{{ route('matex.purchase-orders.index') }}" class="text-blue-600 hover:underline">{{ __('matex::ordering.back') }}</a>
-    </div>
+<x-matex::scan-page-layout
+    :has-info="$this->hasInfo"
+    :title="__('matex::ordering.title')"
+>
+    <x-slot name="backLink">
+        <flux:button href="{{ route('matex.purchase-orders.index') }}" wire:navigate variant="subtle">{{ __('matex::ordering.back') }}</flux:button>
+    </x-slot>
 
-    <div class="grid gap-4 md:grid-cols-2">
-        <div class="rounded border p-4 space-y-4">
-            <flux:heading size="sm">{{ __('matex::ordering.token.title') }}</flux:heading>
-            <div class="flex gap-2">
-                <flux:input
-                    id="token"
-                    x-ref="token"
-                    wire:model.live.debounce.300ms="form.token"
-                    placeholder="{{ __('matex::ordering.token.placeholder') }}"
-                    class="flex-1"
-                />
-                <livewire:matex::qr-scanner wire:model.live="form.token" />
+    <x-slot name="waitTitle">
+        発注用QRコードをスキャンしてください
+    </x-slot>
+
+    <x-slot name="waitScanner">
+        <livewire:matex::qr-scanner wire:model.live="qrCode" />
+    </x-slot>
+
+    <x-slot name="waitDescription">
+        <p>発注用QRコードをスキャンするか、トークンを入力してください。</p>
+    </x-slot>
+
+    <x-slot name="waitInput">
+        <flux:input
+            id="token"
+            x-ref="token"
+            wire:model.live.debounce.500ms="form.token"
+            placeholder="{{ __('matex::ordering.token.placeholder') }}"
+            icon="magnifying-glass"
+        />
+    </x-slot>
+
+    <x-slot name="messages">
+        @if ($message)
+            <flux:callout :variant="$ok ? 'success' : 'danger'" class="{{ $this->hasInfo ? 'shadow-sm' : 'mt-2 text-center' }}">
+                {{ $message }}
+            </flux:callout>
+        @endif
+    </x-slot>
+
+    <x-slot name="infoTitle">
+        {{ __('matex::ordering.info.title') }}
+    </x-slot>
+
+    <x-slot name="infoCard">
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::ordering.info.material') }}</label>
+                <div class="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                    {{ $info['material_name'] }}
+                </div>
+                <div class="text-sm text-gray-500 font-mono">
+                    {{ $info['material_sku'] }}
+                </div>
             </div>
-            <div class="flex gap-2">
-                <flux:button
-                    variant="outline"
-                    wire:click="lookup"
-                    wire:loading.attr="disabled"
-                    wire:target="lookup"
-                >{{ __('matex::ordering.token.lookup') }}</flux:button>
-            </div>
 
-            @if ($message)
-                @if ($ok)
-                    <flux:callout variant="success" class="mt-2">{{ $message }}</flux:callout>
-                @else
-                    <flux:callout variant="danger" class="mt-2">{{ $message }}</flux:callout>
-                @endif
-            @endif
-        </div>
-
-        <div class="rounded border p-4 space-y-4">
-            <flux:heading size="sm">{{ __('matex::ordering.info.title') }}</flux:heading>
-
-            @if ($this->hasInfo)
-                <div class="text-sm text-gray-700 space-y-1">
-                    <div>{{ __('matex::ordering.info.material') }}: <span class="font-medium">{{ $info['material_name'] }}</span> [<span>{{ $info['material_sku'] }}</span>]</div>
-                    <div>{{ __('matex::ordering.info.supplier') }}: <span class="font-medium">{{ $info['preferred_supplier'] ?? __('matex::ordering.common.not_set') }}</span></div>
-                    <div>{{ __('matex::ordering.info.unit_purchase') }}: <span class="font-medium">{{ $info['unit_purchase'] ?? '-' }}</span></div>
-                    @if($info['moq'])
-                        <div>{{ __('matex::ordering.info.moq') }}: <span class="font-medium">{{ $info['moq'] }}</span></div>
-                    @endif
-                    @if($info['pack_size'])
-                        <div>{{ __('matex::ordering.info.pack_size') }}: <span class="font-medium">{{ $info['pack_size'] }}</span></div>
+            <div class="grid grid-cols-2 gap-4 pt-4 border-t dark:border-neutral-700">
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::ordering.info.supplier') }}</label>
+                    <div class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {{ $info['preferred_supplier'] ?? __('matex::ordering.common.not_set') }}
+                    </div>
+                    @if($info['preferred_supplier_contact'])
+                        <div class="text-xs text-gray-500 font-normal">
+                            ({{ $info['preferred_supplier_contact'] }})
+                        </div>
                     @endif
                 </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::ordering.info.unit_purchase') }}</label>
+                    <div class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {{ $info['unit_purchase'] ?? '-' }}
+                    </div>
+                </div>
+            </div>
 
-                {{-- Options (same style as PO issuance; price impact: none) --}}
+            <div class="grid grid-cols-2 gap-4">
+                @if($info['moq'])
+                    <div class="space-y-1">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::ordering.info.moq') }}</label>
+                        <div class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ $info['moq'] }}</div>
+                    </div>
+                @endif
+                @if($info['pack_size'])
+                    <div class="space-y-1">
+                        <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::ordering.info.pack_size') }}</label>
+                        <div class="text-sm font-semibold text-gray-700 dark:text-gray-300">{{ $info['pack_size'] }}</div>
+                    </div>
+                @endif
+            </div>
+        </div>
+    </x-slot>
+
+    <x-slot name="actionForm">
+        <div class="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-800 dark:border-neutral-700">
+            <div class="space-y-6">
+                {{-- Quantity Selector --}}
+                <div class="space-y-3">
+                    <flux:label class="text-base font-bold">{{ __('matex::ordering.qty.label') }}</flux:label>
+                    <div class="flex items-stretch gap-4">
+                        <div class="flex-1 relative">
+                            <flux:input
+                                type="number"
+                                step="0.000001"
+                                min="0"
+                                wire:model.number="form.qty"
+                                class="!text-2xl !py-4 font-bold text-center"
+                            />
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <flux:button variant="outline" class="flex-1 px-6" wire:click="incrementQty" title="+1">
+                                <flux:icon.plus class="h-6 w-6" />
+                            </flux:button>
+                            <flux:button variant="outline" class="flex-1 px-6" wire:click="decrementQty" title="-1">
+                                <flux:icon.minus class="h-6 w-6" />
+                            </flux:button>
+                        </div>
+                    </div>
+                    <flux:error name="form.qty" />
+                </div>
+
+                {{-- Options Selection --}}
                 @if (!empty($optionGroups))
-                    <div class="mt-4 space-y-3">
-                        <flux:heading size="xs">{{ __('matex::ordering.options.title') }}</flux:heading>
-                        <div class="grid grid-cols-2 gap-4">
+                    <div class="pt-6 border-t dark:border-neutral-700">
+                        <flux:heading size="md" class="mb-4">{{ __('matex::ordering.options.title') }}</flux:heading>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                             @foreach($optionGroups as $g)
                                 @php $gid = $g['id']; $opts = $optionsByGroup[$gid] ?? []; @endphp
                                 <flux:field>
-                                    <flux:label>{{ $g['name'] }}</flux:label>
-                                    <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.defer="form.options.{{ $gid }}">
+                                    <flux:label class="font-medium text-gray-700 dark:text-gray-300">{{ $g['name'] }}</flux:label>
+                                    <select
+                                        class="w-full border border-gray-300 rounded-lg p-3 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-neutral-900 dark:border-neutral-600 dark:text-white"
+                                        wire:model.defer="form.options.{{ $gid }}"
+                                    >
                                         <option value="">-</option>
                                         @foreach($opts as $o)
                                             <option value="{{ $o['id'] }}">{{ $o['name'] }}</option>
@@ -333,26 +414,21 @@ new class extends Component
                         </div>
                     </div>
                 @endif
-            @endif
 
-            <div class="grid gap-3 md:grid-cols-3 items-end">
-                <div class="md:col-span-2">
-                    <flux:input type="number" step="0.000001" min="0" wire:model.number="form.qty" label="{{ __('matex::ordering.qty.label') }}"/>
+                {{-- Action Button --}}
+                <div class="pt-6 border-t dark:border-neutral-700">
+                    <flux:button
+                        variant="primary"
+                        wire:click="order"
+                        wire:loading.attr="disabled"
+                        wire:target="order"
+                        icon="shopping-cart"
+                        class="w-full !py-6 !text-lg font-bold shadow-lg shadow-blue-500/20"
+                    >
+                        {{ __('matex::ordering.create_draft') }}
+                    </flux:button>
                 </div>
-                <div class="flex gap-2">
-                    <flux:button variant="outline" wire:click="decrementQty" title="-1">-</flux:button>
-                    <flux:button variant="outline" wire:click="incrementQty" title="+1">+</flux:button>
-                </div>
-            </div>
-
-            <div class="flex gap-2">
-                <flux:button
-                    variant="primary"
-                    wire:click="order"
-                    wire:loading.attr="disabled"
-                    wire:target="order"
-                >{{ __('matex::ordering.create_draft') }}</flux:button>
             </div>
         </div>
-    </div>
-</div>
+    </x-slot>
+</x-matex::scan-page-layout>

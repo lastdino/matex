@@ -34,7 +34,7 @@ test('moving a lot to a new location succeeds when multiple lots of the same mat
     // However, if the current constraint is only (material_id, lot_no),
     // this test will fail during setup or during the transfer action.
 
-    Livewire::test('matex::matex.materials.show', ['material' => $material])
+    Livewire::test('matex::matex.materials.show', ['id' => $material->id])
         ->call('openTransferModal', $lot->id)
         ->set('transferForm.to_storage_location_id', $loc2->id)
         ->set('transferForm.qty', 5)

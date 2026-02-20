@@ -67,6 +67,14 @@ new class extends Component
 
     public string $storageWarning = '';
 
+    public function resetScan(): void
+    {
+        $this->resetAfterReceive();
+        $this->message = '';
+        $this->ok = false;
+        $this->dispatch('focus-token');
+    }
+
     public function mount(UnitConversionService $conversion): void
     {
         if (! empty($this->token)) {
@@ -377,98 +385,173 @@ new class extends Component
 
 ?>
 
-<div class="p-6 space-y-4" x-data @focus-token.window="$refs.token?.focus(); $refs.token?.select()">
-    <x-matex::topmenu />
-    <div class="flex items-center justify-between">
-        <h1 class="text-xl font-semibold">{{ __('matex::receiving.title') }}</h1>
-        <a href="{{ route('matex.purchase-orders.index') }}" class="text-blue-600 hover:underline">{{ __('matex::receiving.back_to_list') }}</a>
-    </div>
+<x-matex::scan-page-layout
+    :has-info="$this->hasInfo"
+    :title="__('matex::receiving.title')"
+>
+    <x-slot name="backLink">
+        <flux:button href="{{ route('matex.purchase-orders.index') }}" wire:navigate variant="subtle">{{ __('matex::receiving.back_to_list') }}</flux:button>
+    </x-slot>
 
-    <div class="grid gap-4 md:grid-cols-2">
-        <div class="rounded border p-4 space-y-4">
-            <flux:heading size="sm">{{ __('matex::receiving.token') }}</flux:heading>
-            <div class="flex gap-2">
-                <flux:input
-                    id="token"
-                    x-ref="token"
-                    wire:model.live.debounce.300ms="form.token"
-                    placeholder="{{ __('matex::receiving.token_placeholder') }}"
-                    class="flex-1"
-                />
-                <livewire:matex::qr-scanner wire:model.live="form.token" />
-            </div>
-            <div class="flex gap-2">
-                <flux:button
-                    variant="outline"
-                    wire:click="lookup"
-                    wire:loading.attr="disabled"
-                    wire:target="lookup"
-                >{{ __('matex::receiving.lookup') }}</flux:button>
-            </div>
+    <x-slot name="waitTitle">
+        入荷用QRコードをスキャンしてください
+    </x-slot>
 
-            @if ($message)
-                @if ($ok)
-                    <flux:callout variant="success" class="mt-2">{{ $message }}</flux:callout>
-                @else
-                    <flux:callout variant="danger" class="mt-2">{{ $message }}</flux:callout>
-                @endif
-            @endif
-        </div>
+    <x-slot name="waitScanner">
+        <livewire:matex::qr-scanner wire:model.live="form.token" />
+    </x-slot>
 
-        <div class="rounded border p-4 space-y-4">
-            <flux:heading size="sm">{{ __('matex::receiving.info') }}</flux:heading>
+    <x-slot name="waitDescription">
+        <p>発注書または現品票のQRコードをスキャンするか、トークンを入力してください。</p>
+    </x-slot>
 
-            @if ($this->hasInfo)
-                <div class="text-sm text-gray-700 space-y-1">
-                    <div>{{ __('matex::receiving.info_po') }}: <span class="font-medium">{{ $info['po_number'] }}</span> (<span>{{ $info['po_status'] }}</span>)</div>
-                    <div>{{ __('matex::receiving.info_material') }}: <span class="font-medium">{{ $info['material_name'] }}</span> [<span>{{ $info['material_sku'] }}</span>]</div>
-                    <div>{{ __('matex::receiving.info_ordered_base') }}: <span class="font-medium">{{ $info['ordered_base'] }}</span>@if($info['unit_stock']) <span class="ml-1 text-gray-500">{{ $info['unit_stock'] }}</span>@endif</div>
-                    <div>{{ __('matex::receiving.info_remaining_base') }}: <span class="font-medium">{{ $info['remaining_base'] }}</span>@if($info['unit_stock']) <span class="ml-1 text-gray-500">{{ $info['unit_stock'] }}</span>@endif</div>
+    <x-slot name="waitInput">
+        <flux:input
+            id="token"
+            x-ref="token"
+            wire:model.live.debounce.500ms="form.token"
+            placeholder="{{ __('matex::receiving.token_placeholder') }}"
+            icon="magnifying-glass"
+        />
+    </x-slot>
+
+    <x-slot name="messages">
+        @if ($message)
+            <flux:callout :variant="$ok ? 'success' : 'danger'" class="{{ $this->hasInfo ? 'shadow-sm' : 'mt-2 text-center' }}">
+                {{ $message }}
+            </flux:callout>
+        @endif
+    </x-slot>
+
+    <x-slot name="infoTitle">
+        {{ __('matex::receiving.info') }}
+    </x-slot>
+
+    <x-slot name="infoCard">
+        <div class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::receiving.info_material') }}</label>
+                <div class="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                    {{ $info['material_name'] }}
                 </div>
-            @endif
-
-            <div class="grid gap-3 md:grid-cols-2">
-                <div class="flex gap-2 items-end">
-                    <flux:input type="number" step="0.000001" min="0" wire:model.live="form.qty" label="{{ __('matex::receiving.qty_received') }}"/>
-                    @if ($this->hasInfo && !empty($info['available_units']))
-                        <div class="w-32">
-                            <flux:select wire:model.live="form.unit">
-                                @foreach($info['available_units'] as $u)
-                                    <flux:select.option :value="$u">{{ $u }}</flux:select.option>
-                                @endforeach
-                            </flux:select>
-                        </div>
-                    @endif
+                <div class="text-sm text-gray-500 font-mono">
+                    {{ $info['material_sku'] }}
                 </div>
-                <flux:select wire:model.live="form.storage_location_id" label="保管場所" required placeholder="場所を選択...">
-                    @foreach(Lastdino\Matex\Models\StorageLocation::query()->where('is_active', true)->orderBy('name')->get() as $loc)
-                        <flux:select.option :value="$loc->id">{{ $loc->name }}</flux:select.option>
-                    @endforeach
-                </flux:select>
-                <flux:input wire:model="form.reference_number" label="{{ __('matex::receiving.reference_number') }}"/>
             </div>
 
-            @if ($storageWarning)
-                <flux:callout variant="warning" class="mt-2">{{ $storageWarning }}</flux:callout>
-            @endif
+            <div class="pt-4 border-t dark:border-neutral-700 space-y-3">
+                <div class="flex justify-between items-center">
+                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::receiving.info_po') }}</label>
+                    <flux:badge size="sm" color="blue" inset="top bottom">{{ $info['po_status'] }}</flux:badge>
+                </div>
+                <div class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                    {{ $info['po_number'] }}
+                </div>
+            </div>
 
-            @if ($this->hasInfo)
-                <div class="mt-4 space-y-3">
-                    <flux:heading size="xs">{{ __('matex::receiving.lot_section_title') }}</flux:heading>
-                    <div class="grid gap-3 md:grid-cols-3">
-                        <flux:input wire:model="form.lot_no" label="{{ __('matex::receiving.lot_no') }}" placeholder="{{ __('matex::receiving.lot_no_placeholder') }}"/>
-                        <flux:input type="date" wire:model="form.mfg_date" label="{{ __('matex::receiving.mfg_date') }}"/>
-                        <flux:input type="date" wire:model="form.expiry_date" label="{{ __('matex::receiving.expiry_date') }}"/>
+            <div class="grid grid-cols-2 gap-4 pt-4 border-t dark:border-neutral-700">
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::receiving.info_ordered_base') }}</label>
+                    <div class="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {{ $info['ordered_base'] }} <span class="text-xs font-normal text-gray-500">{{ $info['unit_stock'] }}</span>
                     </div>
-                    <p class="text-xs text-gray-500">{{ __('matex::receiving.lot_notice') }}</p>
                 </div>
-            @endif
-            <flux:button
-                variant="primary"
-                wire:click="receive"
-                wire:loading.attr="disabled"
-                wire:target="receive"
-            >{{ __('matex::receiving.receive') }}</flux:button>
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::receiving.info_remaining_base') }}</label>
+                    <div class="text-sm font-semibold text-red-600 dark:text-red-400">
+                        {{ $info['remaining_base'] }} <span class="text-xs font-normal text-gray-500">{{ $info['unit_stock'] }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+    </x-slot>
+
+    <x-slot name="actionForm">
+        <div class="rounded-xl border bg-white p-6 shadow-sm dark:bg-neutral-800 dark:border-neutral-700">
+            <div class="space-y-6">
+                {{-- Quantity & Unit & Storage --}}
+                <div class="grid gap-6 sm:grid-cols-2">
+                    <div class="space-y-3">
+                        <flux:label class="text-base font-bold">{{ __('matex::receiving.qty_received') }}</flux:label>
+                        <div class="flex gap-2">
+                            <flux:input
+                                type="number"
+                                step="0.000001"
+                                min="0"
+                                wire:model.live="form.qty"
+                                class="flex-1 !text-xl font-bold"
+                            />
+                            @if (!empty($info['available_units']))
+                                <div class="w-24">
+                                    <flux:select wire:model.live="form.unit">
+                                        @foreach($info['available_units'] as $u)
+                                            <flux:select.option :value="$u">{{ $u }}</flux:select.option>
+                                        @endforeach
+                                    </flux:select>
+                                </div>
+                            @endif
+                        </div>
+                        <flux:error name="form.qty" />
+                    </div>
+
+                    <div class="space-y-3">
+                        <flux:label class="text-base font-bold">保管場所</flux:label>
+                        <flux:select wire:model.live="form.storage_location_id" placeholder="場所を選択..." required>
+                            @foreach(Lastdino\Matex\Models\StorageLocation::query()->where('is_active', true)->orderBy('name')->get() as $loc)
+                                <flux:select.option :value="$loc->id">{{ $loc->name }} @if($loc->max_specified_quantity_ratio) (指定数量倍率: {{ $loc->max_specified_quantity_ratio }}) @endif</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                        <flux:error name="form.storage_location_id" />
+                    </div>
+                </div>
+
+                @if ($storageWarning)
+                    <flux:callout variant="warning" class="shadow-sm">
+                        {{ $storageWarning }}
+                    </flux:callout>
+                @endif
+
+                <div class="pt-6 border-t dark:border-neutral-700">
+                    <flux:input wire:model="form.reference_number" label="{{ __('matex::receiving.reference_number') }}" placeholder="納品書番号など"/>
+                </div>
+
+                {{-- Lot Info Section --}}
+                <div class="pt-6 border-t dark:border-neutral-700 space-y-4">
+                    <flux:heading size="md">{{ __('matex::receiving.lot_section_title') }}</flux:heading>
+                    <div class="grid gap-4 sm:grid-cols-3">
+                        <flux:field>
+                            <flux:label>{{ __('matex::receiving.lot_no') }}</flux:label>
+                            <flux:input wire:model="form.lot_no" placeholder="{{ __('matex::receiving.lot_no_placeholder') }}"/>
+                            <flux:error name="form.lot_no" />
+                        </flux:field>
+                        <flux:field>
+                            <flux:label>{{ __('matex::receiving.mfg_date') }}</flux:label>
+                            <flux:input type="date" wire:model="form.mfg_date"/>
+                            <flux:error name="form.mfg_date" />
+                        </flux:field>
+                        <flux:field>
+                            <flux:label>{{ __('matex::receiving.expiry_date') }}</flux:label>
+                            <flux:input type="date" wire:model="form.expiry_date"/>
+                            <flux:error name="form.expiry_date" />
+                        </flux:field>
+                    </div>
+                    <p class="text-xs text-neutral-500">{{ __('matex::receiving.lot_notice') }}</p>
+                </div>
+
+                {{-- Action Button --}}
+                <div class="pt-6 border-t dark:border-neutral-700">
+                    <flux:button
+                        variant="primary"
+                        wire:click="receive"
+                        wire:loading.attr="disabled"
+                        wire:target="receive"
+                        icon="arrow-down-tray"
+                        class="w-full !py-6 !text-lg font-bold shadow-lg shadow-blue-500/20"
+                    >
+                        {{ __('matex::receiving.receive') }}
+                    </flux:button>
+                </div>
+            </div>
+        </div>
+    </x-slot>
+</x-matex::scan-page-layout>

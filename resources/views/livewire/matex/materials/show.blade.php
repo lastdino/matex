@@ -1,22 +1,31 @@
 <?php
 
-use Illuminate\Contracts\View\View as ViewContract;
 use Lastdino\Matex\Models\Material;
 use Lastdino\Matex\Models\MaterialInspection;
 use Lastdino\Matex\Models\MaterialLot;
 use Lastdino\Matex\Models\MaterialRiskAssessment;
 use Lastdino\Matex\Models\StockMovement;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 new class extends Component
 {
+    #[Url]
+    public ?int $id = null;
+
     public int $materialId;
 
+    public string $viewMode = 'details'; // 'details' | 'labels'
+
     public bool $showRaModal = false;
+
     public bool $showInspectionModal = false;
+
     public bool $showTransferModal = false;
 
     public ?int $transferLotId = null;
+
     public array $transferForm = [
         'qty' => null,
         'to_storage_location_id' => '',
@@ -40,11 +49,23 @@ new class extends Component
         'details' => null,
     ];
 
-    public function mount(Material $material): void
+    public function mount(?Material $material = null): void
     {
-        $this->materialId = (int) $material->getKey();
+        if ($this->id) {
+            $this->materialId = $this->id;
+        } elseif ($material && $material->exists) {
+            $this->materialId = (int) $material->getKey();
+        } else {
+            abort(404);
+        }
+
         $this->raForm['assessment_date'] = now()->format('Y-m-d');
         $this->inspectionForm['inspection_date'] = now()->format('Y-m-d');
+    }
+
+    public function toggleViewMode(): void
+    {
+        $this->viewMode = ($this->viewMode === 'details') ? 'labels' : 'details';
     }
 
     public function getMaterialProperty(): Material
@@ -52,9 +73,9 @@ new class extends Component
         /** @var Material $m */
         $m = Material::query()->with(['lots' => function ($q) {
             $q->orderBy('expiry_date')->orderBy('lot_no');
-        }, 'riskAssessments' => function($q) {
+        }, 'riskAssessments' => function ($q) {
             $q->orderByDesc('assessment_date');
-        }, 'inspections' => function($q) {
+        }, 'inspections' => function ($q) {
             $q->orderByDesc('inspection_date');
         }])->findOrFail($this->materialId);
 
@@ -169,11 +190,13 @@ new class extends Component
 
         if ($qtyToMove > (float) $lot->qty_on_hand) {
             $this->addError('transferForm.qty', '移動数量が在庫数を超えています。');
+
             return;
         }
 
         if ((int) $this->transferForm['to_storage_location_id'] === (int) $lot->storage_location_id) {
             $this->addError('transferForm.to_storage_location_id', '移動先が現在の場所と同じです。');
+
             return;
         }
 
@@ -234,14 +257,24 @@ new class extends Component
         $this->showTransferModal = false;
         $this->dispatch('toast', type: 'success', message: '在庫移動が完了しました。');
     }
+
+    #[On('matex:material-saved')]
+    public function materialSaved(): void
+    {
+        // Simply triggering a re-render
+    }
+
+    #[On('matex:sds-updated')]
+    public function refresh(): void
+    {
+        // Simply triggering a re-render
+    }
 };
 
 ?>
 
-<div class="p-6 space-y-6">
-    <x-matex::topmenu />
-
-    <div class="flex items-center justify-between">
+<div class="">
+    <div class="flex items-center justify-between print:hidden" wire:key="show-header-{{ $this->material->id }}">
         <div class="flex items-center gap-3">
             <h1 class="text-xl font-semibold">
                 {{ __('matex::materials.show.title_prefix') }}: {{ $this->material->sku }} — {{ $this->material->name }}
@@ -264,12 +297,32 @@ new class extends Component
                 @endif
             </div>
         </div>
-        <div class="flex gap-2">
-            <a class="px-3 py-1.5 rounded bg-neutral-200 dark:bg-neutral-800" href="{{ route('matex.materials.index') }}">{{ __('matex::materials.show.back_to_list') }}</a>
-            <a class="px-3 py-1.5 rounded bg-blue-600 text-white" href="{{ route('matex.materials.issue', ['material' => $this->material->id]) }}">{{ __('matex::materials.show.issue') }}</a>
-        </div>
+        <flux:navbar>
+            <flux:navbar.item icon="arrow-left" href="{{ route('matex.materials.index') }}" :current="false" wire:navigate>{{ __('matex::materials.show.back_to_list') }}</flux:navbar.item>
+            <flux:navbar.item
+                icon="{{ $viewMode === 'labels' ? 'document-text' : 'qr-code' }}"
+                wire:click="toggleViewMode"
+                :current="false"
+            >
+                {{ $viewMode === 'labels' ? '詳細に戻る' : 'QRラベル' }}
+            </flux:navbar.item>
+            <flux:navbar.item icon="arrow-up-tray" href="{{ route('matex.issue.scan', ['material' => $this->material->id]) }}" :current="false" wire:navigate>{{ __('matex::materials.show.issue') }}</flux:navbar.item>
+            <flux:dropdown>
+                <flux:navbar.item icon="ellipsis-horizontal" :current="false" />
+                <flux:menu>
+                    <flux:menu.item icon="pencil-square" x-on:click="$dispatch('matex:open-material-form', { id: {{ $this->material->id }} })">{{ __('matex::materials.buttons.edit') }}</flux:menu.item>
+                    <flux:menu.item icon="qr-code" x-on:click="$dispatch('matex:open-token', { materialId: {{ $this->material->id }} })">{{ __('matex::materials.buttons.issue_token') }}</flux:menu.item>
+                    <flux:menu.item icon="document-text" x-on:click="$dispatch('matex:open-sds', { materialId: {{ $this->material->id }} })">{{ __('matex::materials.sds.open_modal') }}</flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
+        </flux:navbar>
     </div>
 
+    @if($viewMode === 'labels')
+        <div class="mt-6">
+            <livewire:matex::matex.materials.labels :materialId="$this->materialId" />
+        </div>
+    @else
     <div class="grid gap-6 md:grid-cols-2">
         <div class="space-y-6">
             <div class="rounded border p-4 bg-white dark:bg-neutral-900 shadow-sm">
@@ -283,9 +336,11 @@ new class extends Component
 
                 @if($this->material->is_chemical)
                     <div class="mt-6 border-t pt-4 space-y-4">
-                        <h3 class="font-medium text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                            <flux:icon name="beaker" class="size-4" />
-                            {{ __('matex::materials.sections.chemical_details') }}
+                        <h3 class="font-medium text-blue-700 dark:text-blue-400 flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <flux:icon name="beaker" class="size-4" />
+                                {{ __('matex::materials.sections.chemical_details') }}
+                            </div>
                         </h3>
                         <div class="grid grid-cols-2 gap-4 text-sm">
                             <div>
@@ -299,6 +354,21 @@ new class extends Component
                             <div class="col-span-2">
                                 <div class="text-neutral-500">{{ __('matex::materials.form.ghs_hazard_details') }}</div>
                                 <div class="font-medium whitespace-pre-wrap">{{ $this->material->ghs_hazard_details ?: '-' }}</div>
+                            </div>
+                            <div>
+                                @php($hasSds = \Illuminate\Support\Facades\Schema::hasTable('media') ? (bool) $this->material->getFirstMedia('sds') : false)
+                                @if($hasSds)
+                                    @php($dl = \Illuminate\Support\Facades\URL::temporarySignedRoute('matex.materials.sds.download', now()->addMinutes(10), ['material' => $this->material->id]))
+                                    <flux:link href="{{ $dl }}" target="_blank">
+                                        <flux:badge size="sm" color="emerald" icon="document-text" class="cursor-pointer">
+                                            {{ __('matex::materials.sds.badge_has') }}
+                                        </flux:badge>
+                                    </flux:link>
+                                @else
+                                    <flux:badge size="sm" color="zinc" icon="document-text" class="cursor-pointer" x-on:click="$dispatch('matex:open-sds', { materialId: {{ $this->material->id }} })">
+                                        {{ __('matex::materials.sds.badge_none') }}
+                                    </flux:badge>
+                                @endif
                             </div>
 
                             <div class="col-span-2 border-t pt-2 mt-2">
@@ -367,14 +437,29 @@ new class extends Component
                                 <td class="py-2 px-3">{{ $lot->expiry_date ?? '-' }}</td>
                                 <td class="py-2 px-3">{{ $lot->status ?? '-' }}</td>
                                 <td class="py-2 px-3">
-                                    <div class="flex gap-2 justify-end">
-                                        <flux:button size="xs" variant="outline" wire:click="openTransferModal({{ $lot->id }})">
-                                            移動
-                                        </flux:button>
-                                        <a class="inline-block text-blue-600 hover:underline text-xs"
-                                           href="{{ route('matex.materials.issue', ['material' => $this->material->id, 'lot' => $lot->id]) }}">
-                                            {{ __('matex::materials.show.issue') }}
-                                        </a>
+                                    <div class="flex justify-end">
+                                        <flux:dropdown>
+                                            <flux:button size="xs" variant="outline" icon:trailing="chevron-down">
+                                                {{ __('matex::materials.show.lots.actions') }}
+                                            </flux:button>
+
+                                            <flux:menu>
+                                                <flux:menu.item wire:click="openTransferModal({{ $lot->id }})" icon="arrows-right-left">
+                                                    移動
+                                                </flux:menu.item>
+
+
+                                                <flux:menu.separator />
+
+                                                <flux:menu.item
+                                                    href="{{ route('matex.issue.scan', ['material' => $this->material->id, 'lot' => $lot->id]) }}"
+                                                    icon="arrow-up-tray"
+                                                    wire:navigate
+                                                >
+                                                    {{ __('matex::materials.show.issue') }}
+                                                </flux:menu.item>
+                                            </flux:menu>
+                                        </flux:dropdown>
                                     </div>
                                 </td>
                             </tr>
@@ -480,6 +565,11 @@ new class extends Component
             </div>
         </div>
     </div>
+    @endif
+
+    <livewire:matex::matex.materials.material-form-modal />
+    <livewire:matex::matex.materials.issue-token-modal />
+    <livewire:matex::matex.materials.sds-manager-modal />
 
     <flux:modal wire:model.self="showRaModal" name="ra-form">
         <div class="w-full md:w-[36rem] max-w-full space-y-4">
@@ -555,4 +645,5 @@ new class extends Component
             </div>
         </div>
     </flux:modal>
+
 </div>

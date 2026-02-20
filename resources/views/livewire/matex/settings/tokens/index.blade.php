@@ -154,7 +154,6 @@ new class extends Component
     <div class="flex items-center justify-between">
         <h1 class="text-xl font-semibold">{{ __('matex::settings.tokens.title') }}</h1>
         <div class="flex gap-2">
-            <a href="{{ route('matex.settings.labels') }}" class="text-blue-600 hover:underline">{{ __('matex::settings.tokens.to_labels') }}</a>
             <flux:button variant="primary" wire:click="creating">{{ __('matex::settings.tokens.buttons.new') }}</flux:button>
         </div>
     </div>

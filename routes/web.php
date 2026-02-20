@@ -30,10 +30,9 @@ Route::group([
     // Materials
     Route::livewire('/materials', 'matex::matex.materials.index')
         ->name('matex.materials.index');
-    Route::livewire('/materials/{material}', 'matex::matex.materials.show')
-        ->name('matex.materials.show');
-    Route::livewire('/materials/{material}/issue', 'matex::matex.materials.issue')
-        ->name('matex.materials.issue');
+
+    Route::livewire('/issue', 'matex::matex.materials.issue')
+        ->name('matex.issue.scan');
     // Material SDS secure download (signed + auth)
     Route::get('/materials/{material}/sds', MaterialSdsDownloadController::class)
         ->middleware('signed')
@@ -43,9 +42,9 @@ Route::group([
     Route::livewire('/suppliers', 'matex::matex.suppliers.index')
         ->name('matex.suppliers.index');
 
-    // Receiving scan page
-    Route::livewire('/receivings/scan', 'matex::matex.receiving.scan')
-        ->name('matex.receiving.scan');
+    // Receiving page
+    Route::livewire('/receivings', 'matex::matex.receiving.scan')
+        ->name('matex.receiving');
 
     // Options settings
     Route::livewire('/settings/options', 'matex::matex.settings.options.index')
@@ -78,10 +77,6 @@ Route::group([
     // Ordering Tokens settings (CRUD)
     Route::livewire('/settings/tokens', 'matex::matex.settings.tokens.index')
         ->name('matex.settings.tokens');
-
-    // Token Labels (printable)
-    Route::livewire('/settings/labels', 'matex::matex.settings.tokens.labels')
-        ->name('matex.settings.labels');
 
     // Ordering scan page (QR→発注ドラフト作成)
     Route::livewire('/ordering/scan', 'matex::matex.ordering.scan')

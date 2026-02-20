@@ -378,7 +378,7 @@ new class extends Component
                             @elseif (!empty($item->scan_token))
                                 <div class="flex items-center gap-2">
                                     <div class="qr-svg w-[40px] h-[40px]">
-                                        {!! \tbQuar\Facades\Quar::size(40)->generate(route('matex.receiving.scan', ['token' => $item->scan_token])) !!}
+                                        {!! \tbQuar\Facades\Quar::size(40)->generate(route('matex.receiving', ['token' => $item->scan_token])) !!}
                                     </div>
                                     <div class="flex flex-col gap-1">
                                         <div class="text-[10px] text-gray-500 select-all">{{ substr($item->scan_token, 0, 8) }}…</div>
@@ -398,7 +398,7 @@ new class extends Component
                                             @if(in_array($statusVal, ['issued', 'receiving'], true) && !empty($item->scan_token))
                                                 <flux:menu.item
                                                     icon="arrow-right-start-on-rectangle"
-                                                    href="{{ route('matex.receiving.scan', ['token' => $item->scan_token]) }}"
+                                                    href="{{ route('matex.receiving', ['token' => $item->scan_token]) }}"
                                                 >
                                                     {{ __('matex::receiving.buttons.go_to_receiving') }}
                                                 </flux:menu.item>

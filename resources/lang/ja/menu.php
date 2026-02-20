@@ -7,6 +7,7 @@ return [
     'dashboard' => 'ダッシュボード',
     'purchase_orders' => '発注',
     'receiving' => '入荷',
+    'issue' => '出庫',
     'quick_ordering' => 'クイック発注',
     'pending_receiving' => '入荷待ち一覧',
     'materials' => '資材一覧',

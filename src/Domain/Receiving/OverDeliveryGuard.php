@@ -6,8 +6,8 @@ namespace Lastdino\Matex\Domain\Receiving;
 
 use Lastdino\Matex\Models\Material;
 use Lastdino\Matex\Models\PurchaseOrderItem;
-use Lastdino\Matex\Services\UnitConversionService;
 use Lastdino\Matex\Models\StorageLocation;
+use Lastdino\Matex\Services\UnitConversionService;
 
 class OverDeliveryGuard
 {
@@ -43,7 +43,7 @@ class OverDeliveryGuard
         $totalRatio = $currentRatio + $newRatio;
 
         if ($totalRatio > (float) $location->max_specified_quantity_ratio) {
-            abort(422, "保管場所「{$location->name}」の指定数量倍率（{$location->max_specified_quantity_ratio}）を超過します。現在の合計: " . number_format($totalRatio, 2));
+            abort(422, "保管場所「{$location->name}」の指定数量倍率（{$location->max_specified_quantity_ratio}）を超過します。現在の合計: ".number_format($totalRatio, 2));
         }
     }
 }
