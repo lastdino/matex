@@ -11,13 +11,14 @@ use Lastdino\Matex\Support\Tables;
 class OrderingToken extends Model
 {
     protected $fillable = [
-        'token', 'material_id', 'unit_purchase', 'default_qty', 'enabled', 'expires_at',
+        'token', 'material_id', 'unit_purchase', 'default_qty', 'options', 'enabled', 'expires_at',
     ];
 
     protected function casts(): array
     {
         return [
             'default_qty' => 'decimal:6',
+            'options' => 'array',
             'enabled' => 'boolean',
             'expires_at' => 'datetime',
         ];

@@ -175,8 +175,8 @@ new class extends Component
 
         // オプショングループ/選択肢をロード（既存PO作成と同等：Activeのみ、並び順あり）
         $this->loadActiveOptions();
-        // 既存の選択をリセット
-        $this->form['options'] = [];
+        // 既定の選択をセット（トークンに保存されている場合）、なければ空
+        $this->form['options'] = $ot->options ?? [];
 
         // 既定数量がある場合はフォームに反映
         if (empty($this->form['qty']) && $this->info['default_qty']) {

@@ -290,7 +290,7 @@ new class extends Component
             </div>
 
             <livewire:matex::matex.materials.material-form-modal />
-            <livewire:matex::matex.materials.issue-token-modal />
+            <livewire:matex::matex.settings.tokens.index />
             <livewire:matex::matex.materials.sds-manager-modal />
         </div>
     @endif
