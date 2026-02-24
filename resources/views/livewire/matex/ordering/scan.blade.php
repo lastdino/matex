@@ -284,7 +284,7 @@ new class extends Component
     </x-slot>
 
     <x-slot name="waitScanner">
-        <livewire:matex::qr-scanner wire:model.live="qrCode" />
+        <livewire:matex::qr-scanner wire:model.live="form.token" />
     </x-slot>
 
     <x-slot name="waitDescription">
