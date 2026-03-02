@@ -22,7 +22,7 @@ class PurchaseOrder extends Model
     use HasApprovalFlow;
 
     protected $fillable = [
-        'po_number', 'supplier_id', 'supplier_contact_id', 'status', 'issue_date', 'expected_date', 'subtotal', 'tax', 'total',
+        'po_number', 'supplier_id', 'department_id', 'supplier_contact_id', 'status', 'issue_date', 'expected_date', 'subtotal', 'tax', 'total',
         'shipping_total', 'shipping_tax_total',
         'invoice_number', 'delivery_note_number', 'notes', 'created_by',
         // 発注ごとの納品先
@@ -39,6 +39,7 @@ class PurchaseOrder extends Model
     protected function casts(): array
     {
         return [
+            'department_id' => 'integer',
             'status' => PurchaseOrderStatusCast::class,
             'issue_date' => 'datetime',
             'expected_date' => 'datetime',
@@ -55,6 +56,11 @@ class PurchaseOrder extends Model
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 
     public function contact(): BelongsTo

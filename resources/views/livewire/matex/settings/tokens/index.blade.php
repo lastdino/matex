@@ -32,6 +32,7 @@ new class extends Component
         $this->form = [
             'token' => strtoupper(\Illuminate\Support\Str::random(12)),
             'material_id' => $materialId,
+            'department_id' => null,
             'unit_purchase' => $m->unit_purchase_default,
             'default_qty' => $m->pack_size ?: 1.0,
             'options' => [],
@@ -43,11 +44,12 @@ new class extends Component
     }
 
     /**
-     * @var array{token:string,material_id:int|null,unit_purchase:string|null,default_qty:float|int|string|null,options:array<int,int|string|null>,enabled:bool,expires_at:string|null}
+     * @var array{token:string,material_id:int|null,department_id:int|null,unit_purchase:string|null,default_qty:float|int|string|null,options:array<int,int|string|null>,enabled:bool,expires_at:string|null}
      */
     public array $form = [
         'token' => '',
         'material_id' => null,
+        'department_id' => null,
         'unit_purchase' => null,
         'default_qty' => null,
         'options' => [],
@@ -82,6 +84,7 @@ new class extends Component
         return [
             'form.token' => ['required', 'string', 'max:191', $unique],
             'form.material_id' => ['required', 'integer', 'exists:'.(new Material)->getTable().',id'],
+            'form.department_id' => ['nullable', 'integer', 'exists:'.\Lastdino\Matex\Support\Tables::name('departments').',id'],
             'form.unit_purchase' => ['nullable', 'string', 'max:64'],
             'form.default_qty' => ['nullable', 'numeric', 'gt:0'],
             'form.options' => ['nullable', 'array'],
@@ -104,6 +107,7 @@ new class extends Component
         $this->form = [
             'token' => (string) $ot->token,
             'material_id' => (int) $ot->material_id,
+            'department_id' => $ot->department_id,
             'unit_purchase' => $ot->unit_purchase,
             'default_qty' => $ot->default_qty,
             'options' => $ot->options ?? [],
@@ -277,6 +281,12 @@ new class extends Component
                 <option value="">{{ __('matex::settings.tokens.modal.select_placeholder') }}</option>
                 @foreach($this->materials as $m)
                     <option value="{{ $m->id }}">{{ $m->name }} ({{ $m->sku }})</option>
+                @endforeach
+            </flux:select>
+            <flux:select wire:model.defer="form.department_id" label="部門">
+                <option value="">(部門指定なし)</option>
+                @foreach(\Lastdino\Matex\Models\Department::active()->ordered()->get() as $dept)
+                    <option value="{{ $dept->id }}">{{ $dept->name }}</option>
                 @endforeach
             </flux:select>
             <div class="grid md:grid-cols-3 gap-3">

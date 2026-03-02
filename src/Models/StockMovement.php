@@ -11,7 +11,7 @@ use Lastdino\Matex\Support\Tables;
 class StockMovement extends Model
 {
     protected $fillable = [
-        'material_id', 'lot_id', 'type', 'source_type', 'source_id', 'qty_base', 'unit', 'occurred_at', 'reason',
+        'material_id', 'department_id', 'lot_id', 'type', 'source_type', 'source_id', 'qty_base', 'unit', 'occurred_at', 'reason',
         'causer_type', 'causer_id', 'is_external_sync',
     ];
 
@@ -23,6 +23,7 @@ class StockMovement extends Model
     protected function casts(): array
     {
         return [
+            'department_id' => 'integer',
             'qty_base' => 'decimal:6',
             'occurred_at' => 'datetime',
             'is_external_sync' => 'boolean',
@@ -32,6 +33,11 @@ class StockMovement extends Model
     public function material(): BelongsTo
     {
         return $this->belongsTo(Material::class, 'material_id');
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function lot(): BelongsTo

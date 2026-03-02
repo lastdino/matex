@@ -23,6 +23,7 @@ final class PurchaseOrderFactory
     /**
      * @param array{
      *   supplier_id:int,
+     *   department_id?:int|null,
      *   supplier_contact_id?:int|null,
      *   expected_date?:string|null,
      *   delivery_location?:string|null,
@@ -46,6 +47,7 @@ final class PurchaseOrderFactory
         return DB::transaction(function () use ($input, $generateShippingPerLine) {
             $po = PurchaseOrder::create([
                 'supplier_id' => (int) $input['supplier_id'],
+                'department_id' => isset($input['department_id']) ? (int) $input['department_id'] : null,
                 'supplier_contact_id' => isset($input['supplier_contact_id']) ? (int) $input['supplier_contact_id'] : null,
                 'status' => PurchaseOrderStatus::Draft,
                 'expected_date' => $input['expected_date'] ?? null,

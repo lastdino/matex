@@ -25,6 +25,7 @@ new class extends Component
     public array $info = [
         'material_name' => '',
         'material_sku' => '',
+        'department_name' => null,
         'preferred_supplier' => null,
         'preferred_supplier_contact' => null,
         'unit_purchase' => null,
@@ -138,7 +139,7 @@ new class extends Component
         /** @var OrderingToken|null $ot */
         $ot = OrderingToken::query()
             ->where('token', (string) $this->form['token'])
-            ->with(['material.preferredSupplier', 'material.preferredSupplierContact'])
+            ->with(['material.preferredSupplier', 'material.preferredSupplierContact', 'department'])
             ->first();
         if (! $ot || ! $ot->enabled || ($ot->expires_at && now()->greaterThan($ot->expires_at))) {
             $this->resetInfo();
@@ -165,6 +166,7 @@ new class extends Component
         $this->info = [
             'material_name' => (string) ($mat->name ?? ''),
             'material_sku' => (string) ($mat->sku ?? ''),
+            'department_name' => $ot->department?->name,
             'preferred_supplier' => $mat->preferredSupplier?->name,
             'preferred_supplier_contact' => $mat->preferredSupplierContact?->name,
             'unit_purchase' => $ot->unit_purchase ?? $mat->unit_purchase_default,
@@ -315,6 +317,12 @@ new class extends Component
 
     <x-slot name="infoCard">
         <div class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">部門</label>
+                <div class="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                    {{ $this->info['department_name'] ?: '---' }}
+                </div>
+            </div>
             <div class="space-y-1">
                 <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::ordering.info.material') }}</label>
                 <div class="text-lg font-bold text-gray-900 dark:text-white leading-tight">

@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Lastdino\Matex\Support\Tables;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::table(Tables::name('departments'), function (Blueprint $table) {
+            $table->renameColumn('monox_api_key', 'api_token');
+            $table->text('description')->nullable()->after('name')->comment('説明');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::table(Tables::name('departments'), function (Blueprint $table) {
+            $table->renameColumn('api_token', 'monox_api_key');
+            $table->dropColumn('description');
+        });
+    }
+};

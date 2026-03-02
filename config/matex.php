@@ -11,6 +11,11 @@ return [
 
     'table_prefix' => 'matex_',
 
+    // 部門（Department）モデルが使用するテーブル名
+    // 未設定の場合は table_prefix + 'departments' が使用されます。
+    // monox 側のテーブルを直接参照したい場合などにここを指定します。
+    'departments_table' => env('MATEX_DEPARTMENTS_TABLE'),
+
     // API 認証設定
     'api_key' => env('MATEX_API_KEY'),
     'api_middleware' => ['api', \Lastdino\Matex\Http\Middleware\VerifyApiKey::class],

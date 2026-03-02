@@ -40,6 +40,7 @@ new class extends Component
      * @var array{
      *   po_number: string,
      *   po_status: string,
+     *   department_name: string|null,
      *   material_id: int|null,
      *   material_name: string,
      *   material_sku: string,
@@ -52,6 +53,7 @@ new class extends Component
     public array $info = [
         'po_number' => '',
         'po_status' => '',
+        'department_name' => null,
         'material_id' => null,
         'material_name' => '',
         'material_sku' => '',
@@ -226,7 +228,7 @@ new class extends Component
         /** @var PurchaseOrderItem|null $poi */
         $poi = PurchaseOrderItem::query()
             ->whereScanToken((string) $this->form['token'])
-            ->with(['purchaseOrder', 'material'])
+            ->with(['purchaseOrder.department', 'material'])
             ->first();
 
         if (! $poi) {
@@ -268,6 +270,7 @@ new class extends Component
             $this->info = [
                 'po_number' => (string) $po->po_number,
                 'po_status' => (string) $po->status->value,
+                'department_name' => $po->department?->name,
                 'material_id' => null,
                 'material_name' => '(アドホック項目)',
                 'material_sku' => '',
@@ -297,6 +300,7 @@ new class extends Component
         $this->info = [
             'po_number' => (string) $po->po_number,
             'po_status' => (string) $po->status->value,
+            'department_name' => $po->department?->name,
             'material_id' => $material->id,
             'material_name' => (string) $material->name,
             'material_sku' => (string) $material->sku,
@@ -429,6 +433,12 @@ new class extends Component
 
     <x-slot name="infoCard">
         <div class="space-y-4">
+            <div class="space-y-1">
+                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">部門</label>
+                <div class="text-lg font-bold text-gray-900 dark:text-white leading-tight">
+                    {{ $info['department_name'] ?: '---' }}
+                </div>
+            </div>
             <div class="space-y-1">
                 <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('matex::receiving.info_material') }}</label>
                 <div class="text-lg font-bold text-gray-900 dark:text-white leading-tight">

@@ -24,6 +24,7 @@ new class extends Component
         // Load all relations required for detail view and receiving history
         $this->po = $po->load([
             'supplier',
+            'department',
             'requester',
             'items.material',
             'receivings.items',
@@ -58,6 +59,7 @@ new class extends Component
 
         $this->po = $po->load([
             'supplier',
+            'department',
             'requester',
             'items.material',
             'receivings.items',
@@ -166,6 +168,7 @@ new class extends Component
         // Reload page data
         $this->po = $po->load([
             'supplier',
+            'department',
             'requester',
             'items.material',
             'receivings.items',
@@ -285,10 +288,14 @@ new class extends Component
 
     <div class="grid gap-4">
         <flux:card>
-            <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-6 gap-6">
                 <flux:field>
                     <flux:label>{{ __('matex::po.detail.fields.po_number') }}</flux:label>
                     <div class="font-medium">{{ $po->po_number ?? '—' }}</div>
+                </flux:field>
+                <flux:field>
+                    <flux:label>部門</flux:label>
+                    <div class="font-medium">{{ $po->department->name ?? '—' }}</div>
                 </flux:field>
                 <flux:field>
                     <flux:label>{{ __('matex::po.detail.fields.supplier') }}</flux:label>

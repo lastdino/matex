@@ -11,12 +11,13 @@ use Lastdino\Matex\Support\Tables;
 class OrderingToken extends Model
 {
     protected $fillable = [
-        'token', 'material_id', 'unit_purchase', 'default_qty', 'options', 'enabled', 'expires_at',
+        'token', 'material_id', 'department_id', 'unit_purchase', 'default_qty', 'options', 'enabled', 'expires_at',
     ];
 
     protected function casts(): array
     {
         return [
+            'department_id' => 'integer',
             'default_qty' => 'decimal:6',
             'options' => 'array',
             'enabled' => 'boolean',
@@ -32,5 +33,10 @@ class OrderingToken extends Model
     public function material(): BelongsTo
     {
         return $this->belongsTo(Material::class);
+    }
+
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 }

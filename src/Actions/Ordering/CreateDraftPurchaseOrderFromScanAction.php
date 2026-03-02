@@ -65,6 +65,7 @@ class CreateDraftPurchaseOrderFromScanAction
 
         $unitPrice = (float) ($material->getAttribute('unit_price') ?? 0);
         $unitPurchase = (string) ($token->getAttribute('unit_purchase') ?? $material->getAttribute('unit_purchase_default') ?? '');
+        $departmentId = $token->department_id ? (int) $token->department_id : null;
 
         // Normalize and validate selected options via shared service (throws 422 on failure)
         /** @var array<int,int> $selectedOpts */
@@ -73,6 +74,7 @@ class CreateDraftPurchaseOrderFromScanAction
         // Create via shared PO factory (with shipping generation enabled)
         $poInput = [
             'supplier_id' => $supplierId,
+            'department_id' => $departmentId,
             'supplier_contact_id' => $supplierContactId,
             'expected_date' => null,
             'delivery_location' => null,

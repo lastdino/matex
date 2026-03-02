@@ -58,9 +58,10 @@ new class extends Component
     // Modal state for creating a PO
     public bool $showPoModal = false;
 
-    /** @var array{supplier_id:?int,supplier_contact_id:?int,expected_date:?string,items:array<int,array{material_id:?int,unit_purchase:?string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,description:?string,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
+    /** @var array{supplier_id:?int,department_id:?int,supplier_contact_id:?int,expected_date:?string,items:array<int,array{material_id:?int,unit_purchase:?string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,description:?string,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
     public array $poForm = [
         'supplier_id' => null,
+        'department_id' => null,
         'supplier_contact_id' => null,
         'expected_date' => null,
         'items' => [
@@ -71,9 +72,10 @@ new class extends Component
     // Modal state for creating an Ad-hoc PO (materials not registered)
     public bool $showAdhocPoModal = false;
 
-    /** @var array{supplier_id:?int,supplier_contact_id:?int,expected_date:?string,items:array<int,array{description:string|null,manufacturer:string|null,unit_purchase:string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
+    /** @var array{supplier_id:?int,department_id:?int,supplier_contact_id:?int,expected_date:?string,items:array<int,array{description:string|null,manufacturer:string|null,unit_purchase:string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
     public array $adhocForm = [
         'supplier_id' => null,
+        'department_id' => null,
         'supplier_contact_id' => null,
         'expected_date' => null,
         'items' => [
@@ -94,7 +96,7 @@ new class extends Component
         $expTo = (string) $this->expectedDate['end'];
 
         return PurchaseOrder::query()
-            ->with(['supplier', 'requester'])
+            ->with(['supplier', 'requester', 'department'])
             // Dedicated filters
             ->when($poNumber !== '', function ($query) use ($poNumber) {
                 // Allow prefix/partial match for PO#
@@ -691,6 +693,13 @@ new class extends Component
             ->get(['id', 'name']);
     }
 
+    public function getDepartmentsProperty()
+    {
+        return \Lastdino\Matex\Models\Department::active()
+            ->ordered()
+            ->get();
+    }
+
     // Active option groups and options for Create PO modal (UI auto-reflection)
     public function getActiveGroupsProperty()
     {
@@ -789,6 +798,7 @@ new class extends Component
         $payload = [
             'poForm' => [
                 'supplier_id' => $this->poForm['supplier_id'],
+                'department_id' => $this->poForm['department_id'],
                 'supplier_contact_id' => $this->poForm['supplier_contact_id'],
                 'expected_date' => $this->poForm['expected_date'],
                 'delivery_location' => (string) ($this->poForm['delivery_location'] ?? ''),
@@ -823,6 +833,9 @@ new class extends Component
 
             $poInput = [
                 'supplier_id' => (int) $validated['supplier_id'],
+                'department_id' => (isset($validated['department_id']) && $validated['department_id'] !== '' && $validated['department_id'] !== null)
+                    ? (int) $validated['department_id']
+                    : null,
                 'expected_date' => $validated['expected_date'] ?? null,
                 'delivery_location' => (string) ($validated['delivery_location'] ?? ''),
                 'items' => $lines,
@@ -887,6 +900,9 @@ new class extends Component
 
             $poInput = [
                 'supplier_id' => (int) $sid,
+                'department_id' => (isset($validated['department_id']) && $validated['department_id'] !== '' && $validated['department_id'] !== null)
+                    ? (int) $validated['department_id']
+                    : null,
                 'supplier_contact_id' => (isset($validated['supplier_contact_id']) && $validated['supplier_contact_id'] !== '' && $validated['supplier_contact_id'] !== null)
                     ? (int) $validated['supplier_contact_id']
                     : null,
@@ -995,6 +1011,7 @@ new class extends Component
         $payload = [
             'adhocForm' => [
                 'supplier_id' => $this->adhocForm['supplier_id'],
+                'department_id' => $this->adhocForm['department_id'],
                 'supplier_contact_id' => $this->adhocForm['supplier_contact_id'],
                 'expected_date' => $this->adhocForm['expected_date'],
                 'delivery_location' => (string) ($this->adhocForm['delivery_location'] ?? ''),
@@ -1032,6 +1049,9 @@ new class extends Component
 
         $poInput = [
             'supplier_id' => (int) $validated['supplier_id'],
+            'department_id' => (isset($validated['department_id']) && $validated['department_id'] !== '' && $validated['department_id'] !== null)
+                ? (int) $validated['department_id']
+                : null,
             'supplier_contact_id' => (isset($validated['supplier_contact_id']) && $validated['supplier_contact_id'] !== '' && $validated['supplier_contact_id'] !== null)
                 ? (int) $validated['supplier_contact_id']
                 : null,
@@ -1178,6 +1198,7 @@ new class extends Component
     {
         $this->poForm = [
             'supplier_id' => null,
+            'department_id' => null,
             'expected_date' => null,
             // 発注単位の納品先（未指定時はPDF設定の既定値を初期値として表示）
             'delivery_location' => (string) (Settings::pdf()['delivery_location'] ?? ''),
@@ -1191,6 +1212,7 @@ new class extends Component
     {
         $this->adhocForm = [
             'supplier_id' => null,
+            'department_id' => null,
             'expected_date' => null,
             // 発注単位の納品先（未指定時はPDF設定の既定値を初期値として表示）
             'delivery_location' => (string) (Settings::pdf()['delivery_location'] ?? ''),
@@ -1402,6 +1424,7 @@ new class extends Component
         <flux:table>
             <flux:table.columns>
                 <flux:table.column>{{ __('matex::po.table.po_number') }}</flux:table.column>
+                <flux:table.column>部門</flux:table.column>
                 <flux:table.column>{{ __('matex::po.table.supplier') }}</flux:table.column>
                 <flux:table.column>{{ __('matex::po.table.requester') }}</flux:table.column>
                 <flux:table.column>{{ __('matex::po.table.status') }}</flux:table.column>
@@ -1417,6 +1440,7 @@ new class extends Component
                                 {{ $po->po_number ?? __('matex::po.labels.draft_with_id', ['id' => $po->id]) }}
                             </flux:link>
                         </flux:table.cell>
+                        <flux:table.cell>{{ $po->department->name ?? '-' }}</flux:table.cell>
                         <flux:table.cell>{{ $po->supplier->name ?? '-' }}</flux:table.cell>
                         <flux:table.cell>{{ $po->requester->name ?? '-' }}</flux:table.cell>
                         <flux:table.cell>
@@ -1436,7 +1460,7 @@ new class extends Component
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="5" class="text-center text-neutral-500 py-6">{{ __('matex::po.table.empty') }}</flux:table.cell>
+                        <flux:table.cell colspan="6" class="text-center text-neutral-500 py-6">{{ __('matex::po.table.empty') }}</flux:table.cell>
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
@@ -1531,6 +1555,14 @@ new class extends Component
                 <div class="md:col-span-1">
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::po.create.mode.title') }}</label>
                     <div class="text-sm text-neutral-700 dark:text-neutral-300">{{ __('matex::po.create.mode.material_based') }}</div>
+                </div>
+                <div class="md:col-span-1">
+                    <flux:select wire:model="poForm.department_id" label="部門">
+                        <option value="">(部門指定なし)</option>
+                        @foreach($this->departments as $dept)
+                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                        @endforeach
+                    </flux:select>
                 </div>
                 <div class="md:col-span-1">
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::po.common.expected_date') }}</label>
@@ -1723,7 +1755,7 @@ new class extends Component
                 </div>
             @enderror
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::po.adhoc.form.supplier') }}</label>
                     <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="adhocForm.supplier_id">
@@ -1733,6 +1765,14 @@ new class extends Component
                         @endforeach
                     </select>
                     @error('adhocForm.supplier_id') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <flux:select wire:model="adhocForm.department_id" label="部門">
+                        <option value="">(部門指定なし)</option>
+                        @foreach($this->departments as $dept)
+                            <option value="{{ $dept->id }}">{{ $dept->name }}</option>
+                        @endforeach
+                    </flux:select>
                 </div>
                 <div>
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::suppliers.form.choose_contact') }}</label>

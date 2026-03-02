@@ -22,7 +22,7 @@ class MonoxApiService
         }
 
         $baseUrl = config('matex.monox.base_url');
-        $apiKey = config('matex.monox.api_key');
+        $apiKey = $movement->department?->api_token ?: config('matex.monox.api_key');
 
         if (empty($baseUrl)) {
             Log::warning('Monox API base URL is not configured.');

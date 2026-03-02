@@ -39,6 +39,8 @@ new class extends Component
 
     public ?float $nonLotQty = null;
 
+    public ?int $departmentId = null;
+
     public string $reason = '';
 
     public string $message = '';
@@ -173,6 +175,9 @@ new class extends Component
             $ot = OrderingToken::query()->where('token', $raw)->with('material')->first();
             if ($ot && $ot->material && $ot->material->is_active) {
                 $this->materialId = $ot->material_id;
+                if ($ot->department_id) {
+                    $this->departmentId = $ot->department_id;
+                }
                 $found = true;
             }
         }
@@ -229,6 +234,7 @@ new class extends Component
     protected function rules(): array
     {
         return [
+            'departmentId' => ['required', 'exists:'.\Lastdino\Matex\Support\Tables::name('departments').',id'],
             'reason' => ['required', 'string', 'max:255'],
         ];
     }
@@ -304,6 +310,7 @@ new class extends Component
                     $user = Auth::user();
                     StockMovement::create([
                         'material_id' => $material->id,
+                        'department_id' => $this->departmentId,
                         'lot_id' => $lot->id,
                         'type' => 'out',
                         'source_type' => static::class,
@@ -495,6 +502,17 @@ new class extends Component
                 </table>
             </div>
             <div class="p-4 border-t space-y-3">
+                <div class="max-w-xl">
+                    <label class="block text-sm text-neutral-600 mb-1">部門</label>
+                    <flux:select wire:model="departmentId" placeholder="部門を選択してください...">
+                        @foreach(\Lastdino\Matex\Models\Department::active()->ordered()->get() as $dept)
+                            <flux:select.option :value="$dept->id">{{ $dept->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
+                    @error('departmentId')
+                        <div class="mt-1 text-sm text-red-600">{{ $message }}</div>
+                    @enderror
+                </div>
                 <div class="max-w-xl">
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::materials.issue.reason_label') }}</label>
                     <flux:textarea wire:model.defer="reason" placeholder="{{ __('matex::materials.issue.reason_placeholder') }}" rows="2" />
