@@ -384,12 +384,10 @@ new class extends Component
                                 <span class="text-gray-400">—</span>
                             @elseif (!empty($item->scan_token))
                                 <div class="flex items-center gap-2">
-                                    <div class="qr-svg w-[40px] h-[40px]">
-                                        {!! \tbQuar\Facades\Quar::size(40)->generate(route('matex.receiving', ['token' => $item->scan_token])) !!}
+                                    <div class="qr-svg w-[61px] h-[61px]">
+                                        {!! \tbQuar\Facades\Quar::size(61)->generate(route('matex.receiving', ['token' => $item->scan_token])) !!}
                                     </div>
-                                    <div class="flex flex-col gap-1">
-                                        <div class="text-[10px] text-gray-500 select-all">{{ substr($item->scan_token, 0, 8) }}…</div>
-                                    </div>
+
                                 </div>
                             @else
                                 <span class="text-gray-400 text-xs">{{ __('matex::po.detail.no_token') }}</span>
