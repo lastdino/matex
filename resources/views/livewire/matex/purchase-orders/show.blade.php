@@ -360,7 +360,7 @@ new class extends Component
                     @endphp
                     <flux:table.row :class="$isCanceledLine ? 'line-through text-neutral-500' : ''">
                         <flux:table.cell>{{ $item->material->sku ?? '-' }}</flux:table.cell>
-                        <flux:table.cell>
+                        <flux:table.cell class="whitespace-pre-line">
                             <div class="flex items-center gap-2">
                                 <span>{{ $item->material->name ?? ($item->description ?? '-') }}</span>
                                 @if($qtyCanceled > 0)

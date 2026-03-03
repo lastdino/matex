@@ -182,10 +182,10 @@
                 @php($effectiveQty = max($qtyOrdered - $qtyCanceled, 0))
                 @php($isShipping = (string) ($item->unit_purchase ?? '') === 'shipping')
                 @php($hasCanceled = $hasCanceled || ($qtyCanceled > 0))
-                <tr >
+                <tr>
                     <td class="border border-black text-center">{{ $idx + 1 }}</td>
-                    <td class="border border-black p-1">
-                        <div class="whitespace-pre-line">{{ $name }}</div>
+                    <td class="border border-black p-1 whitespace-pre-line">
+                        {{ $name }}
                     </td>
                     <td class="border border-black text-center">
                         {{ \Lastdino\Matex\Support\Format::qty($effectiveQty) }}

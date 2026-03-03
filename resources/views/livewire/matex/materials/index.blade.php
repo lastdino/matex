@@ -1,17 +1,9 @@
 <?php
 
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 use Lastdino\Matex\Models\Material;
 use Lastdino\Matex\Models\MaterialCategory;
-use Lastdino\Matex\Models\OrderingToken;
-use Lastdino\Matex\Models\Supplier;
-use Lastdino\Matex\Models\UnitConversion;
-use Lastdino\Matex\Support\Settings;
-use Lastdino\Matex\Support\Tables;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
-use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -200,7 +192,7 @@ new class extends Component
                                     @endif
                                 </flux:table.cell>
                                 <flux:table.cell class="whitespace-nowrap">{{ $m->sku }}</flux:table.cell>
-                                <flux:table.cell>
+                                <flux:table.cell class="whitespace-pre-line">
                                     <div class="flex items-center gap-2">
                                         <span class="font-medium">{{ $m->name }}</span>
                                         @if(!($m->is_active ?? true))
