@@ -13,8 +13,8 @@ final class Tables
         return $configured !== '' ? $configured : 'matex_';
     }
 
-    public static function name(string $base): string
+    public static function name(string $key): string
     {
-        return self::prefix().$base;
+        return config("matex.{$key}_table") ?: self::prefix().$key;
     }
 }

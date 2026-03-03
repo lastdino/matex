@@ -1137,6 +1137,12 @@ new class extends Component
             // If supplier is not chosen yet and material has preferred supplier, auto-assign it
             if (empty($this->poForm['supplier_id']) && ! is_null($preferred)) {
                 $this->poForm['supplier_id'] = (int) $preferred;
+
+                // Also auto-assign preferred supplier contact if present
+                $preferredContact = $material->preferred_supplier_contact_id;
+                if (! is_null($preferredContact)) {
+                    $this->poForm['supplier_contact_id'] = (int) $preferredContact;
+                }
             }
             $defaultUnit = $material->unit_purchase_default ?: $material->unit_stock;
             $this->poForm['items'][$index]['unit_purchase'] = (string) $defaultUnit;
