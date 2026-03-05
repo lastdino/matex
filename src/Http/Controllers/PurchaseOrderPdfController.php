@@ -23,7 +23,7 @@ class PurchaseOrderPdfController extends Controller
         }
 
         // Load missing relations to avoid N+1
-        $po = $po->loadMissing(['supplier', 'items.material']);
+        $po = $po->loadMissing(['supplier', 'contact', 'items.material']);
         $poNumber = $po->po_number ?: ('Draft-'.$po->getKey());
 
         $html = Blade::render('matex::pdf.purchase-order', compact('po'));

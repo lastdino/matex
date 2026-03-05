@@ -166,6 +166,7 @@
                 <th class="border border-black text-center min-w-[1.5rem]"></th>
                 <th class="border border-black text-center min-w-[14rem]">品番（品名）</th>
                 <th class="border border-black text-center min-w-[2.5rem]">個数</th>
+                <th class="border border-black text-center min-w-[2.5rem]">単位</th>
                 <th class="border border-black text-center ">単価</th>
                 <th class="border border-black text-center w-12">希望納期</th>
                 <th class="border border-black text-center w-12">回答納期</th>
@@ -190,8 +191,11 @@
                     <td class="border border-black text-center">
                         {{ \Lastdino\Matex\Support\Format::qty($effectiveQty) }}
                         @if(!$isShipping && $qtyCanceled > 0)
-                            <span class="text-xs text-red-600">（キャンセル: {{ \Lastdino\Matex\Support\Format::qty($qtyCanceled) }}）</span>
+                            <br><span class="text-xs text-red-600">（キャンセル: {{ \Lastdino\Matex\Support\Format::qty($qtyCanceled) }}）</span>
                         @endif
+                    </td>
+                    <td class="border border-black text-center">
+                        {{ $item->unit_purchase ?? '' }}
                     </td>
                     <td class="border border-black text-center">{{ \Lastdino\Matex\Support\Format::unitPrice($item->price_unit) }}</td>
                     <td class="border border-black text-center">{{ optional($item->desired_date)->format('m/d') }}</td>
@@ -201,15 +205,15 @@
             @endforeach
             <tr>
                 <td class="border border-black text-center " colspan="2">小計</td>
-                <td class="border border-black text-center " colspan="5">{{ \Lastdino\Matex\Support\Format::moneySubtotal($po->subtotal) }}</td>
+                <td class="border border-black text-center " colspan="6">{{ \Lastdino\Matex\Support\Format::moneySubtotal($po->subtotal) }}</td>
             </tr>
             <tr>
                 <td class="border border-black text-center " colspan="2">消費税</td>
-                <td class="border border-black text-center " colspan="5">{{ \Lastdino\Matex\Support\Format::moneyTax($po->tax) }}</td>
+                <td class="border border-black text-center " colspan="6">{{ \Lastdino\Matex\Support\Format::moneyTax($po->tax) }}</td>
             </tr>
             <tr>
                 <td class="border border-black text-center font-bold" colspan="2">合計金額</td>
-                <td class="border border-black text-center font-bold" colspan="5">{{ \Lastdino\Matex\Support\Format::moneyTotal($po->total) }}</td>
+                <td class="border border-black text-center font-bold" colspan="6">{{ \Lastdino\Matex\Support\Format::moneyTotal($po->total) }}</td>
             </tr>
             </tbody>
         </table>
