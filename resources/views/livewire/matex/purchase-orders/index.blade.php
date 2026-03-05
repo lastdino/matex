@@ -307,10 +307,11 @@ new class extends Component
                 'receiving:id,purchase_order_id,received_at,notes',
                 // include manufacturer on item for ad-hoc lines
                 'purchaseOrderItem:id,purchase_order_id,material_id,qty_ordered,price_unit,note,description,manufacturer',
-                'purchaseOrderItem.purchaseOrder:id,po_number,supplier_id,issue_date',
+                'purchaseOrderItem.purchaseOrder:id,po_number,supplier_id,department_id,issue_date',
                 // include manufacturer_name on material when available
                 'purchaseOrderItem.material:id,sku,name,manufacturer_name',
                 'purchaseOrderItem.purchaseOrder.supplier:id,name',
+                'purchaseOrderItem.purchaseOrder.department:id,name',
                 // Options (if any)
                 'purchaseOrderItem.optionValues.option:id,name',
                 'purchaseOrderItem.optionValues.group:id,name,sort_order',
@@ -326,6 +327,7 @@ new class extends Component
         $baseBeforeOptionHeaders = [
             __('matex::po.export.excel.headers.order_no'),
             __('matex::po.export.excel.headers.supplier'),
+            __('matex::po.export.excel.headers.department'),
             __('matex::po.export.excel.headers.issue_date'),
             __('matex::po.export.excel.headers.received_at'),
             __('matex::po.export.excel.headers.sku'),
@@ -384,6 +386,7 @@ new class extends Component
             $mat = $poi?->material;
             $poNumber = (string) ($po?->po_number ?? '');
             $supplierName = (string) ($po?->supplier?->name ?? '');
+            $departmentName = (string) ($po?->department?->name ?? '');
             $issueDate = $po?->issue_date ? Carbon::parse($po->issue_date)->format('Y-m-d') : '';
             $receivedAt = $rcv?->received_at ? Carbon::parse($rcv->received_at)->format('Y-m-d') : '';
             $sku = (string) ($mat?->sku ?? '');
@@ -415,7 +418,7 @@ new class extends Component
             }
 
             $values = array_merge(
-                [$poNumber, $supplierName, $issueDate, $receivedAt, $sku, $name, $manufacturer],
+                [$poNumber, $supplierName, $departmentName, $issueDate, $receivedAt, $sku, $name, $manufacturer],
                 $dynamicOptionValues,
                 [(float) $qtyOrdered, (float) $qtyReceived, (float) $unitPrice, (float) $amount, $note]
             );

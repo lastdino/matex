@@ -36,6 +36,7 @@ return [
             'headers' => [
                 'order_no' => '発注番号',
                 'supplier' => 'サプライヤー名',
+                'department' => '部門',
                 'issue_date' => '発注日',
                 'received_at' => '入荷日',
                 'sku' => '品目コード',
