@@ -4,6 +4,7 @@ use Illuminate\Support\Carbon;
 use Lastdino\Matex\Models\Option;
 use Lastdino\Matex\Models\OptionGroup;
 use Lastdino\Matex\Models\PurchaseOrder;
+use Lastdino\Matex\Models\PurchaseOrderItem;
 use Lastdino\Matex\Models\Receiving;
 use Lastdino\Matex\Models\ReceivingItem;
 use Lastdino\Matex\Support\Settings;
@@ -47,6 +48,8 @@ new class extends Component
 
     // Export modal state
     public bool $showExportModal = false;
+
+    public string $exportDateType = 'receiving'; // receiving|issue
 
     // Matrix options
     public ?int $rowGroupId = null;
@@ -292,33 +295,54 @@ new class extends Component
             return null;
         }
 
-        if (! in_array($this->aggregateType, ['amount', 'quantity'], true)) {
+        $validAggregates = ['amount', 'quantity'];
+        if ($this->exportDateType === 'issue') {
+            $validAggregates = array_merge($validAggregates, ['ordered_amount', 'ordered_quantity']);
+        }
+
+        if (! in_array($this->aggregateType, $validAggregates, true)) {
             $this->addError('aggregateType', __('matex::po.export.validation.aggregate_required'));
 
             return null;
         }
 
         // Build dataset
-        $items = ReceivingItem::query()
-            ->join((new Receiving)->getTable().' as r', 'r.id', '=', (new ReceivingItem)->getTable().'.receiving_id')
-            ->whereDate('r.received_at', '>=', $from)
-            ->whereDate('r.received_at', '<=', $to)
-            ->with([
-                'receiving:id,purchase_order_id,received_at,notes',
-                // include manufacturer on item for ad-hoc lines
-                'purchaseOrderItem:id,purchase_order_id,material_id,qty_ordered,price_unit,note,description,manufacturer',
-                'purchaseOrderItem.purchaseOrder:id,po_number,supplier_id,department_id,issue_date',
-                // include manufacturer_name on material when available
-                'purchaseOrderItem.material:id,sku,name,manufacturer_name',
-                'purchaseOrderItem.purchaseOrder.supplier:id,name',
-                'purchaseOrderItem.purchaseOrder.department:id,name',
-                // Options (if any)
-                'purchaseOrderItem.optionValues.option:id,name',
-                'purchaseOrderItem.optionValues.group:id,name,sort_order',
-            ])
-            ->orderBy('r.received_at', 'asc')
-            ->select((new ReceivingItem)->getTable().'.*', 'r.received_at')
-            ->get();
+        if ($this->exportDateType === 'issue') {
+            $items = PurchaseOrderItem::query()
+                ->join((new PurchaseOrder)->getTable().' as po', 'po.id', '=', (new PurchaseOrderItem)->getTable().'.purchase_order_id')
+                ->whereDate('po.issue_date', '>=', $from)
+                ->whereDate('po.issue_date', '<=', $to)
+                ->with([
+                    'purchaseOrder:id,po_number,supplier_id,department_id,issue_date',
+                    'purchaseOrder.supplier:id,name',
+                    'purchaseOrder.department:id,name',
+                    'material:id,sku,name,manufacturer_name',
+                    'receivingItems.receiving:id,received_at',
+                    'optionValues.group',
+                    'optionValues.option',
+                ])
+                ->orderBy('po.issue_date', 'asc')
+                ->select((new PurchaseOrderItem)->getTable().'.*')
+                ->get();
+        } else {
+            $items = ReceivingItem::query()
+                ->join((new Receiving)->getTable().' as r', 'r.id', '=', (new ReceivingItem)->getTable().'.receiving_id')
+                ->whereDate('r.received_at', '>=', $from)
+                ->whereDate('r.received_at', '<=', $to)
+                ->with([
+                    'receiving:id,purchase_order_id,received_at,notes',
+                    'purchaseOrderItem:id,purchase_order_id,material_id,qty_ordered,price_unit,note,description,manufacturer',
+                    'purchaseOrderItem.purchaseOrder:id,po_number,supplier_id,department_id,issue_date',
+                    'purchaseOrderItem.material:id,sku,name,manufacturer_name',
+                    'purchaseOrderItem.purchaseOrder.supplier:id,name',
+                    'purchaseOrderItem.purchaseOrder.department:id,name',
+                    'purchaseOrderItem.optionValues.option:id,name',
+                    'purchaseOrderItem.optionValues.group:id,name,sort_order',
+                ])
+                ->orderBy('r.received_at', 'asc')
+                ->select((new ReceivingItem)->getTable().'.*', 'r.received_at')
+                ->get();
+        }
 
         // Spreadsheet
         $spreadsheet = new Spreadsheet;
@@ -345,8 +369,8 @@ new class extends Component
         // Collect unique option groups used in the result set
         /** @var array<int, array{id:int,name:string,sort:int}> $groupMeta */
         $groupMeta = [];
-        foreach ($items as $riForGroups) {
-            $poiForGroups = $riForGroups->purchaseOrderItem;
+        foreach ($items as $item) {
+            $poiForGroups = ($this->exportDateType === 'issue') ? $item : $item->purchaseOrderItem;
             $ovc = $poiForGroups?->optionValues;
             if (! $ovc) {
                 continue;
@@ -378,25 +402,73 @@ new class extends Component
         $headers = array_merge($baseBeforeOptionHeaders, $dynamicOptionHeaders, $baseAfterOptionHeaders);
         $rows = [$headers];
 
-        foreach ($items as $ri) {
-            /** @var ReceivingItem $ri */
-            $poi = $ri->purchaseOrderItem;
-            $po = $poi?->purchaseOrder;
-            $rcv = $ri->receiving;
-            $mat = $poi?->material;
-            $poNumber = (string) ($po?->po_number ?? '');
-            $supplierName = (string) ($po?->supplier?->name ?? '');
-            $departmentName = (string) ($po?->department?->name ?? '');
-            $issueDate = $po?->issue_date ? Carbon::parse($po->issue_date)->format('Y-m-d') : '';
-            $receivedAt = $rcv?->received_at ? Carbon::parse($rcv->received_at)->format('Y-m-d') : '';
-            $sku = (string) ($mat?->sku ?? '');
-            $name = (string) ($mat?->name ?? ($poi?->description ?? ''));
-            $manufacturer = (string) ($mat?->manufacturer_name ?? ($poi?->manufacturer ?? ''));
-            $qtyOrdered = (float) ($poi?->qty_ordered ?? 0);
-            $qtyReceived = (float) ($ri->qty_received ?? 0);
-            $unitPrice = (float) ($poi?->price_unit ?? 0);
-            $amount = $unitPrice * $qtyReceived;
-            $note = (string) ($poi?->note ?? '');
+        foreach ($items as $item) {
+            if ($this->exportDateType === 'issue') {
+                /** @var PurchaseOrderItem $item */
+                $poi = $item;
+                $po = $item->purchaseOrder;
+                $rcvItems = $item->receivingItems;
+                $mat = $item->material;
+
+                $poNumber = (string) ($po?->po_number ?? '');
+                $supplierName = (string) ($po?->supplier?->name ?? '');
+                $departmentName = (string) ($po?->department?->name ?? '');
+                $issueDate = $po?->issue_date ? Carbon::parse($po->issue_date)->format('Y-m-d') : '';
+
+                // For order-based, multiple receivings might exist. Sum them up.
+                $qtyReceived = (float) $rcvItems->sum('qty_received');
+                $receivedAt = '';
+                if ($rcvItems->isNotEmpty()) {
+                    $latestReceiving = $rcvItems->sortByDesc(fn ($ri) => $ri->receiving?->received_at)->first();
+                    $receivedAt = $latestReceiving?->receiving?->received_at ? Carbon::parse($latestReceiving->receiving->received_at)->format('Y-m-d') : '';
+                }
+
+                $sku = (string) ($mat?->sku ?? '');
+                $name = (string) ($mat?->name ?? ($poi?->description ?? ''));
+                $manufacturer = (string) ($mat?->manufacturer_name ?? ($poi?->manufacturer ?? ''));
+                $qtyOrdered = (float) ($poi?->qty_ordered ?? 0);
+                $unitPrice = (float) ($poi?->price_unit ?? 0);
+
+                // Determine amount based on aggregateType
+                $amount = match ($this->aggregateType) {
+                    'ordered_amount' => $unitPrice * $qtyOrdered,
+                    'ordered_quantity' => $qtyOrdered, // though name is amount, it follows usage below
+                    'quantity' => $qtyReceived,
+                    default => $unitPrice * $qtyReceived,
+                };
+                // Adjust amount if aggregateType is quantity-based
+                if (str_contains($this->aggregateType, 'quantity')) {
+                    $amount = ($this->aggregateType === 'ordered_quantity') ? $qtyOrdered : $qtyReceived;
+                } else {
+                    $amount = ($this->aggregateType === 'ordered_amount') ? ($unitPrice * $qtyOrdered) : ($unitPrice * $qtyReceived);
+                }
+
+                $note = (string) ($poi?->note ?? '');
+            } else {
+                /** @var ReceivingItem $item */
+                $ri = $item;
+                $poi = $ri->purchaseOrderItem;
+                $po = $poi?->purchaseOrder;
+                $rcv = $ri->receiving;
+                $mat = $poi?->material;
+
+                $poNumber = (string) ($po?->po_number ?? '');
+                $supplierName = (string) ($po?->supplier?->name ?? '');
+                $departmentName = (string) ($po?->department?->name ?? '');
+                $issueDate = $po?->issue_date ? Carbon::parse($po->issue_date)->format('Y-m-d') : '';
+                $receivedAt = $rcv?->received_at ? Carbon::parse($rcv->received_at)->format('Y-m-d') : '';
+                $sku = (string) ($mat?->sku ?? '');
+                $name = (string) ($mat?->name ?? ($poi?->description ?? ''));
+                $manufacturer = (string) ($mat?->manufacturer_name ?? ($poi?->manufacturer ?? ''));
+                $qtyOrdered = (float) ($poi?->qty_ordered ?? 0);
+                $qtyReceived = (float) ($ri->qty_received ?? 0);
+                $unitPrice = (float) ($poi?->price_unit ?? 0);
+                $amount = $unitPrice * $qtyReceived;
+                if ($this->aggregateType === 'quantity') {
+                    $amount = $qtyReceived;
+                }
+                $note = (string) ($poi?->note ?? '');
+            }
 
             // Map option values to dynamic group columns (option name per group)
             $optionValuesByGroupId = [];
@@ -1476,7 +1548,6 @@ new class extends Component
         </flux:table>
     </div>
 
-    <!-- 履歴ダウンロードモーダル -->
     <flux:modal wire:model.self="showExportModal" name="export-history" class="w-full md:w-[40rem] max-w-full">
         <x-slot name="title">{{ __('matex::po.export.modal.title') }}</x-slot>
 
@@ -1484,13 +1555,27 @@ new class extends Component
             <p class="text-sm text-neutral-600 dark:text-neutral-300">{{ __('matex::po.export.modal.description') }}</p>
 
             <flux:field>
-                <flux:label>{{ __('matex::po.export.fields.receiving_from_to') }}</flux:label>
+                <flux:label>{{ __('matex::po.export.fields.date_type') }}</flux:label>
+                <div class="flex items-center gap-3">
+                    <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="radio" value="receiving" class="accent-blue-600" wire:model.live="exportDateType">
+                        {{ __('matex::po.export.date_type.receiving') }}
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                        <input type="radio" value="issue" class="accent-blue-600" wire:model.live="exportDateType">
+                        {{ __('matex::po.export.date_type.issue') }}
+                    </label>
+                </div>
+            </flux:field>
+
+            <flux:field>
+                <flux:label>{{ $exportDateType === 'receiving' ? __('matex::po.export.fields.receiving_from_to') : __('matex::po.export.fields.issue_from_to') }}</flux:label>
                 <div class="flex items-center gap-2">
                     <div class="w-full">
-                        <input type="date" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="receivingDate.start" placeholder="{{ __('matex::po.export.fields.receiving_from') }}">
+                        <input type="date" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="receivingDate.start" placeholder="{{ $exportDateType === 'receiving' ? __('matex::po.export.fields.receiving_from') : __('matex::po.export.fields.issue_from') }}">
                     </div>
                     <div class="w-full">
-                        <input type="date" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="receivingDate.end" placeholder="{{ __('matex::po.export.fields.receiving_to') }}">
+                        <input type="date" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="receivingDate.end" placeholder="{{ $exportDateType === 'receiving' ? __('matex::po.export.fields.receiving_to') : __('matex::po.export.fields.issue_to') }}">
                     </div>
                 </div>
                 @error('receivingDate')
@@ -1521,16 +1606,30 @@ new class extends Component
 
             <flux:field>
                 <flux:label>{{ __('matex::po.export.fields.aggregate_type') }}</flux:label>
-                <div class="flex items-center gap-3">
-                    <label class="inline-flex items-center gap-2 text-sm">
-                        <input type="radio" value="amount" class="accent-blue-600" wire:model.live="aggregateType">
-                        {{ __('matex::po.export.aggregate.amount') }}
-                    </label>
-                    <label class="inline-flex items-center gap-2 text-sm">
-                        <input type="radio" value="quantity" class="accent-blue-600" wire:model.live="aggregateType">
-                        {{ __('matex::po.export.aggregate.quantity') }}
-                    </label>
-                </div>
+                    <div class="flex flex-col gap-3">
+                        <div class="flex items-center gap-3">
+                            <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="radio" value="amount" class="accent-blue-600" wire:model.live="aggregateType">
+                                {{ $exportDateType === 'issue' ? __('matex::po.export.aggregate.amount_issue') : __('matex::po.export.aggregate.amount') }}
+                            </label>
+                            <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                                <input type="radio" value="quantity" class="accent-blue-600" wire:model.live="aggregateType">
+                                {{ $exportDateType === 'issue' ? __('matex::po.export.aggregate.quantity_issue') : __('matex::po.export.aggregate.quantity') }}
+                            </label>
+                        </div>
+                        @if($exportDateType === 'issue')
+                            <div class="flex items-center gap-3">
+                                <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                                    <input type="radio" value="ordered_amount" class="accent-blue-600" wire:model.live="aggregateType">
+                                    {{ __('matex::po.export.aggregate.ordered_amount') }}
+                                </label>
+                                <label class="inline-flex items-center gap-2 text-sm cursor-pointer">
+                                    <input type="radio" value="ordered_quantity" class="accent-blue-600" wire:model.live="aggregateType">
+                                    {{ __('matex::po.export.aggregate.ordered_quantity') }}
+                                </label>
+                            </div>
+                        @endif
+                    </div>
                 @error('aggregateType')
                     <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
                 @enderror

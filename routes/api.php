@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Lastdino\Matex\Http\Controllers\Api\PurchaseOrderApiController;
 use Lastdino\Matex\Http\Controllers\Api\StockMovementController;
 
 Route::group([
@@ -13,4 +14,7 @@ Route::group([
         ->name('matex.api.stock-out');
     Route::get('/stock-movements', [StockMovementController::class, 'history'])
         ->name('matex.api.stock-movements');
+
+    Route::get('/purchase-orders/history', [PurchaseOrderApiController::class, 'history'])
+        ->name('matex.api.purchase-orders.history');
 });
