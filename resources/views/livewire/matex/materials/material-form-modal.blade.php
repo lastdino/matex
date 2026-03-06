@@ -195,7 +195,6 @@ new class extends Component
             'materialForm.moq' => ['nullable', 'numeric', 'min:0'],
             'materialForm.pack_size' => ['nullable', 'numeric', 'min:0'],
             'materialForm.sync_to_monox' => ['boolean'],
-            'materialForm.manage_by_lot' => ['boolean'],
         ];
     }
 
@@ -448,9 +447,6 @@ new class extends Component
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div class="md:col-span-1 flex items-center gap-2">
                         <flux:switch wire:model.live="materialForm.is_chemical" label="{{ __('matex::materials.form.is_chemical') }}" align="left"/>
-                    </div>
-                    <div class="md:col-span-1 flex items-center gap-2">
-                        <flux:switch wire:model="materialForm.manage_by_lot" label="{{ __('matex::materials.badges.lot') }}管理" align="left"/>
                     </div>
                 </div>
 
