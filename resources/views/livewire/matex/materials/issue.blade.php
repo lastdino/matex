@@ -161,9 +161,9 @@ new class extends Component
             }
         }
 
-        // 4. Try to find material by SKU/Barcode? (Optional, but good for UX)
+        // 4. Try to find material by SKU? (Optional, but good for UX)
         if (! $found) {
-            $matBySku = Material::active()->where('sku', $raw)->orWhere('barcode', $raw)->first();
+            $matBySku = Material::active()->where('sku', $raw)->first();
             if ($matBySku) {
                 $this->materialId = $matBySku->id;
                 $found = true;

@@ -355,6 +355,7 @@ new class extends Component
         $this->info = [
             'po_number' => '',
             'po_status' => '',
+            'department_name' => null,
             'material_id' => null,
             'material_name' => '',
             'material_sku' => '',
