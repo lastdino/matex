@@ -1735,13 +1735,11 @@ new class extends Component
                                 <tr class="border-t">
                                     <td class="py-2 px-3">
                                         <div class="min-w-64">
-                                            <livewire:matex_component::choices-select
-                                                wire:model.live="poForm.items.{{ $i }}.material_id"
-                                                :options="$this->materials->map(fn($m) => ['id' => $m->id, 'name' => $m->sku . ' - ' . $m->name])"
-                                                placeholder="{{ __('matex::po.common.choose_material_placeholder') }}"
-                                                @change="onMaterialChanged({{ $i }}, $event.target.value)"
-                                                wire:key="po-item-material-{{ $i }}"
-                                            />
+                                            <flux:select class="min-w-48" searchable placeholder="{{ __('matex::po.common.choose_material_placeholder') }}" wire:model.live="poForm.items.{{ $i }}.material_id" wire:change="onMaterialChanged({{ $i }}, $event.target.value)">
+                                                @foreach($this->materials as $m)
+                                                    <flux:select.option value="{{ $m->id }}">{{ $m->sku }} - {{ $m->name }}</flux:select.option>
+                                                @endforeach
+                                            </flux:select>
                                         </div>
                                         <flux:error name="poForm.items.{{ $i }}.material_id" />
                                     </td>
