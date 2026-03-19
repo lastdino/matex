@@ -131,6 +131,7 @@ new class extends Component
     public function saveGroup(): void
     {
         $validated = $this->validate([
+            'groupForm.id' => ['nullable', 'integer'],
             'groupForm.name' => ['required', 'string', 'max:255'],
             'groupForm.description' => ['nullable', 'string'],
             'groupForm.input_type' => ['required', 'string', 'in:select,input'],
@@ -213,11 +214,8 @@ new class extends Component
 
     public function saveOption(): void
     {
-        $gid = (int) ($this->optionForm['group_id'] ?? 0);
-        // Preserve ID before validation because it is not part of validated payload
-        $currentId = (int) ($this->optionForm['id'] ?? 0);
-
         $validated = $this->validate([
+            'optionForm.id' => ['nullable', 'integer'],
             'optionForm.group_id' => ['required', Rule::exists((new OptionGroup)->getTable(), 'id')],
             'optionForm.name' => ['required', 'string', 'max:255'],
             'optionForm.description' => ['nullable', 'string'],
@@ -226,6 +224,7 @@ new class extends Component
         ]);
 
         $payload = $validated['optionForm'];
+        $currentId = (int) ($payload['id'] ?? 0);
 
         if ($currentId > 0) {
             $o = Option::findOrFail($currentId);
