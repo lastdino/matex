@@ -53,7 +53,7 @@ class StorePurchaseOrderRequest extends FormRequest
         ];
 
         // オプショングループ: 有効なグループごとに必須にする（共通ビルダーを利用）
-        $activeGroups = OptionGroup::query()->active()->ordered()->get(['id', 'name']);
+        $activeGroups = OptionGroup::query()->active()->ordered()->get(['id', 'name', 'input_type']);
         if ($activeGroups->isNotEmpty()) {
             /** @var OptionSelectionRuleBuilder $builder */
             $builder = app(OptionSelectionRuleBuilder::class);
@@ -143,7 +143,7 @@ class StorePurchaseOrderRequest extends FormRequest
     {
         // Provide friendly messages for required options per active group
         $messages = [];
-        $activeGroups = OptionGroup::query()->active()->ordered()->get(['id', 'name']);
+        $activeGroups = OptionGroup::query()->active()->ordered()->get(['id', 'name', 'input_type']);
         foreach ($activeGroups as $group) {
             $gid = (int) $group->getKey();
             $gname = (string) $group->getAttribute('name');

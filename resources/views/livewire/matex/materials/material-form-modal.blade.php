@@ -414,7 +414,7 @@ new class extends Component
 
                     <flux:field class="md:col-span-1">
                         <flux:label>{{ __('matex::suppliers.form.preferred_supplier_contact') }}</flux:label>
-                        <flux:select wire:model="materialForm.preferred_supplier_contact_id" :disabled="!$materialForm['preferred_supplier_id']">
+                        <flux:select wire:model="materialForm.preferred_supplier_contact_id" x-bind:disabled="!$wire.materialForm.preferred_supplier_id">
                             <option value="">-</option>
                             @foreach($this->preferredSupplierContacts as $c)
                                 <option value="{{ $c->id }}">{{ $c->department ? '['.$c->department.'] ' : '' }}{{ $c->name }}</option>
@@ -502,7 +502,7 @@ new class extends Component
                         <flux:switch wire:model.live="materialForm.separate_shipping" label="{{ __('matex::materials.form.separate_shipping') }}" align="left"/>
                     </div>
                     <div>
-                        <flux:input type="number" step="0.01" min="0" class="disabled:opacity-60" wire:model="materialForm.shipping_fee_per_order" :disabled="! $this->materialForm['separate_shipping']" label="{{ __('matex::materials.form.shipping_fee_per_order') }}"/>
+                        <flux:input type="number" step="0.01" min="0" class="disabled:opacity-60" wire:model="materialForm.shipping_fee_per_order" x-bind:disabled="!$wire.materialForm.separate_shipping" label="{{ __('matex::materials.form.shipping_fee_per_order') }}"/>
                         <flux:text class="text-xs mt-1">{{ __('matex::materials.form.shipping_fee_help') }}</flux:text>
                     </div>
                 </div>

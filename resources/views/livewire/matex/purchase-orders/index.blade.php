@@ -61,12 +61,13 @@ new class extends Component
     // Modal state for creating a PO
     public bool $showPoModal = false;
 
-    /** @var array{supplier_id:?int,department_id:?int,supplier_contact_id:?int,expected_date:?string,items:array<int,array{material_id:?int,unit_purchase:?string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,description:?string,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
+    /** @var array{supplier_id:?int,department_id:?int,supplier_contact_id:?int,expected_date:?string,delivery_location:?string,items:array<int,array{material_id:?int,unit_purchase:?string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,description:?string,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
     public array $poForm = [
         'supplier_id' => null,
         'department_id' => null,
         'supplier_contact_id' => null,
         'expected_date' => null,
+        'delivery_location' => null,
         'items' => [
             ['material_id' => '', 'unit_purchase' => '', 'qty_ordered' => null, 'price_unit' => null, 'tax_rate' => null, 'description' => null, 'desired_date' => null, 'expected_date' => null, 'options' => []],
         ],
@@ -75,12 +76,13 @@ new class extends Component
     // Modal state for creating an Ad-hoc PO (materials not registered)
     public bool $showAdhocPoModal = false;
 
-    /** @var array{supplier_id:?int,department_id:?int,supplier_contact_id:?int,expected_date:?string,items:array<int,array{description:string|null,manufacturer:string|null,unit_purchase:string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
+    /** @var array{supplier_id:?int,department_id:?int,supplier_contact_id:?int,expected_date:?string,delivery_location:?string,items:array<int,array{description:string|null,manufacturer:string|null,unit_purchase:string,qty_ordered:float|int|null,price_unit:float|int|null,tax_rate:float|int|null,desired_date:?string|null,expected_date:?string|null,options:array<int,int|null>}>} */
     public array $adhocForm = [
         'supplier_id' => null,
         'department_id' => null,
         'supplier_contact_id' => null,
         'expected_date' => null,
+        'delivery_location' => null,
         'items' => [
             ['description' => null, 'manufacturer' => null, 'unit_purchase' => '', 'qty_ordered' => null, 'price_unit' => null, 'tax_rate' => null, 'desired_date' => null, 'expected_date' => null, 'options' => []],
         ],
@@ -278,7 +280,7 @@ new class extends Component
      */
     public function getOptionGroupsProperty()
     {
-        return OptionGroup::query()->active()->ordered()->get(['id', 'name']);
+        return OptionGroup::query()->active()->ordered()->get(['id', 'name', 'input_type']);
     }
 
     /**
@@ -778,7 +780,7 @@ new class extends Component
     // Active option groups and options for Create PO modal (UI auto-reflection)
     public function getActiveGroupsProperty()
     {
-        return OptionGroup::query()->active()->ordered()->get(['id', 'name']);
+        return OptionGroup::query()->active()->ordered()->get(['id', 'name', 'input_type']);
     }
 
     /**
@@ -1691,7 +1693,7 @@ new class extends Component
                         wire:key="po-supplier-select"
                     />
                 </div>
-                <flux:select wire:model="poForm.supplier_contact_id" label="{{ __('matex::suppliers.form.choose_contact') }}" :disabled="!$poForm['supplier_id']">
+                <flux:select wire:model="poForm.supplier_contact_id" label="{{ __('matex::suppliers.form.choose_contact') }}" x-bind:disabled="!$wire.poForm.supplier_id">
                     <option value="">-</option>
                     @foreach($this->poContacts as $contact)
                         <option value="{{ $contact->id }}">{{ $contact->department ? '['.$contact->department.'] ' : '' }}{{ $contact->name }}</option>
@@ -1797,6 +1799,7 @@ new class extends Component
                                                 @foreach ($this->activeGroups as $g)
                                                     <div class="flex items-center gap-2">
                                                         @if (($g->input_type ?? 'select') === 'input')
+
                                                             <flux:input wire:model.live="poForm.items.{{ $i }}.options.{{ $g->id }}" label="{{ $g->name }}" class="min-w-56" />
                                                         @else
                                                             <flux:select wire:model.live="poForm.items.{{ $i }}.options.{{ $g->id }}" placeholder="{{ __('matex::po.common.choose_placeholder') }}" label="{{ $g->name }}" class="min-w-56" >
@@ -1895,7 +1898,7 @@ new class extends Component
                 </div>
                 <div>
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::suppliers.form.choose_contact') }}</label>
-                    <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900 disabled:opacity-50" wire:model="adhocForm.supplier_contact_id" :disabled="!$adhocForm['supplier_id']">
+                    <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900 disabled:opacity-50" wire:model="adhocForm.supplier_contact_id" x-bind:disabled="!$wire.adhocForm.supplier_id">
                         <option value="">-</option>
                         @foreach($this->adhocContacts as $contact)
                             <option value="{{ $contact->id }}">{{ $contact->department ? '['.$contact->department.'] ' : '' }}{{ $contact->name }}</option>

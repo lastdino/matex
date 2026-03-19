@@ -87,7 +87,7 @@ new class extends Component
                 <input type="file" wire:model="sdsUpload" accept="application/pdf" class="w-full border rounded p-2 bg-white dark:bg-neutral-900" />
                 @error('sdsUpload') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
                 <div class="mt-3 flex items-center gap-2">
-                    <flux:button wire:click="uploadSds" :disabled="!$sdsUpload" variant="primary">{{ __('matex::materials.buttons.save') }}</flux:button>
+                    <flux:button wire:click="uploadSds" x-bind:disabled="!$wire.sdsUpload" variant="primary">{{ __('matex::materials.buttons.save') }}</flux:button>
                     <flux:button variant="ghost" @click="$flux.modal('sds-form').close()">{{ __('matex::materials.buttons.cancel') }}</flux:button>
                 </div>
                 <div wire:loading wire:target="sdsUpload" class="text-sm text-neutral-500 mt-1">{{ __('matex::materials.buttons.processing') }}</div>
