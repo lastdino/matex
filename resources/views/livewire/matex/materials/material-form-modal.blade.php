@@ -401,16 +401,15 @@ new class extends Component
                         <flux:error name="materialForm.tax_code" />
                     </flux:field>
 
-                    <flux:field class="md:col-span-1">
-                        <flux:label>{{ __('matex::materials.form.preferred_supplier') }}</flux:label>
-                        <flux:select wire:model.live="materialForm.preferred_supplier_id">
-                            <option value="">-</option>
-                            @foreach($this->suppliers as $s)
-                                <option value="{{ $s->id }}">{{ $s->name }}</option>
-                            @endforeach
-                        </flux:select>
+                    <div class="md:col-span-1">
+                        <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::materials.form.preferred_supplier') }}</label>
+                        <x-choices-select
+                            wire:model.live="materialForm.preferred_supplier_id"
+                            :options="$this->suppliers"
+                            placeholder="-"
+                        />
                         <flux:error name="materialForm.preferred_supplier_id" />
-                    </flux:field>
+                    </div>
 
                     <flux:field class="md:col-span-1">
                         <flux:label>{{ __('matex::suppliers.form.preferred_supplier_contact') }}</flux:label>

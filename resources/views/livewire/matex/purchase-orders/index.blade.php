@@ -1450,12 +1450,11 @@ new class extends Component
             <flux:input wire:model.live.debounce.300ms="poNumber" placeholder="{{ __('matex::po.filters.po_number_placeholder') }}" />
         </div>
         <div class="w-full sm:w-56">
-            <flux:select wire:model.live="supplierId">
-                <option value="">{{ __('matex::po.filters.supplier') }}</option>
-                @foreach($this->suppliers as $sup)
-                    <option value="{{ $sup->id }}">{{ $sup->name }}</option>
-                @endforeach
-            </flux:select>
+            <x-choices-select
+                wire:model.live="supplierId"
+                :options="$this->suppliers"
+                placeholder="{{ __('matex::po.filters.supplier') }}"
+            />
         </div>
         <div class="w-full sm:w-48">
             <flux:select wire:model.live="requesterId">
@@ -1682,12 +1681,14 @@ new class extends Component
                 </div>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <flux:select wire:model.live="poForm.supplier_id" label="{{ __('matex::po.adhoc.form.supplier') }}">
-                    <option value="">{{ __('matex::po.common.choose_placeholder') }}</option>
-                    @foreach($this->suppliers as $sup)
-                        <option value="{{ $sup->id }}">{{ $sup->name }}</option>
-                    @endforeach
-                </flux:select>
+                <div class="flex flex-col">
+                    <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::po.adhoc.form.supplier') }}</label>
+                    <x-choices-select
+                        wire:model.live="poForm.supplier_id"
+                        :options="$this->suppliers"
+                        placeholder="{{ __('matex::po.common.choose_placeholder') }}"
+                    />
+                </div>
                 <flux:select wire:model="poForm.supplier_contact_id" label="{{ __('matex::suppliers.form.choose_contact') }}" :disabled="!$poForm['supplier_id']">
                     <option value="">-</option>
                     @foreach($this->poContacts as $contact)
@@ -1729,11 +1730,14 @@ new class extends Component
                             @foreach($poForm['items'] as $i => $row)
                                 <tr class="border-t">
                                     <td class="py-2 px-3">
-                                        <flux:select class="min-w-48" placeholder="{{ __('matex::po.common.choose_material_placeholder') }}" wire:model.live="poForm.items.{{ $i }}.material_id" wire:change="onMaterialChanged({{ $i }}, $event.target.value)">
-                                            @foreach($this->materials as $m)
-                                                <flux:select.option value="{{ $m->id }}">{{ $m->sku }} - {{ $m->name }}</flux:select.option>
-                                            @endforeach
-                                        </flux:select>
+                                        <div class="min-w-64">
+                                            <x-choices-select
+                                                wire:model.live="poForm.items.{{ $i }}.material_id"
+                                                :options="$this->materials->map(fn($m) => ['id' => $m->id, 'name' => $m->sku . ' - ' . $m->name])"
+                                                placeholder="{{ __('matex::po.common.choose_material_placeholder') }}"
+                                                @change="onMaterialChanged({{ $i }}, $event.target.value)"
+                                            />
+                                        </div>
                                         <flux:error name="poForm.items.{{ $i }}.material_id" />
                                     </td>
                                     <td class="py-2 px-3">
@@ -1870,12 +1874,11 @@ new class extends Component
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::po.adhoc.form.supplier') }}</label>
-                    <select class="w-full border rounded p-2 bg-white dark:bg-neutral-900" wire:model.live="adhocForm.supplier_id">
-                        <option value="">{{ __('matex::po.common.choose_placeholder') }}</option>
-                        @foreach($this->suppliers as $sup)
-                            <option value="{{ $sup->id }}">{{ $sup->name }}</option>
-                        @endforeach
-                    </select>
+                    <x-choices-select
+                        wire:model.live="adhocForm.supplier_id"
+                        :options="$this->suppliers"
+                        placeholder="{{ __('matex::po.common.choose_placeholder') }}"
+                    />
                     @error('adhocForm.supplier_id') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
                 </div>
                 <div>
