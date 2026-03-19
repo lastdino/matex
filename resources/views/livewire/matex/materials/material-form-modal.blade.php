@@ -403,10 +403,11 @@ new class extends Component
 
                     <div class="md:col-span-1">
                         <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::materials.form.preferred_supplier') }}</label>
-                        <x-choices-select
+                        <livewire:matex_component::choices-select
                             wire:model.live="materialForm.preferred_supplier_id"
                             :options="$this->suppliers"
                             placeholder="-"
+                            wire:key="material-supplier-select"
                         />
                         <flux:error name="materialForm.preferred_supplier_id" />
                     </div>

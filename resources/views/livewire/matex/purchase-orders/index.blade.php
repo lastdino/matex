@@ -1450,10 +1450,11 @@ new class extends Component
             <flux:input wire:model.live.debounce.300ms="poNumber" placeholder="{{ __('matex::po.filters.po_number_placeholder') }}" />
         </div>
         <div class="w-full sm:w-56">
-            <x-choices-select
+            <livewire:matex_component::choices-select
                 wire:model.live="supplierId"
                 :options="$this->suppliers"
                 placeholder="{{ __('matex::po.filters.supplier') }}"
+                wire:key="supplier-filter"
             />
         </div>
         <div class="w-full sm:w-48">
@@ -1683,10 +1684,11 @@ new class extends Component
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div class="flex flex-col">
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::po.adhoc.form.supplier') }}</label>
-                    <x-choices-select
+                    <livewire:matex_component::choices-select
                         wire:model.live="poForm.supplier_id"
                         :options="$this->suppliers"
                         placeholder="{{ __('matex::po.common.choose_placeholder') }}"
+                        wire:key="po-supplier-select"
                     />
                 </div>
                 <flux:select wire:model="poForm.supplier_contact_id" label="{{ __('matex::suppliers.form.choose_contact') }}" :disabled="!$poForm['supplier_id']">
@@ -1731,11 +1733,12 @@ new class extends Component
                                 <tr class="border-t">
                                     <td class="py-2 px-3">
                                         <div class="min-w-64">
-                                            <x-choices-select
+                                            <livewire:matex_component::choices-select
                                                 wire:model.live="poForm.items.{{ $i }}.material_id"
                                                 :options="$this->materials->map(fn($m) => ['id' => $m->id, 'name' => $m->sku . ' - ' . $m->name])"
                                                 placeholder="{{ __('matex::po.common.choose_material_placeholder') }}"
                                                 @change="onMaterialChanged({{ $i }}, $event.target.value)"
+                                                wire:key="po-item-material-{{ $i }}"
                                             />
                                         </div>
                                         <flux:error name="poForm.items.{{ $i }}.material_id" />
@@ -1874,10 +1877,11 @@ new class extends Component
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                 <div>
                     <label class="block text-sm text-neutral-600 mb-1">{{ __('matex::po.adhoc.form.supplier') }}</label>
-                    <x-choices-select
+                    <livewire:matex_component::choices-select
                         wire:model.live="adhocForm.supplier_id"
                         :options="$this->suppliers"
                         placeholder="{{ __('matex::po.common.choose_placeholder') }}"
+                        wire:key="adhoc-supplier-select"
                     />
                     @error('adhocForm.supplier_id') <div class="text-red-600 text-sm mt-1">{{ $message }}</div> @enderror
                 </div>
