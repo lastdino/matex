@@ -77,7 +77,10 @@ class MatexServiceProvider extends ServiceProvider
     // custom methods for livewire components
     protected function loadLivewireComponents(): void
     {
-        Livewire::addNamespace('matex_component', __DIR__.'/../resources/views/components');
+        Livewire::addNamespace(
+            namespace: 'matex_component',
+            viewPath: __DIR__.'/../resources/views/components'
+        );
         Livewire::addNamespace(
             namespace: 'matex',
             viewPath: __DIR__.'/../resources/views/livewire',
@@ -88,14 +91,20 @@ class MatexServiceProvider extends ServiceProvider
         if (is_dir($publishedPath)) {
             $files = array_diff(scandir($publishedPath), ['.', '..']);
             if (count($files) > 0) {
-                Livewire::addNamespace('matex', $publishedPath);
+                Livewire::addNamespace(
+                    namespace: 'matex',
+                    viewPath: $publishedPath
+                );
             }
         }
         $publishedPath = resource_path('views/vendor/matex/components');
         if (is_dir($publishedPath)) {
             $files = array_diff(scandir($publishedPath), ['.', '..']);
             if (count($files) > 0) {
-                Livewire::addNamespace('matex_component', $publishedPath);
+                Livewire::addNamespace(
+                    namespace: 'matex_component',
+                    viewPath: $publishedPath
+                );
             }
         }
     }
