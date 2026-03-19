@@ -17,18 +17,18 @@ final class OptionSelectionService
 
     /**
      * @param  array<int,int|string|null>  $raw
-     * @return array<int,int>
+     * @return array<int,int|string>
      */
     public function normalizeAndValidate(array $raw): array
     {
         $selected = [];
         $groups = $this->catalog->getActiveGroups();
         if ($groups->isEmpty()) {
-            foreach ($raw as $gid => $oid) {
-                if ($oid === null || $oid === '') {
+            foreach ($raw as $gid => $val) {
+                if ($val === null || $val === '') {
                     continue;
                 }
-                $selected[(int) $gid] = (int) $oid;
+                $selected[(int) $gid] = $val;
             }
 
             return $selected;
@@ -52,18 +52,18 @@ final class OptionSelectionService
         } catch (\Illuminate\Validation\ValidationException $e) {
             abort(422, $validator->errors()->first());
         }
-        foreach ((array) ($validated['options'] ?? []) as $gid => $oid) {
-            if ($oid === null || $oid === '') {
+        foreach ((array) ($validated['options'] ?? []) as $gid => $val) {
+            if ($val === null || $val === '') {
                 continue;
             }
-            $selected[(int) $gid] = (int) $oid;
+            $selected[(int) $gid] = $val;
         }
 
         return $selected;
     }
 
     /**
-     * @param  array<int,int>  $selected
+     * @param  array<int,int|string>  $selected
      */
     public function syncToItem(PurchaseOrderItem $item, array $selected): void
     {

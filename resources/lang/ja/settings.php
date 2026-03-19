@@ -25,6 +25,9 @@ return [
                 'title_edit' => 'グループを編集',
                 'name' => '名称',
                 'description' => '説明',
+                'input_type' => '入力タイプ',
+                'input_type_select' => '選択式',
+                'input_type_input' => 'テキスト入力式',
                 'active' => '有効',
                 'sort_order' => '並び順',
                 'cancel' => 'キャンセル',
@@ -145,6 +148,24 @@ return [
         ],
         'flash' => [
             'saved' => '表示・通貨設定を保存しました。',
+        ],
+    ],
+
+    'notifications' => [
+        'title' => '通知設定',
+        'back' => '戻る',
+        'receiving' => [
+            'heading' => '入庫通知',
+            'accounting_email' => '経理担当者メールアドレス',
+            'accounting_name' => '通知先宛名',
+            'enable' => '経理担当者に通知を送信する',
+            'enable_requester' => '発注者に通知を送信する',
+            'email_placeholder' => 'example@example.com',
+            'name_placeholder' => '経理担当者様',
+        ],
+        'save' => '保存',
+        'flash' => [
+            'saved' => '通知設定を保存しました。',
         ],
     ],
 

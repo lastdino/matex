@@ -11,7 +11,7 @@ use Lastdino\Matex\Support\Tables;
 class PurchaseOrderItemOptionValue extends Model
 {
     protected $fillable = [
-        'purchase_order_item_id', 'group_id', 'option_id',
+        'purchase_order_item_id', 'group_id', 'option_id', 'custom_value',
     ];
 
     public function getTable()

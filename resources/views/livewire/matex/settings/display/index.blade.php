@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Contracts\View\View;
 use Lastdino\Matex\Support\Settings;
 use Livewire\Component;
 

@@ -1789,12 +1789,16 @@ new class extends Component
                                             <div class="grid gap-2">
                                                 @foreach ($this->activeGroups as $g)
                                                     <div class="flex items-center gap-2">
-                                                        <flux:select wire:model.live="poForm.items.{{ $i }}.options.{{ $g->id }}" placeholder="{{ __('matex::po.common.choose_placeholder') }}" label="{{ $g->name }}" class="min-w-56" >
-                                                            <flux:select.option value="">—</flux:select.option>
-                                                            @foreach (($this->activeOptionsByGroup[$g->id] ?? []) as $opt)
-                                                                <flux:select.option value="{{ $opt['id'] }}">{{ $opt['name'] }}</flux:select.option>
-                                                            @endforeach
-                                                        </flux:select>
+                                                        @if (($g->input_type ?? 'select') === 'input')
+                                                            <flux:input wire:model.live="poForm.items.{{ $i }}.options.{{ $g->id }}" label="{{ $g->name }}" class="min-w-56" />
+                                                        @else
+                                                            <flux:select wire:model.live="poForm.items.{{ $i }}.options.{{ $g->id }}" placeholder="{{ __('matex::po.common.choose_placeholder') }}" label="{{ $g->name }}" class="min-w-56" >
+                                                                <flux:select.option value="">—</flux:select.option>
+                                                                @foreach (($this->activeOptionsByGroup[$g->id] ?? []) as $opt)
+                                                                    <flux:select.option value="{{ $opt['id'] }}">{{ $opt['name'] }}</flux:select.option>
+                                                                @endforeach
+                                                            </flux:select>
+                                                        @endif
                                                     </div>
                                                 @endforeach
                                             </div>
@@ -1996,12 +2000,16 @@ new class extends Component
                                             <div class="grid gap-2">
                                                 @foreach ($this->activeGroups as $g)
                                                     <div class="flex items-center gap-2">
-                                                        <flux:select wire:model.live="adhocForm.items.{{ $i }}.options.{{ $g->id }}" placeholder="{{ __('matex::po.common.choose_placeholder') }}" label="{{ $g->name }}" class="min-w-56" >
-                                                            <flux:select.option value="">—</flux:select.option>
-                                                            @foreach (($this->activeOptionsByGroup[$g->id] ?? []) as $opt)
-                                                                <flux:select.option value="{{ $opt['id'] }}">{{ $opt['name'] }}</flux:select.option>
-                                                            @endforeach
-                                                        </flux:select>
+                                                        @if (($g->input_type ?? 'select') === 'input')
+                                                            <flux:input wire:model.live="adhocForm.items.{{ $i }}.options.{{ $g->id }}" label="{{ $g->name }}" class="min-w-56" />
+                                                        @else
+                                                            <flux:select wire:model.live="adhocForm.items.{{ $i }}.options.{{ $g->id }}" placeholder="{{ __('matex::po.common.choose_placeholder') }}" label="{{ $g->name }}" class="min-w-56" >
+                                                                <flux:select.option value="">—</flux:select.option>
+                                                                @foreach (($this->activeOptionsByGroup[$g->id] ?? []) as $opt)
+                                                                    <flux:select.option value="{{ $opt['id'] }}">{{ $opt['name'] }}</flux:select.option>
+                                                                @endforeach
+                                                            </flux:select>
+                                                        @endif
                                                     </div>
                                                 @endforeach
                                             </div>

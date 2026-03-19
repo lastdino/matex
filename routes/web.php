@@ -58,6 +58,10 @@ Route::group([
     Route::livewire('/settings/taxes', 'matex::matex.settings.taxes.index')
         ->name('matex.settings.taxes');
 
+    // Notifications settings
+    Route::livewire('/settings/notifications', 'matex::matex.settings.notifications.index')
+        ->name('matex.settings.notifications');
+
     // Material Categories settings
     Route::livewire('/settings/categories', 'matex::matex.settings.categories.index')
         ->name('matex.settings.categories');

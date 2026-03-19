@@ -16,6 +16,7 @@ return [
     'options' => 'オプション設定',
     'approval_flow' => '承認フロー設定',
     'taxes' => '税設定',
+    'notifications' => '通知設定',
     'display' => '表示・通貨設定',
     'categories' => '資材カテゴリ',
     'storage_locations' => '保管場所',

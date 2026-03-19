@@ -187,6 +187,13 @@
                     <td class="border border-black text-center">{{ $idx + 1 }}</td>
                     <td class="border border-black p-1 whitespace-pre-line">
                         {{ $name }}
+                        @if($item->optionValues && $item->optionValues->isNotEmpty())
+                            <div style="font-size: 0.75rem; color: #666; margin-left: 0.5rem;">
+                                @foreach($item->optionValues as $ov)
+                                    <div>[{{ $ov->group->name ?? '' }}] {{ $ov->option->name ?? $ov->custom_value ?? '' }}</div>
+                                @endforeach
+                            </div>
+                        @endif
                     </td>
                     <td class="border border-black text-center">
                         {{ \Lastdino\Matex\Support\Format::qty($effectiveQty) }}

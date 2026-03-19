@@ -27,6 +27,8 @@ new class extends Component
             'department',
             'requester',
             'items.material',
+            'items.optionValues.group',
+            'items.optionValues.option',
             'receivings.items',
             'receivings.items.material',
             'receivings.items.purchaseOrderItem',
@@ -62,6 +64,8 @@ new class extends Component
             'department',
             'requester',
             'items.material',
+            'items.optionValues.group',
+            'items.optionValues.option',
             'receivings.items',
             'receivings.items.material',
             'receivings.items.purchaseOrderItem',
@@ -171,6 +175,8 @@ new class extends Component
             'department',
             'requester',
             'items.material',
+            'items.optionValues.group',
+            'items.optionValues.option',
             'receivings.items',
             'receivings.items.material',
             'receivings.items.purchaseOrderItem',
@@ -264,6 +270,8 @@ new class extends Component
             'supplier',
             'requester',
             'items.material',
+            'items.optionValues.group',
+            'items.optionValues.option',
             'receivings.items',
             'receivings.items.material',
             'receivings.items.purchaseOrderItem',
@@ -367,6 +375,13 @@ new class extends Component
                                     <flux:badge color="red" size="xs">{{ __('matex::po.detail.badges.canceled') }}</flux:badge>
                                 @endif
                             </div>
+                            @if($item->optionValues->isNotEmpty())
+                                <div class="mt-1 ml-2 text-xs text-neutral-500">
+                                    @foreach($item->optionValues as $ov)
+                                        <div>[{{ $ov->group->name ?? '' }}] {{ $ov->option->name ?? $ov->custom_value ?? '' }}</div>
+                                    @endforeach
+                                </div>
+                            @endif
                         </flux:table.cell>
                         <flux:table.cell>
                             {{ \Lastdino\Matex\Support\Format::qty($effectiveQty) }}

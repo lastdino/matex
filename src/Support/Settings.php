@@ -193,4 +193,32 @@ final class Settings
             'space' => $space,
         ]);
     }
+
+    /**
+     * Get notification configuration: ['accounting_email' => string, 'accounting_name' => string, 'enable_receiving_notification' => bool, 'enable_requester_receiving_notification' => bool]
+     *
+     * @return array{accounting_email:string,accounting_name:string,enable_receiving_notification:bool,enable_requester_receiving_notification:bool}
+     */
+    public static function notification(): array
+    {
+        $cfg = AppSetting::getArray('matex.notification');
+        if ($cfg === null) {
+            $cfg = (array) config('matex.notification', []);
+        }
+
+        return [
+            'accounting_email' => (string) ($cfg['accounting_email'] ?? ''),
+            'accounting_name' => (string) ($cfg['accounting_name'] ?? '経理担当者様'),
+            'enable_receiving_notification' => (bool) ($cfg['enable_receiving_notification'] ?? false),
+            'enable_requester_receiving_notification' => (bool) ($cfg['enable_requester_receiving_notification'] ?? false),
+        ];
+    }
+
+    /**
+     * @param  array{accounting_email?:string,accounting_name?:string,enable_receiving_notification?:bool,enable_requester_receiving_notification?:bool}  $value
+     */
+    public static function saveNotification(array $value): void
+    {
+        AppSetting::setArray('matex.notification', $value);
+    }
 }

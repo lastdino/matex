@@ -30,14 +30,20 @@ class OptionSelectionRuleBuilder
 
         foreach ($activeGroups as $group) {
             $gid = (int) $group->getKey();
-            $rules["{$optionsKey}.{$gid}"] = [
-                'required',
-                Rule::exists((new Option)->getTable(), 'id')
-                    ->where(fn ($q) => $q->where('group_id', $gid)
-                        ->where('is_active', true)
-                        ->whereNull('deleted_at')
-                    ),
-            ];
+            $inputType = (string) ($group->getAttribute('input_type') ?? 'select');
+
+            if ($inputType === 'input') {
+                $rules["{$optionsKey}.{$gid}"] = ['required', 'string', 'max:1000'];
+            } else {
+                $rules["{$optionsKey}.{$gid}"] = [
+                    'required',
+                    Rule::exists((new Option)->getTable(), 'id')
+                        ->where(fn ($q) => $q->where('group_id', $gid)
+                            ->where('is_active', true)
+                            ->whereNull('deleted_at')
+                        ),
+                ];
+            }
         }
 
         return $rules;

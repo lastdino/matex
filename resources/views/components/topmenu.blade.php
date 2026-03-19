@@ -20,6 +20,7 @@
                             <flux:menu.item href="{{ route('matex.settings.options') }}">{{ __('matex::menu.options') }}</flux:menu.item>
                             <flux:menu.item href="{{ route('matex.settings.approval') }}">{{ __('matex::menu.approval_flow') }}</flux:menu.item>
                             <flux:menu.item href="{{ route('matex.settings.taxes') }}">{{ __('matex::menu.taxes') }}</flux:menu.item>
+                            <flux:menu.item href="{{ route('matex.settings.notifications') }}">{{ __('matex::menu.notifications') }}</flux:menu.item>
                             <flux:menu.item href="{{ route('matex.settings.display') }}">{{ __('matex::menu.display') }}</flux:menu.item>
                             <flux:menu.item href="{{ route('matex.settings.categories') }}">{{ __('matex::menu.categories') }}</flux:menu.item>
                             <flux:menu.item href="{{ route('matex.settings.storage-locations') }}">{{ __('matex::menu.storage_locations') }}</flux:menu.item>

@@ -11,28 +11,39 @@ use Lastdino\Matex\Models\PurchaseOrderItemOptionValue;
 class PurchaseOrderOptionSyncService
 {
     /**
-     * Sync selected options for a PO item. Invalid/inactive selections are ignored.
-     *
-     * @param  array<int,int|string>  $selectedOptions  [group_id => option_id]
+     * @param  array<int,int|string|null>  $selectedOptions  [group_id => option_id|custom_value]
      */
     public function syncItemOptions(PurchaseOrderItem $item, array $selectedOptions): void
     {
-        foreach ($selectedOptions as $groupId => $optionId) {
-            if (empty($optionId)) {
+        foreach ($selectedOptions as $groupId => $value) {
+            if ($value === null || $value === '') {
                 continue;
             }
 
             $gid = (int) $groupId;
-            $oid = (int) $optionId;
 
-            $exists = Option::query()
-                ->active()
-                ->where('group_id', $gid)
-                ->whereKey($oid)
-                ->exists();
+            $group = \Lastdino\Matex\Models\OptionGroup::find($gid);
+            if (! $group || ! $group->is_active) {
+                continue;
+            }
 
-            if (! $exists) {
-                continue; // skip invalid
+            $inputType = (string) ($group->input_type ?? 'select');
+            $oid = null;
+            $customValue = null;
+
+            if ($inputType === 'input') {
+                $customValue = (string) $value;
+            } else {
+                $oid = (int) $value;
+                $exists = Option::query()
+                    ->active()
+                    ->where('group_id', $gid)
+                    ->whereKey($oid)
+                    ->exists();
+
+                if (! $exists) {
+                    continue; // skip invalid
+                }
             }
 
             PurchaseOrderItemOptionValue::query()->updateOrCreate(
@@ -42,6 +53,7 @@ class PurchaseOrderOptionSyncService
                 ],
                 [
                     'option_id' => $oid,
+                    'custom_value' => $customValue,
                 ]
             );
         }

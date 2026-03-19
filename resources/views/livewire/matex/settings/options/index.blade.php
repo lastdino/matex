@@ -25,6 +25,7 @@ new class extends Component
         'id' => null,
         'name' => '',
         'description' => '',
+        'input_type' => 'select',
         'is_active' => true,
         'sort_order' => 0,
     ];
@@ -106,6 +107,7 @@ new class extends Component
             'id' => null,
             'name' => '',
             'description' => '',
+            'input_type' => 'select',
             'is_active' => true,
             'sort_order' => 0,
         ];
@@ -119,6 +121,7 @@ new class extends Component
             'id' => (int) $g->getKey(),
             'name' => (string) $g->getAttribute('name'),
             'description' => (string) ($g->getAttribute('description') ?? ''),
+            'input_type' => (string) ($g->getAttribute('input_type') ?? 'select'),
             'is_active' => (bool) $g->getAttribute('is_active'),
             'sort_order' => (int) $g->getAttribute('sort_order'),
         ];
@@ -130,6 +133,7 @@ new class extends Component
         $validated = $this->validate([
             'groupForm.name' => ['required', 'string', 'max:255'],
             'groupForm.description' => ['nullable', 'string'],
+            'groupForm.input_type' => ['required', 'string', 'in:select,input'],
             'groupForm.is_active' => ['boolean'],
             'groupForm.sort_order' => ['integer'],
         ]);
@@ -417,6 +421,10 @@ new class extends Component
         <div class="space-y-3 mt-3">
             <flux:input wire:model="groupForm.name" label="{{ __('matex::settings.options.groups.modal.name') }}"/>
             <flux:textarea wire:model="groupForm.description" label="{{ __('matex::settings.options.groups.modal.description') }}"></flux:textarea>
+            <flux:radio.group wire:model="groupForm.input_type" label="{{ __('matex::settings.options.groups.modal.input_type') }}">
+                <flux:radio value="select" label="{{ __('matex::settings.options.groups.modal.input_type_select') }}" />
+                <flux:radio value="input" label="{{ __('matex::settings.options.groups.modal.input_type_input') }}" />
+            </flux:radio.group>
             <flux:switch wire:model="groupForm.is_active" label="{{ __('matex::settings.options.groups.modal.active') }}"/>
             <flux:input type="number" wire:model="groupForm.sort_order" label="{{ __('matex::settings.options.groups.modal.sort_order') }}"/>
         </div>

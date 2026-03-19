@@ -11,7 +11,7 @@ use Lastdino\Matex\Support\Tables;
 class OptionGroup extends Model
 {
     protected $fillable = [
-        'name', 'description', 'is_active', 'sort_order',
+        'name', 'description', 'input_type', 'is_active', 'sort_order',
     ];
 
     public function getTable()

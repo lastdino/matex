@@ -6,9 +6,12 @@ namespace Lastdino\Matex\Observers;
 
 use Illuminate\Contracts\Events\ShouldHandleEventsAfterCommit;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Lastdino\Matex\Mail\ReceivingNotificationMail;
 use Lastdino\Matex\Models\PurchaseOrderItem;
 use Lastdino\Matex\Models\Receiving;
 use Lastdino\Matex\Models\ReceivingItem;
+use Lastdino\Matex\Support\Settings;
 
 class ReceivingObserver implements ShouldHandleEventsAfterCommit
 {
@@ -19,6 +22,8 @@ class ReceivingObserver implements ShouldHandleEventsAfterCommit
     public function created(Receiving $receiving): void
     {
         $this->maybeAutoReceiveShipping($receiving);
+
+        $this->sendNotifications($receiving);
     }
 
     /**
@@ -105,5 +110,25 @@ class ReceivingObserver implements ShouldHandleEventsAfterCommit
                 ]);
             }
         });
+    }
+
+    protected function sendNotifications(Receiving $receiving): void
+    {
+        $config = Settings::notification();
+
+        // 経理担当者への通知
+        if (($config['enable_receiving_notification'] ?? false) && ! empty($config['accounting_email'])) {
+            Mail::to($config['accounting_email'])->send(new ReceivingNotificationMail($receiving));
+        }
+
+        // 発注者への通知
+        if (($config['enable_requester_receiving_notification'] ?? false)) {
+            $receiving->loadMissing('purchaseOrder.requester');
+            $requester = $receiving->purchaseOrder?->requester;
+
+            if ($requester && ! empty($requester->email)) {
+                Mail::to($requester->email)->send(new ReceivingNotificationMail($receiving));
+            }
+        }
     }
 }

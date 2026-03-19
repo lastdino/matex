@@ -15,7 +15,7 @@ class OptionCatalogService
      */
     public function getActiveGroups(): Collection
     {
-        return OptionGroup::query()->active()->ordered()->get(['id', 'name']);
+        return OptionGroup::query()->active()->ordered()->get(['id', 'name', 'input_type']);
     }
 
     /**
