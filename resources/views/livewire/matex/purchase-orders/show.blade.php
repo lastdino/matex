@@ -288,6 +288,20 @@ new class extends Component
 ?>
 
 <div class="p-6 space-y-4">
+    <style>
+        /* 印刷時の設定 */
+        @media print {
+            tr {
+                /* 行の途中での改ページを禁止 */
+                break-inside: avoid;
+            }
+
+            thead {
+                /* 複数ページにわたる場合、各ページの上部にヘッダーを表示 */
+                display: table-header-group;
+            }
+        }
+    </style>
     <x-matex::topmenu />
     <div class="flex items-center justify-between">
         <flux:heading size="lg">{{ __('matex::po.detail.title') }}</flux:heading>
@@ -375,13 +389,6 @@ new class extends Component
                                     <flux:badge color="red" size="xs">{{ __('matex::po.detail.badges.canceled') }}</flux:badge>
                                 @endif
                             </div>
-                            @if($item->optionValues->isNotEmpty())
-                                <div class="mt-1 ml-2 text-xs text-neutral-500">
-                                    @foreach($item->optionValues as $ov)
-                                        <div>[{{ $ov->group->name ?? '' }}] {{ $ov->option->name ?? $ov->custom_value ?? '' }}</div>
-                                    @endforeach
-                                </div>
-                            @endif
                         </flux:table.cell>
                         <flux:table.cell>
                             {{ \Lastdino\Matex\Support\Format::qty($effectiveQty) }}
@@ -446,6 +453,22 @@ new class extends Component
                             </div>
                         </flux:table.cell>
                     </flux:table.row>
+
+                    @if($item->optionValues->isNotEmpty())
+                        <flux:table.row class="bg-neutral-50/50">
+                            <flux:table.cell></flux:table.cell>
+                            <flux:table.cell colspan="9">
+                                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+                                    @foreach($item->optionValues as $ov)
+                                        <div>
+                                            <span class="font-medium text-neutral-700">[{{ $ov->group->name ?? '' }}]</span>
+                                            {{ $ov->option->name ?? $ov->custom_value ?? '' }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </flux:table.cell>
+                        </flux:table.row>
+                    @endif
                 @endforeach
             </flux:table.rows>
         </flux:table>

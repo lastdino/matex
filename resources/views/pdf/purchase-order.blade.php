@@ -48,6 +48,30 @@
     <meta charset="utf-8">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <title>注文書 {{ $poNo }}</title>
+    <style>
+        /* 印刷時の設定 */
+        @media print {
+            tr {
+                /* 行の途中での改ページを禁止 */
+                break-inside: avoid;
+            }
+
+            /* 必要に応じてテーブル全体の分割も制御する場合 */
+            table {
+                break-inside: auto;
+            }
+
+            thead {
+                /* 複数ページにわたる場合、各ページの上部にヘッダーを表示 */
+                display: table-header-group;
+            }
+        }
+
+        /* PDF生成エンジン（DomPDF等）向けの一般的な設定 */
+        tr {
+            page-break-inside: avoid;
+        }
+    </style>
 </head>
 <body>
 <article class="sheet flex flex-col">
