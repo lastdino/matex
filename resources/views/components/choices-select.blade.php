@@ -44,8 +44,8 @@ new class extends Component
 @endphp
 
 
-<div {{ $attributes->class($classes) }}>
-    <div x-data="choice" wire:ignore
+<div>
+    <div {{ $attributes->except('wire:model')->class($classes) }} x-data="choice" wire:ignore
          @if($placeholder)
         style="--placeholder-length: {{ mb_strlen($placeholder) + 4 }}ch;"
         @endif
