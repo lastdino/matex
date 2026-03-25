@@ -882,6 +882,7 @@ new class extends Component
                 'items' => $items,
             ],
         ];
+
         $validated = $this->validatePurchaseOrderPayload('poForm', $payload, $rules);
 
         // Path A: legacy/single-supplier explicit flow when supplier_id provided
@@ -912,6 +913,9 @@ new class extends Component
                 'supplier_id' => (int) $validated['supplier_id'],
                 'department_id' => (isset($validated['department_id']) && $validated['department_id'] !== '' && $validated['department_id'] !== null)
                     ? (int) $validated['department_id']
+                    : null,
+                'supplier_contact_id' => (isset($validated['supplier_contact_id']) && $validated['supplier_contact_id'] !== '' && $validated['supplier_contact_id'] !== null)
+                    ? (int) $validated['supplier_contact_id']
                     : null,
                 'expected_date' => $validated['expected_date'] ?? null,
                 'delivery_location' => (string) ($validated['delivery_location'] ?? ''),

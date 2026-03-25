@@ -28,6 +28,7 @@ class StorePurchaseOrderRequest extends FormRequest
             // New flow (materials-based) allows supplier_id to be omitted. Ad-hoc flow still requires it (enforced in withValidator).
             'supplier_id' => ['nullable', 'exists:'.Tables::name('suppliers').',id'],
             'department_id' => ['nullable', 'exists:'.Tables::name('departments').',id'],
+            'supplier_contact_id' => ['nullable', 'exists:'.Tables::name('supplier_contacts').',id'],
             'expected_date' => ['nullable', 'date'],
             // 発注ごとの納品先（未指定の場合はPDF設定の値を用いてバックエンドで補完）
             'delivery_location' => ['nullable', 'string'],

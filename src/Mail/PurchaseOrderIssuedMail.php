@@ -45,14 +45,30 @@ class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
             }
         }
 
+        $this->subject("【注文書】PO {$poNumber}");
+
+        if ($requesterFromAddress) {
+            $this->from($requesterFromAddress, $requesterFromName);
+        } elseif ($fromAddress !== '') {
+            $this->from($fromAddress, $fromName);
+        }
+
         $blade = Blade::render('matex::pdf.purchase-order', compact('po'));
+
+        //\Log::info('[PurchaseOrderIssuedMail] Generating PDF', ['po_number' => $poNumber, 'po_id' => $po->getKey()]);
 
         $tmpPath = Chrome::pdfFromHtml($blade, [
             'printBackground' => true,
         ]);
 
-        $mail = $this
-            ->subject("【注文書】PO {$poNumber}")
+        //\Log::info('[PurchaseOrderIssuedMail] PDF generated', ['tmp_path' => $tmpPath, 'po_number' => $poNumber]);
+
+        //\Log::info('[PurchaseOrderIssuedMail] Attaching PDF and building mail', [
+        //    'as' => "PO-{$poNumber}.pdf",
+        //    'to' => $this->to,
+        //]);
+
+        return $this
             ->view('matex::mail.purchase-orders.issued', [
                 'po' => $po,
             ])
@@ -60,13 +76,5 @@ class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
                 'as' => "PO-{$poNumber}.pdf",
                 'mime' => 'application/pdf',
             ]);
-
-        if ($requesterFromAddress) {
-            $mail->from($requesterFromAddress, $requesterFromName);
-        } elseif ($fromAddress !== '') {
-            $mail->from($fromAddress, $fromName);
-        }
-
-        return $mail;
     }
 }
