@@ -5,7 +5,7 @@ use Lastdino\Matex\Http\Controllers\MaterialSdsDownloadController;
 use Lastdino\Matex\Http\Controllers\PurchaseOrderPdfController;
 
 Route::group([
-    'prefix' => config('matex.route_prefix', 'procurement'),
+    'prefix' => config('matex.route_prefix', 'matex'),
     'middleware' => config('matex.middleware', ['web', 'auth']),
 ], function () {
     // Dashboard
