@@ -9,7 +9,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Blade;
-use Lastdino\ChromeLaravel\Facades\Chrome;
+use LastDino\ChromeLaravel\Facades\Chrome;
 use Lastdino\Matex\Models\PurchaseOrder;
 
 class PurchaseOrderIssuedMail extends Mailable implements ShouldQueue
