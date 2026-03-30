@@ -1717,12 +1717,12 @@ new class extends Component
                     <div class="text-sm text-neutral-600">{{ __('matex::po.create.items.title') }}</div>
                     <flux:button size="sm" variant="outline" wire:click="addPoItem">{{ __('matex::po.create.items.add_row') }}</flux:button>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
                     <table class="min-w-full text-sm">
-                        <thead>
+                        <thead class="sticky top-0 z-10 bg-white dark:bg-neutral-900">
                             <tr class="text-left text-neutral-500">
                                 <th class="py-2 px-3">{{ __('matex::po.create.table.material') }}</th>
-                                <th class="py-2 px-3">{{ __('matex::po.create.table.description') }}</th>
+                                {{-- 新規発注では説明列は不要のため非表示 --}}
                                 <th class="py-2 px-3">{{ __('matex::po.create.table.note') }}</th>
                                 <th class="py-2 px-3">{{ __('matex::po.create.table.unit') }}</th>
                                 <th class="py-2 px-3">{{ __('matex::po.create.table.qty') }}</th>
@@ -1730,8 +1730,7 @@ new class extends Component
                                 <th class="py-2 px-3">{{ __('matex::po.create.table.tax_rate') }}</th>
                                 <th class="py-2 px-3">{{ __('matex::po.create.table.desired_date') }}</th>
                                 <th class="py-2 px-3">{{ __('matex::po.create.table.expected_date') }}</th>
-                                <th class="py-2 px-3">{{ __('matex::po.create.table.options') }}</th>
-                                <th class="py-2 px-3"></th>
+                               <th class="py-2 px-3"></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1747,14 +1746,7 @@ new class extends Component
                                         </div>
                                         <flux:error name="poForm.items.{{ $i }}.material_id" />
                                     </td>
-                                    <td class="py-2 px-3">
-                                        <flux:textarea
-                                            rows="2"
-                                            placeholder="{{ __('matex::po.adhoc.placeholders.description_hint') }}"
-                                            wire:model="poForm.items.{{ $i }}.description"
-                                            class="min-w-64"
-                                        />
-                                    </td>
+                                    {{-- 新規発注では説明列は不要のため非表示 --}}
                                     <td class="py-2 px-3">
                                         <flux:textarea
                                             rows="2"
@@ -1795,16 +1787,21 @@ new class extends Component
                                             <flux:input class="w-40" type="date" wire:model.live="poForm.items.{{ $i }}.expected_date"/>
                                         </div>
                                     </td>
-                                    <td class="py-2 px-3 align-top">
-                                        @if ($this->activeGroups && $this->activeGroups->isNotEmpty())
-                                            <div class="grid gap-2">
+                                    <td class="py-2 px-3 text-right">
+                                        <flux:button size="xs" variant="outline" wire:click="removePoItem({{ $i }})">{{ __('matex::po.common.remove') }}</flux:button>
+                                    </td>
+                                </tr>
+                                @if ($this->activeGroups && $this->activeGroups->isNotEmpty())
+                                    <tr class="border-t border-dashed bg-neutral-50 dark:bg-neutral-800/30">
+                                        <td colspan="9" class="py-2 px-3">
+                                            <div class="flex flex-wrap gap-3">
                                                 @foreach ($this->activeGroups as $g)
                                                     <div class="flex items-center gap-2">
+                                                        <span class="text-xs text-neutral-500">{{ $g->name }}</span>
                                                         @if (($g->input_type ?? 'select') === 'input')
-
-                                                            <flux:input wire:model.live="poForm.items.{{ $i }}.options.{{ $g->id }}" label="{{ $g->name }}" class="min-w-56" />
+                                                            <flux:input wire:model.live="poForm.items.{{ $i }}.options.{{ $g->id }}" class="min-w-40" />
                                                         @else
-                                                            <flux:select wire:model.live="poForm.items.{{ $i }}.options.{{ $g->id }}" placeholder="{{ __('matex::po.common.choose_placeholder') }}" label="{{ $g->name }}" class="min-w-56" >
+                                                            <flux:select wire:model.live="poForm.items.{{ $i }}.options.{{ $g->id }}" placeholder="{{ __('matex::po.common.choose_placeholder') }}" class="min-w-40" >
                                                                 <flux:select.option value="">—</flux:select.option>
                                                                 @foreach (($this->activeOptionsByGroup[$g->id] ?? []) as $opt)
                                                                     <flux:select.option value="{{ $opt['id'] }}">{{ $opt['name'] }}</flux:select.option>
@@ -1814,14 +1811,9 @@ new class extends Component
                                                     </div>
                                                 @endforeach
                                             </div>
-                                        @else
-                                            <span class="text-neutral-400 text-sm">{{ __('matex::po.create.options.no_active_groups') }}</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-2 px-3 text-right">
-                                        <flux:button size="xs" variant="outline" wire:click="removePoItem({{ $i }})">{{ __('matex::po.common.remove') }}</flux:button>
-                                    </td>
-                                </tr>
+                                        </td>
+                                    </tr>
+                                @endif
                             @endforeach
                         </tbody>
                     </table>
@@ -1930,9 +1922,9 @@ new class extends Component
                     <div class="text-sm text-neutral-600">{{ __('matex::po.adhoc.items.title') }}</div>
                     <flux:button size="sm" variant="outline" wire:click="addAdhocItem">{{ __('matex::po.adhoc.items.add_row') }}</flux:button>
                 </div>
-                <div class="overflow-x-auto">
+                <div class="overflow-x-auto max-h-[60vh] overflow-y-auto">
                     <table class="min-w-full text-sm">
-                        <thead>
+                        <thead class="sticky top-0 z-10 bg-white dark:bg-neutral-900">
                             <tr class="text-left text-neutral-500">
                                 <th class="py-2 px-3">{{ __('matex::po.adhoc.table.description') }}</th>
                                 <th class="py-2 px-3">{{ __('matex::po.adhoc.table.manufacturer') }}</th>
@@ -1943,7 +1935,6 @@ new class extends Component
                                 <th class="py-2 px-3">{{ __('matex::po.adhoc.table.tax_rate') }}</th>
                                 <th class="py-2 px-3">{{ __('matex::po.adhoc.table.desired_date') }}</th>
                                 <th class="py-2 px-3">{{ __('matex::po.adhoc.table.expected_date') }}</th>
-                                <th class="py-2 px-3">{{ __('matex::po.adhoc.table.options') }}</th>
                                 <th class="py-2 px-3"></th>
                             </tr>
                         </thead>
@@ -2007,15 +1998,21 @@ new class extends Component
                                             <flux:input class="w-40" type="date" wire:model.live="adhocForm.items.{{ $i }}.expected_date"/>
                                         </div>
                                     </td>
-                                    <td class="py-2 px-3 align-top">
-                                        @if ($this->activeGroups && $this->activeGroups->isNotEmpty())
-                                            <div class="grid gap-2">
+                                    <td class="py-2 px-3">
+                                        <flux:button size="xs" variant="ghost" wire:click="removeAdhocItem({{ $i }})">{{ __('matex::po.common.remove') }}</flux:button>
+                                    </td>
+                                </tr>
+                                @if ($this->activeGroups && $this->activeGroups->isNotEmpty())
+                                    <tr class="border-t border-dashed bg-neutral-50 dark:bg-neutral-800/30">
+                                        <td colspan="10" class="py-2 px-3">
+                                            <div class="flex flex-wrap gap-3">
                                                 @foreach ($this->activeGroups as $g)
                                                     <div class="flex items-center gap-2">
+                                                        <span class="text-xs text-neutral-500">{{ $g->name }}</span>
                                                         @if (($g->input_type ?? 'select') === 'input')
-                                                            <flux:input wire:model.live="adhocForm.items.{{ $i }}.options.{{ $g->id }}" label="{{ $g->name }}" class="min-w-56" />
+                                                            <flux:input wire:model.live="adhocForm.items.{{ $i }}.options.{{ $g->id }}" class="min-w-40" />
                                                         @else
-                                                            <flux:select wire:model.live="adhocForm.items.{{ $i }}.options.{{ $g->id }}" placeholder="{{ __('matex::po.common.choose_placeholder') }}" label="{{ $g->name }}" class="min-w-56" >
+                                                            <flux:select wire:model.live="adhocForm.items.{{ $i }}.options.{{ $g->id }}" placeholder="{{ __('matex::po.common.choose_placeholder') }}" class="min-w-40" >
                                                                 <flux:select.option value="">—</flux:select.option>
                                                                 @foreach (($this->activeOptionsByGroup[$g->id] ?? []) as $opt)
                                                                     <flux:select.option value="{{ $opt['id'] }}">{{ $opt['name'] }}</flux:select.option>
@@ -2025,14 +2022,9 @@ new class extends Component
                                                     </div>
                                                 @endforeach
                                             </div>
-                                        @else
-                                            <span class="text-neutral-400 text-sm">{{ __('matex::po.adhoc.options.no_active_groups') }}</span>
-                                        @endif
-                                    </td>
-                                    <td class="py-2 px-3">
-                                        <flux:button size="xs" variant="ghost" wire:click="removeAdhocItem({{ $i }})">{{ __('matex::po.common.remove') }}</flux:button>
-                                    </td>
-                                </tr>
+                                        </td>
+                                    </tr>
+                                @endif
                             @endforeach
                         </tbody>
                     </table>
