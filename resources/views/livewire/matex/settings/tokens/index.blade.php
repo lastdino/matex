@@ -301,12 +301,16 @@ new class extends Component
                     <p class="text-sm font-medium text-gray-700 dark:text-gray-300">既定のオプション選択（任意）</p>
                     <div class="grid gap-3 md:grid-cols-2">
                         @foreach($optionGroups as $group)
-                            <flux:select wire:model.defer="form.options.{{ $group['id'] }}" label="{{ $group['name'] }}" placeholder="選択なし">
-                                <option value="">(選択なし)</option>
-                                @foreach($optionsByGroup[$group['id']] ?? [] as $opt)
-                                    <option value="{{ $opt['id'] }}">{{ $opt['name'] }}</option>
-                                @endforeach
-                            </flux:select>
+                            @if(($group['input_type'] ?? 'select') === 'input')
+                                <flux:input wire:model.defer="form.options.{{ $group['id'] }}" label="{{ $group['name'] }}" placeholder="テキストを入力"/>
+                            @else
+                                <flux:select wire:model.defer="form.options.{{ $group['id'] }}" label="{{ $group['name'] }}" placeholder="選択なし">
+                                    <option value="">(選択なし)</option>
+                                    @foreach($optionsByGroup[$group['id']] ?? [] as $opt)
+                                        <option value="{{ $opt['id'] }}">{{ $opt['name'] }}</option>
+                                    @endforeach
+                                </flux:select>
+                            @endif
                         @endforeach
                     </div>
                 </div>
