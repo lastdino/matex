@@ -525,7 +525,7 @@ new class extends Component
             @php $statusVal = is_string($po->status) ? $po->status : ($po->status->value ?? 'draft'); @endphp
             <flux:button href="{{ route('matex.purchase-orders.index') }}" variant="outline">{{ __('matex::po.detail.buttons.back') }}</flux:button>
             <flux:button type="button" onclick="window.print()" variant="outline">{{ __('matex::po.detail.buttons.print_labels') }}</flux:button>
-            @if ($statusVal !== 'draft' && $statusVal !== 'canceled')
+            @if ($statusVal !== 'draft' && $statusVal !== 'canceled' && $statusVal !== 'completed')
                 <flux:button href="{{ route('matex.purchase-orders.pdf', ['po' => $po->id]) }}" target="_blank" variant="outline">{{ __('matex::po.detail.buttons.download_pdf') }}</flux:button>
             @endif
 
