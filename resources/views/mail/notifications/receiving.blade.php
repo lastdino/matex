@@ -62,7 +62,7 @@
                         <div style="margin-top: 5px; padding-top: 5px; border-top: 1px dashed #eee;">
                             @foreach($poi->optionValues as $val)
                                 <small style="display: block; color: #444;">
-                                    {{ $val->group->name }}: {{ $val->option->name }}
+                                    {{ $val->group?->name }}: {{ $val->option?->name ?? $val->custom_value ?? '---' }}
                                 </small>
                             @endforeach
                         </div>
